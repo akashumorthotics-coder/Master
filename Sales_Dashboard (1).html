@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sales Performance Dashboard</title>
+<style>
+  :root{
+    --white:#ffffff;
+    --bg:#f4f7fa;
+    --blue:#1a56db;
+    --blue-dark:#0f3d91;
+    --blue-light:#e8f0fe;
+    --green:#0e9f6e;
+    --green-light:#e6f9f1;
+    --red:#e02424;
+    --red-light:#fde8e8;
+    --text:#1f2937;
+    --text-muted:#6b7280;
+    --border:#e5e7eb;
+    --shadow:0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    display:flex;
+    min-height:100vh;
+  }
+  /* Sidebar */
+  .sidebar{
+    width:250px;
+    background:linear-gradient(180deg, var(--blue-dark), var(--blue));
+    color:#fff;
+    display:flex;
+    flex-direction:column;
+    flex-shrink:0;
+    position:sticky;
+    top:0;
+    height:100vh;
+  }
+  .sidebar-header{
+    padding:24px 20px;
+    border-bottom:1px solid rgba(255,255,255,0.15);
+  }
+  .sidebar-header h1{
+    font-size:18px;
+    font-weight:700;
+    letter-spacing:0.3px;
+  }
+  .sidebar-header p{
+    font-size:12px;
+    color:rgba(255,255,255,0.7);
+    margin-top:4px;
+  }
+  .nav{
+    flex:1;
+    padding:16px 12px;
+  }
+  .nav-item{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:13px 14px;
+    margin-bottom:6px;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:14px;
+    font-weight:500;
+    color:rgba(255,255,255,0.85);
+    transition:background 0.15s ease;
+    user-select:none;
+  }
+  .nav-item:hover{ background:rgba(255,255,255,0.08); }
+  .nav-item.active{
+    background:var(--green);
+    color:#fff;
+    box-shadow:var(--shadow);
+  }
+  .nav-item .emoji{ font-size:17px; }
+  .sidebar-footer{
+    padding:16px 20px;
+    font-size:11px;
+    color:rgba(255,255,255,0.55);
+    border-top:1px solid rgba(255,255,255,0.15);
+  }
+  #last-updated{ display:block; margin-top:4px; color:rgba(255,255,255,0.8); }
+
+  /* Main */
+  .main{
+    flex:1;
+    padding:28px 34px;
+    max-width:calc(100vw - 250px);
+  }
+  .topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:24px;
+    flex-wrap:wrap;
+    gap:14px;
+  }
+  .topbar h2{
+    font-size:22px;
+    font-weight:700;
+    color:var(--blue-dark);
+  }
+  .controls{
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+  select, .refresh-btn{
+    padding:9px 14px;
+    border-radius:8px;
+    border:1px solid var(--border);
+    background:#fff;
+    font-size:13px;
+    color:var(--text);
+    cursor:pointer;
+    box-shadow:var(--shadow);
+  }
+  select{ min-width:180px; }
+  .refresh-btn{
+    background:var(--blue);
+    color:#fff;
+    border:none;
+    font-weight:600;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .refresh-btn:hover{ background:var(--blue-dark); }
+  .refresh-btn:disabled{ opacity:0.6; cursor:default; }
+
+  .section-label{
+    font-size:13px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    color:var(--text-muted);
+    margin:26px 0 12px;
+  }
+  .section-label:first-of-type{ margin-top:0; }
+
+  .kpi-grid{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:16px;
+  }
+  .kpi-card{
+    background:#fff;
+    border-radius:12px;
+    padding:18px 20px;
+    box-shadow:var(--shadow);
+    border-left:4px solid var(--blue);
+    position:relative;
+    overflow:hidden;
+  }
+  .kpi-card.green{ border-left-color:var(--green); }
+  .kpi-card.amber{ border-left-color:#d97706; }
+  .kpi-card.red{ border-left-color:var(--red); }
+  .kpi-card .label{
+    font-size:12px;
+    color:var(--text-muted);
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.4px;
+  }
+  .kpi-card .value{
+    font-size:26px;
+    font-weight:800;
+    color:var(--blue-dark);
+    margin-top:8px;
+  }
+  .kpi-card.green .value{ color:var(--green); }
+  .kpi-card .sub{
+    font-size:12px;
+    color:var(--text-muted);
+    margin-top:4px;
+  }
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    background:#fff;
+    border-radius:12px;
+    overflow:hidden;
+    box-shadow:var(--shadow);
+  }
+  thead th{
+    background:var(--blue-light);
+    color:var(--blue-dark);
+    text-align:left;
+    padding:12px 16px;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:0.4px;
+    cursor:pointer;
+    position:sticky;
+    top:0;
+    user-select:none;
+  }
+  thead th:hover{ background:#d7e5fd; }
+  tbody td{
+    padding:11px 16px;
+    font-size:13.5px;
+    border-top:1px solid var(--border);
+  }
+  tbody tr:hover{ background:var(--green-light); }
+  .table-wrap{
+    max-height:520px;
+    overflow-y:auto;
+    border-radius:12px;
+    box-shadow:var(--shadow);
+  }
+  .table-wrap table{ box-shadow:none; border-radius:0; }
+  .table-wrap thead th{ top:0; }
+
+  .card-panel{
+    background:#fff;
+    border-radius:12px;
+    padding:20px;
+    box-shadow:var(--shadow);
+    margin-top:14px;
+  }
+
+  .search-box{
+    width:100%;
+    max-width:320px;
+    padding:9px 14px;
+    border-radius:8px;
+    border:1px solid var(--border);
+    font-size:13px;
+    margin-bottom:14px;
+  }
+
+  .tab-content{ display:none; }
+  .tab-content.active{ display:block; }
+
+  .loading{
+    text-align:center;
+    padding:60px 20px;
+    color:var(--text-muted);
+    font-size:14px;
+  }
+  .spinner{
+    width:32px; height:32px;
+    border:3px solid var(--blue-light);
+    border-top-color:var(--blue);
+    border-radius:50%;
+    margin:0 auto 14px;
+    animation:spin 0.8s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  .error-box{
+    background:var(--red-light);
+    color:var(--red);
+    padding:14px 18px;
+    border-radius:8px;
+    font-size:13px;
+    margin-top:14px;
+  }
+
+  .progress-bar-bg{
+    width:100%;
+    background:#eef0f3;
+    border-radius:6px;
+    height:8px;
+    overflow:hidden;
+  }
+  .progress-bar-fill{
+    height:100%;
+    background:var(--green);
+    border-radius:6px;
+    transition:width 0.4s ease;
+  }
+  .progress-bar-fill.amber{ background:#d97706; }
+  .progress-bar-fill.red{ background:var(--red); }
+
+  .placeholder-note{
+    text-align:center;
+    padding:60px 20px;
+    color:var(--text-muted);
+    background:#fff;
+    border-radius:12px;
+    box-shadow:var(--shadow);
+    font-size:14px;
+  }
+
+  @media (max-width:900px){
+    .kpi-grid{ grid-template-columns:repeat(2,1fr); }
+    .sidebar{ width:70px; }
+    .sidebar-header h1, .sidebar-header p, .nav-item span:not(.emoji), .sidebar-footer{ display:none; }
+    .nav-item{ justify-content:center; }
+    .main{ max-width:calc(100vw - 70px); padding:20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h1>📈 Sales MIS</h1>
+    <p>UM Orthotics</p>
+  </div>
+  <div class="nav">
+    <div class="nav-item active" data-tab="exec">
+      <span class="emoji">📊</span><span>Executive Summary</span>
+    </div>
+    <div class="nav-item" data-tab="primary">
+      <span class="emoji">👥</span><span>Primary Sale</span>
+    </div>
+    <div class="nav-item" data-tab="secondary">
+      <span class="emoji">🏪</span><span>Secondary Sale</span>
+    </div>
+    <div class="nav-item" data-tab="beatwise">
+      <span class="emoji">🧭</span><span>Beat Wise Secondary</span>
+    </div>
+  </div>
+  <div class="sidebar-footer">
+    Live data from Google Sheets
+    <span id="last-updated">Not loaded yet</span>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- EXECUTIVE SUMMARY -->
+  <div class="tab-content active" id="tab-exec">
+    <div class="topbar">
+      <h2>📊 Executive Summary</h2>
+      <div class="controls">
+        <select id="stateFilterExec"><option value="ALL">All States</option></select>
+        <button class="refresh-btn" id="refreshBtn">⟳ Refresh Data</button>
+      </div>
+    </div>
+
+    <div id="exec-status" class="loading"><div class="spinner"></div>Loading live data from Google Sheets…</div>
+
+    <div id="exec-content" style="display:none;">
+      <div class="section-label">Primary Sale · Overall KPIs</div>
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="label">Total Target</div><div class="value" id="p-target">–</div></div>
+        <div class="kpi-card green"><div class="label">Total Achievement</div><div class="value" id="p-ach">–</div></div>
+        <div class="kpi-card" id="p-pct-card"><div class="label">Achievement %</div><div class="value" id="p-pct">–</div>
+          <div class="progress-bar-bg" style="margin-top:8px;"><div class="progress-bar-fill" id="p-pct-bar" style="width:0%"></div></div>
+        </div>
+        <div class="kpi-card red" id="p-gap-card"><div class="label">Gap to Achieve</div><div class="value" id="p-gap">–</div></div>
+      </div>
+
+      <div class="section-label">Secondary Sale · Overall KPIs</div>
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="label">Total Target</div><div class="value" id="s-target">–</div></div>
+        <div class="kpi-card green"><div class="label">Total Achievement</div><div class="value" id="s-ach">–</div></div>
+        <div class="kpi-card" id="s-pct-card"><div class="label">Achievement %</div><div class="value" id="s-pct">–</div>
+          <div class="progress-bar-bg" style="margin-top:8px;"><div class="progress-bar-fill" id="s-pct-bar" style="width:0%"></div></div>
+        </div>
+        <div class="kpi-card red" id="s-gap-card"><div class="label">Gap to Achieve</div><div class="value" id="s-gap">–</div></div>
+      </div>
+      <p style="margin-top:14px; font-size:12px; color:var(--text-muted);">
+        Secondary Sale KPIs will populate once the Secondary Sale source tab is connected.
+      </p>
+    </div>
+    <div id="exec-error"></div>
+  </div>
+
+  <!-- PRIMARY SALE -->
+  <div class="tab-content" id="tab-primary">
+    <div class="topbar">
+      <h2>👥 Primary Sale — Party Wise</h2>
+      <div class="controls">
+        <select id="stateFilterPrimary"><option value="ALL">All States</option></select>
+      </div>
+    </div>
+    <div id="primary-status" class="loading"><div class="spinner"></div>Loading live data from Google Sheets…</div>
+    <div id="primary-content" style="display:none;">
+      <input type="text" class="search-box" id="primarySearch" placeholder="Search party name…">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th data-key="state">State ⬍</th>
+              <th data-key="party">Party Name ⬍</th>
+              <th data-key="sale">Sale Amount ⬍</th>
+            </tr>
+          </thead>
+          <tbody id="primary-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div id="primary-error"></div>
+  </div>
+
+  <!-- SECONDARY SALE (placeholder) -->
+  <div class="tab-content" id="tab-secondary">
+    <div class="topbar"><h2>🏪 Secondary Sale</h2></div>
+    <div class="placeholder-note">🚧 Secondary Sale view will be connected next — source tab & columns to be confirmed.</div>
+  </div>
+
+  <!-- BEAT WISE (placeholder) -->
+  <div class="tab-content" id="tab-beatwise">
+    <div class="topbar"><h2>🧭 Beat Wise Secondary Sale</h2></div>
+    <div class="placeholder-note">🚧 Beat Wise Secondary Sale view will be connected next — source tab & columns to be confirmed.</div>
+  </div>
+
+</div>
+
+<script>
+/* ============ CONFIG ============ */
+const SHEET_ID = "1UQC0hU7EEDQKRwvyglqDY0yCClx9wKC62bt3q_hCgs0";
+const TAB_TARGET_VS_ACH = "Primary Sale Target vs ach."; // B=State, D=Target, E=Sale(Achievement)
+const TAB_PARTY_WISE   = "Party -Wise Primary";           // A=Party, C=Sale, D=State
+const REFRESH_INTERVAL_MS = 5 * 60 * 1000; // auto-refresh every 5 minutes
+
+let _jsonpCounter = 0;
+
+function gvizUrl(tabName, callbackName){
+  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json;responseHandler:${callbackName}&sheet=${encodeURIComponent(tabName)}`;
+}
+
+/* ============ FETCH HELPER (JSONP - avoids CORS/file:// issues) ============ */
+function fetchSheetTab(tabName){
+  return new Promise((resolve, reject) => {
+    const callbackName = "gvizCallback_" + (_jsonpCounter++) + "_" + Date.now();
+    const timeout = setTimeout(() => {
+      cleanup();
+      reject(new Error("Timed out loading tab '" + tabName + "'. Check your internet connection or the sheet sharing setting."));
+    }, 15000);
+
+    function cleanup(){
+      clearTimeout(timeout);
+      delete window[callbackName];
+      if(script.parentNode) script.parentNode.removeChild(script);
+    }
+
+    window[callbackName] = function(json){
+      cleanup();
+      try{
+        if(json.status === "error"){
+          reject(new Error("Sheet error (check tab name '" + tabName + "' exists): " + (json.errors?.[0]?.detailed_message || "unknown")));
+          return;
+        }
+        const cols = json.table.cols.map(c => c.label || c.id);
+        const rows = json.table.rows.map(r => r.c.map(cell => cell ? (cell.v !== undefined ? cell.v : cell.f) : null));
+        resolve({ cols, rows });
+      }catch(e){
+        reject(e);
+      }
+    };
+
+    const script = document.createElement('script');
+    script.src = gvizUrl(tabName, callbackName);
+    script.onerror = () => {
+      cleanup();
+      reject(new Error("Could not reach Google Sheets for tab '" + tabName + "'. Confirm the sheet is shared as 'Anyone with the link - Viewer' and you're online."));
+    };
+    document.body.appendChild(script);
+  });
+}
+
+function colLetterToIndex(letter){
+  return letter.toUpperCase().charCodeAt(0) - 65; // A=0, B=1, ...
+}
+
+function toNumber(v){
+  if(v === null || v === undefined) return 0;
+  if(typeof v === "number") return v;
+  const n = parseFloat(String(v).replace(/,/g,''));
+  return isNaN(n) ? 0 : n;
+}
+
+function fmtNum(n){
+  return Math.round(n).toLocaleString('en-IN');
+}
+
+/* ============ STATE ============ */
+let targetVsAchData = []; // {state, target, sale}
+let partyWiseData = [];   // {party, sale, state}
+let currentPrimarySort = { key: null, dir: 1 };
+
+/* ============ TAB NAVIGATION ============ */
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    item.classList.add('active');
+    document.getElementById('tab-' + item.dataset.tab).classList.add('active');
+  });
+});
+
+/* ============ LOAD DATA ============ */
+async function loadAllData(){
+  const btn = document.getElementById('refreshBtn');
+  btn.disabled = true;
+  btn.textContent = '⟳ Refreshing…';
+  document.getElementById('exec-status').style.display = 'block';
+  document.getElementById('exec-content').style.display = 'none';
+  document.getElementById('exec-error').innerHTML = '';
+  document.getElementById('primary-status').style.display = 'block';
+  document.getElementById('primary-content').style.display = 'none';
+  document.getElementById('primary-error').innerHTML = '';
+
+  try{
+    const [tva, pw] = await Promise.all([
+      fetchSheetTab(TAB_TARGET_VS_ACH),
+      fetchSheetTab(TAB_PARTY_WISE)
+    ]);
+
+    const bIdx = colLetterToIndex('B'), dIdx = colLetterToIndex('D'), eIdx = colLetterToIndex('E');
+    targetVsAchData = tva.rows
+      .map(r => ({
+        state: (r[bIdx] || '').toString().trim(),
+        target: toNumber(r[dIdx]),
+        sale: toNumber(r[eIdx])
+      }))
+      .filter(r => r.state && r.state.toUpperCase() !== 'STATE');
+
+    const aIdx = colLetterToIndex('A'), cIdx = colLetterToIndex('C'), pdIdx = colLetterToIndex('D');
+    partyWiseData = pw.rows
+      .map(r => ({
+        party: (r[aIdx] || '').toString().trim(),
+        sale: toNumber(r[cIdx]),
+        state: (r[pdIdx] || '').toString().trim()
+      }))
+      .filter(r => r.party && r.party.toUpperCase() !== 'PARTY NAME');
+
+    populateStateFilters();
+    renderExecutive('ALL');
+    renderPrimaryTable('ALL');
+
+    document.getElementById('exec-status').style.display = 'none';
+    document.getElementById('exec-content').style.display = 'block';
+    document.getElementById('primary-status').style.display = 'none';
+    document.getElementById('primary-content').style.display = 'block';
+
+    const now = new Date();
+    document.getElementById('last-updated').textContent = 'Updated ' + now.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
+  }catch(err){
+    console.error(err);
+    const msg = `<div class="error-box">⚠️ Could not load live data: ${err.message}<br><br>
+      Make sure the Google Sheet is shared as <b>"Anyone with the link – Viewer"</b>, and that the tab names exactly match:<br>
+      • "${TAB_TARGET_VS_ACH}"<br>• "${TAB_PARTY_WISE}"</div>`;
+    document.getElementById('exec-status').style.display = 'none';
+    document.getElementById('primary-status').style.display = 'none';
+    document.getElementById('exec-error').innerHTML = msg;
+    document.getElementById('primary-error').innerHTML = msg;
+  }finally{
+    btn.disabled = false;
+    btn.textContent = '⟳ Refresh Data';
+  }
+}
+
+function populateStateFilters(){
+  const states = Array.from(new Set(targetVsAchData.map(r => r.state))).sort();
+  [document.getElementById('stateFilterExec'), document.getElementById('stateFilterPrimary')].forEach(sel => {
+    const current = sel.value;
+    sel.innerHTML = '<option value="ALL">All States</option>' +
+      states.map(s => `<option value="${s}">${s}</option>`).join('');
+    if(states.includes(current)) sel.value = current;
+  });
+}
+
+/* ============ RENDER EXECUTIVE ============ */
+function renderExecutive(stateFilter){
+  const filtered = stateFilter === 'ALL' ? targetVsAchData : targetVsAchData.filter(r => r.state === stateFilter);
+  const totalTarget = filtered.reduce((s,r) => s + r.target, 0);
+  const totalAch = filtered.reduce((s,r) => s + r.sale, 0);
+  const pct = totalTarget > 0 ? (totalAch / totalTarget * 100) : 0;
+  const gap = Math.max(totalTarget - totalAch, 0);
+
+  document.getElementById('p-target').textContent = '₹ ' + fmtNum(totalTarget);
+  document.getElementById('p-ach').textContent = '₹ ' + fmtNum(totalAch);
+  document.getElementById('p-pct').textContent = pct.toFixed(1) + '%';
+  document.getElementById('p-gap').textContent = '₹ ' + fmtNum(gap);
+
+  const bar = document.getElementById('p-pct-bar');
+  bar.style.width = Math.min(pct,100) + '%';
+  bar.className = 'progress-bar-fill' + (pct >= 90 ? '' : pct >= 60 ? ' amber' : ' red');
+
+  const gapCard = document.getElementById('p-gap-card');
+  gapCard.className = 'kpi-card' + (gap === 0 ? ' green' : pct >= 60 ? '' : ' red');
+
+  // Secondary placeholders (no source yet)
+  ['s-target','s-ach','s-pct','s-gap'].forEach(id => document.getElementById(id).textContent = '—');
+  document.getElementById('s-pct-bar').style.width = '0%';
+}
+
+document.getElementById('stateFilterExec').addEventListener('change', e => renderExecutive(e.target.value));
+
+/* ============ RENDER PRIMARY TABLE ============ */
+function renderPrimaryTable(stateFilter){
+  let rows = stateFilter === 'ALL' ? partyWiseData : partyWiseData.filter(r => r.state === stateFilter);
+  const search = document.getElementById('primarySearch').value.trim().toLowerCase();
+  if(search) rows = rows.filter(r => r.party.toLowerCase().includes(search));
+
+  if(currentPrimarySort.key){
+    const k = currentPrimarySort.key, dir = currentPrimarySort.dir;
+    rows = [...rows].sort((a,b) => {
+      const av = a[k], bv = b[k];
+      if(typeof av === 'number') return (av - bv) * dir;
+      return String(av).localeCompare(String(bv)) * dir;
+    });
+  }
+
+  const tbody = document.getElementById('primary-tbody');
+  if(rows.length === 0){
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:24px;">No records found</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td>${r.state}</td>
+      <td>${r.party}</td>
+      <td>₹ ${fmtNum(r.sale)}</td>
+    </tr>
+  `).join('');
+}
+
+document.getElementById('stateFilterPrimary').addEventListener('change', e => renderPrimaryTable(e.target.value));
+document.getElementById('primarySearch').addEventListener('input', () => renderPrimaryTable(document.getElementById('stateFilterPrimary').value));
+
+document.querySelectorAll('#tab-primary thead th').forEach(th => {
+  th.addEventListener('click', () => {
+    const key = th.dataset.key;
+    if(currentPrimarySort.key === key){ currentPrimarySort.dir *= -1; }
+    else { currentPrimarySort = { key, dir: 1 }; }
+    renderPrimaryTable(document.getElementById('stateFilterPrimary').value);
+  });
+});
+
+/* ============ REFRESH BUTTON + AUTO REFRESH ============ */
+document.getElementById('refreshBtn').addEventListener('click', loadAllData);
+setInterval(loadAllData, REFRESH_INTERVAL_MS);
+
+/* ============ INIT ============ */
+loadAllData();
+</script>
+
+</body>
+</html>
