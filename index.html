@@ -134,6 +134,66 @@
   .refresh-btn:hover{ background:var(--blue-dark); }
   .refresh-btn:disabled{ opacity:0.6; cursor:default; }
 
+  /* Multi-select state filter dropdown */
+  .ms-wrap{ position:relative; }
+  .ms-toggle{
+    padding:9px 14px;
+    border-radius:8px;
+    border:1px solid var(--border);
+    background:#fff;
+    font-size:13px;
+    color:var(--text);
+    cursor:pointer;
+    box-shadow:var(--shadow);
+    min-width:180px;
+    text-align:left;
+    white-space:nowrap;
+  }
+  .ms-toggle:hover{ border-color:var(--blue); }
+  .ms-menu{
+    display:none;
+    position:absolute;
+    top:calc(100% + 6px);
+    left:0;
+    z-index:20;
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:10px;
+    box-shadow:0 4px 14px rgba(0,0,0,0.12);
+    min-width:220px;
+    max-height:280px;
+    overflow-y:auto;
+    padding:6px;
+  }
+  .ms-menu.open{ display:block; }
+  .ms-item{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:7px 10px;
+    border-radius:6px;
+    font-size:13px;
+    cursor:pointer;
+    user-select:none;
+  }
+  .ms-item:hover{ background:var(--blue-light); }
+  .ms-item input{ cursor:pointer; }
+  .ms-sep{ height:1px; background:var(--border); margin:4px 2px; }
+
+  .subtotal-bar{
+    display:flex;
+    flex-wrap:wrap;
+    gap:20px;
+    align-items:center;
+    background:var(--blue-light);
+    color:var(--blue-dark);
+    padding:12px 18px;
+    border-radius:10px;
+    font-size:13px;
+    margin-bottom:14px;
+  }
+  .subtotal-bar b{ font-size:14.5px; }
+
   .section-label{
     font-size:13px;
     font-weight:700;
@@ -290,6 +350,64 @@
     font-size:14px;
   }
 
+  tr.beat-row{ cursor:pointer; }
+  td.beat-link{ color:var(--blue); font-weight:600; text-decoration:underline; text-decoration-color:transparent; transition:text-decoration-color 0.15s; }
+  tr.beat-row:hover td.beat-link{ text-decoration-color:var(--blue); }
+
+  td.state-link{ color:var(--blue); font-weight:600; text-decoration:underline; text-decoration-color:transparent; cursor:pointer; transition:text-decoration-color 0.15s; }
+  td.state-link:hover{ text-decoration-color:var(--blue); background:var(--blue-light); }
+
+  /* RAG conditional row tinting */
+  tr.row-rag-green{ background:rgba(14,159,110,0.06); }
+  tr.row-rag-green:hover{ background:rgba(14,159,110,0.14); }
+  tr.row-rag-amber{ background:rgba(217,119,6,0.06); }
+  tr.row-rag-amber:hover{ background:rgba(217,119,6,0.14); }
+  tr.row-rag-red{ background:rgba(224,36,36,0.06); }
+  tr.row-rag-red:hover{ background:rgba(224,36,36,0.14); }
+
+  .mini-bar-bg{ width:70px; height:6px; background:#eef0f3; border-radius:5px; overflow:hidden; display:inline-block; vertical-align:middle; margin-right:8px; }
+  .mini-bar-fill{ height:100%; background:var(--green); border-radius:5px; }
+  .mini-bar-fill.amber{ background:#d97706; }
+  .mini-bar-fill.red{ background:var(--red); }
+  .pct-pill{ font-weight:800; vertical-align:middle; }
+  .pct-pill.green{ color:var(--green); }
+  .pct-pill.amber{ color:#d97706; }
+  .pct-pill.red{ color:var(--red); }
+
+  /* Charts */
+  .chart-grid{ display:grid; grid-template-columns:1fr 1fr 1.6fr; gap:16px; margin-bottom:8px; }
+  .chart-card{
+    background:#fff; border-radius:12px; padding:16px 18px; box-shadow:var(--shadow);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;
+  }
+  .chart-card h4{ font-size:12.5px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:8px; align-self:flex-start; }
+  .chart-card .gauge-sub{ font-size:11.5px; color:var(--text-muted); margin-top:4px; }
+  @media (max-width:1100px){ .chart-grid{ grid-template-columns:1fr 1fr; } .chart-card.wide{ grid-column:1 / -1; } }
+  @media (max-width:640px){ .chart-grid{ grid-template-columns:1fr; } }
+
+  .modal-overlay{
+    display:none;
+    position:fixed; inset:0; background:rgba(15,23,42,0.5);
+    align-items:center; justify-content:center; z-index:100; padding:20px;
+  }
+  .modal-overlay.open{ display:flex; }
+  .modal-box{
+    background:#fff; border-radius:14px; width:100%; max-width:640px;
+    max-height:85vh; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,0.25);
+    overflow:hidden;
+  }
+  .modal-header{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:18px 20px; border-bottom:1px solid var(--border);
+  }
+  .modal-header h3{ font-size:17px; color:var(--blue-dark); font-weight:700; }
+  .modal-close{
+    background:var(--bg); border:none; width:30px; height:30px; border-radius:50%;
+    cursor:pointer; font-size:14px; color:var(--text-muted);
+  }
+  .modal-close:hover{ background:var(--red-light); color:var(--red); }
+  .modal-table-wrap{ margin:0 20px 20px; max-height:400px; }
+
   @media (max-width:900px){
     .kpi-grid{ grid-template-columns:repeat(2,1fr); }
     .sidebar{ width:70px; }
@@ -333,7 +451,10 @@
     <div class="topbar">
       <h2>📊 Executive Summary</h2>
       <div class="controls">
-        <select id="stateFilterExec"><option value="ALL">All States</option></select>
+        <div class="ms-wrap" id="msWrap-exec">
+          <button type="button" class="ms-toggle" id="msToggle-exec">All States ▾</button>
+          <div class="ms-menu" id="msMenu-exec"></div>
+        </div>
         <button class="refresh-btn" id="refreshBtn">⟳ Refresh Data</button>
       </div>
     </div>
@@ -341,28 +462,67 @@
     <div id="exec-status" class="loading"><div class="spinner"></div>Loading live data from Google Sheets…</div>
 
     <div id="exec-content" style="display:none;">
-      <div class="section-label">Primary Sale · Overall KPIs</div>
+      <div class="section-label">🎯 Primary Sale · Overall KPIs</div>
       <div class="kpi-grid">
-        <div class="kpi-card"><div class="label">Total Target</div><div class="value" id="p-target">–</div></div>
-        <div class="kpi-card green"><div class="label">Total Achievement</div><div class="value" id="p-ach">–</div></div>
-        <div class="kpi-card" id="p-pct-card"><div class="label">Achievement %</div><div class="value" id="p-pct">–</div>
+        <div class="kpi-card"><div class="label">🎯 Total Target</div><div class="value" id="p-target">–</div></div>
+        <div class="kpi-card green"><div class="label">✅ Total Achievement</div><div class="value" id="p-ach">–</div></div>
+        <div class="kpi-card" id="p-pct-card"><div class="label">📈 Achievement %</div><div class="value" id="p-pct">–</div>
           <div class="progress-bar-bg" style="margin-top:8px;"><div class="progress-bar-fill" id="p-pct-bar" style="width:0%"></div></div>
         </div>
-        <div class="kpi-card red" id="p-gap-card"><div class="label">Gap to Achieve</div><div class="value" id="p-gap">–</div></div>
+        <div class="kpi-card red" id="p-gap-card"><div class="label">⚠️ Gap to Achieve</div><div class="value" id="p-gap">–</div></div>
       </div>
 
-      <div class="section-label">Secondary Sale · Overall KPIs</div>
+      <div class="section-label">🏪 Secondary Sale · Overall KPIs</div>
       <div class="kpi-grid">
-        <div class="kpi-card"><div class="label">Total Target</div><div class="value" id="s-target">–</div></div>
-        <div class="kpi-card green"><div class="label">Total Achievement</div><div class="value" id="s-ach">–</div></div>
-        <div class="kpi-card" id="s-pct-card"><div class="label">Achievement %</div><div class="value" id="s-pct">–</div>
+        <div class="kpi-card"><div class="label">🎯 Total Target</div><div class="value" id="s-target">–</div></div>
+        <div class="kpi-card green"><div class="label">✅ Total Achievement</div><div class="value" id="s-ach">–</div></div>
+        <div class="kpi-card" id="s-pct-card"><div class="label">📈 Achievement %</div><div class="value" id="s-pct">–</div>
           <div class="progress-bar-bg" style="margin-top:8px;"><div class="progress-bar-fill" id="s-pct-bar" style="width:0%"></div></div>
         </div>
-        <div class="kpi-card red" id="s-gap-card"><div class="label">Gap to Achieve</div><div class="value" id="s-gap">–</div></div>
+        <div class="kpi-card red" id="s-gap-card"><div class="label">⚠️ Gap to Achieve</div><div class="value" id="s-gap">–</div></div>
       </div>
-      <p style="margin-top:14px; font-size:12px; color:var(--text-muted);">
-        Secondary Sale KPIs will populate once the Secondary Sale source tab is connected.
-      </p>
+
+      <div class="section-label">📈 Visual Insights</div>
+      <div class="chart-grid">
+        <div class="chart-card">
+          <h4>🎯 Primary Ach. %</h4>
+          <div id="gauge-primary"></div>
+          <div class="gauge-sub" id="gauge-primary-sub">–</div>
+        </div>
+        <div class="chart-card">
+          <h4>🏪 Secondary Ach. %</h4>
+          <div id="gauge-secondary"></div>
+          <div class="gauge-sub" id="gauge-secondary-sub">–</div>
+        </div>
+        <div class="chart-card wide">
+          <h4>💰 Target vs Achievement (₹)</h4>
+          <div id="bar-comparison" style="width:100%;"></div>
+        </div>
+      </div>
+
+      <div class="section-label">👤 Primary Sale · RSM / ASM Wise</div>
+      <div class="subtotal-bar" id="exec-rsm-subtotal-bar">
+        <span>Showing <b id="exec-rsm-count">0</b> RSM/ASM</span>
+        <span>Total Target: <b id="exec-rsm-subtotal-target">₹ 0</b></span>
+        <span>Total Ach.: <b id="exec-rsm-subtotal-sale">₹ 0</b></span>
+        <span>Ach. %: <b id="exec-rsm-subtotal-pct">0%</b></span>
+        <span>Total Gap: <b id="exec-rsm-subtotal-gap">₹ 0</b></span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th data-key="rsm">👤 RSM/ASM ⬍</th>
+              <th data-key="state">📍 State ⬍</th>
+              <th data-key="target">🎯 Target ⬍</th>
+              <th data-key="sale">✅ Ach. ⬍</th>
+              <th data-key="pct">📊 % ⬍</th>
+              <th data-key="gap">⚠️ Gap ⬍</th>
+            </tr>
+          </thead>
+          <tbody id="exec-rsm-tbody"></tbody>
+        </table>
+      </div>
     </div>
     <div id="exec-error"></div>
   </div>
@@ -372,19 +532,26 @@
     <div class="topbar">
       <h2>👥 Primary Sale — Party Wise</h2>
       <div class="controls">
-        <select id="stateFilterPrimary"><option value="ALL">All States</option></select>
+        <div class="ms-wrap" id="msWrap-primary">
+          <button type="button" class="ms-toggle" id="msToggle-primary">All States ▾</button>
+          <div class="ms-menu" id="msMenu-primary"></div>
+        </div>
       </div>
     </div>
     <div id="primary-status" class="loading"><div class="spinner"></div>Loading live data from Google Sheets…</div>
     <div id="primary-content" style="display:none;">
       <input type="text" class="search-box" id="primarySearch" placeholder="Search party name…">
+      <div class="subtotal-bar" id="primary-subtotal-bar">
+        <span>Showing <b id="primary-subtotal-count">0</b> records</span>
+        <span>Subtotal Sale Amount: <b id="primary-subtotal">₹ 0</b></span>
+      </div>
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
-              <th data-key="state">State ⬍</th>
-              <th data-key="party">Party Name ⬍</th>
-              <th data-key="sale">Sale Amount ⬍</th>
+              <th data-key="state">📍 State ⬍</th>
+              <th data-key="party">🏬 Party Name ⬍</th>
+              <th data-key="sale">💰 Sale Amount ⬍</th>
             </tr>
           </thead>
           <tbody id="primary-tbody"></tbody>
@@ -394,16 +561,130 @@
     <div id="primary-error"></div>
   </div>
 
-  <!-- SECONDARY SALE (placeholder) -->
+  <!-- SECONDARY SALE -->
   <div class="tab-content" id="tab-secondary">
-    <div class="topbar"><h2>🏪 Secondary Sale</h2></div>
-    <div class="placeholder-note">🚧 Secondary Sale view will be connected next — source tab & columns to be confirmed.</div>
+    <div class="topbar">
+      <h2>🏪 Secondary Sale — User Wise</h2>
+      <div class="controls">
+        <div class="ms-wrap" id="msWrap-secondary">
+          <button type="button" class="ms-toggle" id="msToggle-secondary">All States ▾</button>
+          <div class="ms-menu" id="msMenu-secondary"></div>
+        </div>
+      </div>
+    </div>
+    <div id="secondary-status" class="loading"><div class="spinner"></div>Loading live data from Google Sheets…</div>
+    <div id="secondary-content" style="display:none;">
+      <input type="text" class="search-box" id="secondarySearch" placeholder="Search user name…">
+      <div class="subtotal-bar" id="secondary-subtotal-bar">
+        <span>Showing <b id="secondary-subtotal-count">0</b> users</span>
+        <span>Total Target: <b id="secondary-subtotal-target">₹ 0</b></span>
+        <span>Total Achievement: <b id="secondary-subtotal-ach">₹ 0</b></span>
+        <span>Achievement %: <b id="secondary-subtotal-pct">0%</b></span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th data-key="state">📍 State ⬍</th>
+              <th data-key="user">👤 User ⬍</th>
+              <th data-key="target">🎯 Target ⬍</th>
+              <th data-key="ach">✅ Achievement ⬍</th>
+              <th data-key="pct">📊 Achievement % ⬍</th>
+            </tr>
+          </thead>
+          <tbody id="secondary-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div id="secondary-error"></div>
   </div>
 
-  <!-- BEAT WISE (placeholder) -->
+  <!-- BEAT WISE -->
   <div class="tab-content" id="tab-beatwise">
-    <div class="topbar"><h2>🧭 Beat Wise Secondary Sale</h2></div>
-    <div class="placeholder-note">🚧 Beat Wise Secondary Sale view will be connected next — source tab & columns to be confirmed.</div>
+    <div class="topbar">
+      <h2>🧭 Beat Wise Secondary Sale</h2>
+      <div class="controls">
+        <div class="ms-wrap" id="msWrap-beatwiseState">
+          <button type="button" class="ms-toggle" id="msToggle-beatwiseState">All States ▾</button>
+          <div class="ms-menu" id="msMenu-beatwiseState"></div>
+        </div>
+        <div class="ms-wrap" id="msWrap-beatwiseUser">
+          <button type="button" class="ms-toggle" id="msToggle-beatwiseUser">All Users ▾</button>
+          <div class="ms-menu" id="msMenu-beatwiseUser"></div>
+        </div>
+      </div>
+    </div>
+    <div id="beatwise-status" class="loading"><div class="spinner"></div>Loading live data from Google Sheets…</div>
+    <div id="beatwise-content" style="display:none;">
+      <input type="text" class="search-box" id="beatSearch" placeholder="Search beat name…">
+      <div class="subtotal-bar" id="beatwise-subtotal-bar">
+        <span>Showing <b id="beatwise-subtotal-count">0</b> beats</span>
+        <span>Subtotal Sale Amount: <b id="beatwise-subtotal">₹ 0</b></span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th data-key="beat">🧭 Beat Name ⬍</th>
+              <th data-key="sale">💰 Sale Amount ⬍</th>
+            </tr>
+          </thead>
+          <tbody id="beatwise-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div id="beatwise-error"></div>
+  </div>
+
+  <!-- SHOP-WISE DRILLDOWN MODAL -->
+  <div class="modal-overlay" id="drilldown-overlay">
+    <div class="modal-box" id="drilldown-modal">
+      <div class="modal-header">
+        <h3 id="drilldown-title">🏬 Shop Wise Sale</h3>
+        <button type="button" id="drilldown-close" class="modal-close">✕</button>
+      </div>
+      <div class="subtotal-bar" style="margin:0 20px 12px;">
+        <span>Showing <b id="drilldown-count">0</b> shops</span>
+        <span>Subtotal Sale Amount: <b id="drilldown-subtotal">₹ 0</b></span>
+      </div>
+      <div class="table-wrap modal-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th data-key="shop">🏪 Shop Name ⬍</th>
+              <th data-key="shopType">🏷️ Shop Type ⬍</th>
+              <th data-key="sale">💰 Sale Amount ⬍</th>
+            </tr>
+          </thead>
+          <tbody id="drilldown-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- PARTY-WISE DRILLDOWN MODAL (from Executive Summary RSM table) -->
+  <div class="modal-overlay" id="party-drilldown-overlay">
+    <div class="modal-box" id="party-drilldown-modal">
+      <div class="modal-header">
+        <h3 id="party-drilldown-title">🏪 Party Wise Sale</h3>
+        <button type="button" id="party-drilldown-close" class="modal-close">✕</button>
+      </div>
+      <div class="subtotal-bar" style="margin:0 20px 12px;">
+        <span>Showing <b id="party-drilldown-count">0</b> parties</span>
+        <span>Subtotal Sale Amount: <b id="party-drilldown-subtotal">₹ 0</b></span>
+      </div>
+      <div class="table-wrap modal-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th data-key="party">🏬 Party Name ⬍</th>
+              <th data-key="sale">💰 Sale Amount ⬍</th>
+            </tr>
+          </thead>
+          <tbody id="party-drilldown-tbody"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
 </div>
@@ -413,6 +694,8 @@
 const SHEET_ID = "1UQC0hU7EEDQKRwvyglqDY0yCClx9wKC62bt3q_hCgs0";
 const TAB_TARGET_VS_ACH = "Primary Sale Target vs ach."; // B=State, D=Target, E=Sale(Achievement)
 const TAB_PARTY_WISE   = "Party -Wise Primary";           // A=Party, C=Sale, D=State
+const TAB_SECONDARY    = "Secondary & Tertiary Sale";     // A=State, B=User, D=Target, E=Ach.
+const TAB_REPORT       = "Report";                        // D=User, G=Beat, I=State, N=Sale Amount
 const REFRESH_INTERVAL_MS = 5 * 60 * 1000; // auto-refresh every 5 minutes
 
 let _jsonpCounter = 0;
@@ -476,10 +759,66 @@ function fmtNum(n){
   return Math.round(n).toLocaleString('en-IN');
 }
 
+function pctClass(pct){ return pct >= 90 ? 'green' : pct >= 60 ? 'amber' : 'red'; }
+
+/* ============ SVG CHART HELPERS ============ */
+function renderGauge(containerId, pct){
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  const clamped = Math.max(0, Math.min(pct, 100));
+  const radius = 52, cx = 70, cy = 70, sw = 14;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (clamped / 100) * circumference;
+  const color = pctClass(pct) === 'green' ? '#0e9f6e' : pctClass(pct) === 'amber' ? '#d97706' : '#e02424';
+  el.innerHTML = `
+    <svg viewBox="0 0 140 140" width="140" height="140">
+      <circle cx="${cx}" cy="${cy}" r="${radius}" fill="none" stroke="#eef0f3" stroke-width="${sw}"/>
+      <circle cx="${cx}" cy="${cy}" r="${radius}" fill="none" stroke="${color}" stroke-width="${sw}"
+        stroke-dasharray="${circumference}" stroke-dashoffset="${offset}"
+        stroke-linecap="round" transform="rotate(-90 ${cx} ${cy})"
+        style="transition:stroke-dashoffset 0.6s ease;"/>
+      <text x="${cx}" y="${cy + 7}" text-anchor="middle" font-size="22" font-weight="800" fill="${color}" font-family="Segoe UI, sans-serif">${pct.toFixed(1)}%</text>
+    </svg>`;
+}
+
+function renderComparisonBar(containerId, items){
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  const max = Math.max(...items.map(i => i.value), 1);
+  const barWidth = 52, gap = 26, chartHeight = 190, topPad = 30;
+  const chartWidth = items.length * (barWidth + gap) + gap;
+  const bars = items.map((item, i) => {
+    const h = Math.max((item.value / max) * (chartHeight - topPad - 34), 2);
+    const x = gap + i * (barWidth + gap);
+    const y = chartHeight - h - 30;
+    return `
+      <rect x="${x}" y="${y}" width="${barWidth}" height="${h}" rx="6" fill="${item.color}"/>
+      <text x="${x + barWidth/2}" y="${y - 8}" text-anchor="middle" font-size="11.5" font-weight="700" fill="#1f2937" font-family="Segoe UI, sans-serif">₹${fmtCompact(item.value)}</text>
+      <text x="${x + barWidth/2}" y="${chartHeight - 10}" text-anchor="middle" font-size="10.5" fill="#6b7280" font-family="Segoe UI, sans-serif">${item.label}</text>
+    `;
+  }).join('');
+  el.innerHTML = `<svg viewBox="0 0 ${chartWidth} ${chartHeight}" width="100%" height="200" preserveAspectRatio="xMidYMid meet">${bars}</svg>`;
+}
+
+function fmtCompact(n){
+  const sign = n < 0 ? '-' : '';
+  n = Math.abs(n);
+  if(n >= 10000000) return sign + (n/10000000).toFixed(2) + ' Cr';
+  if(n >= 100000) return sign + (n/100000).toFixed(1) + ' L';
+  if(n >= 1000) return sign + (n/1000).toFixed(1) + ' K';
+  return sign + fmtNum(n);
+}
+
 /* ============ STATE ============ */
 let targetVsAchData = []; // {state, target, sale}
 let partyWiseData = [];   // {party, sale, state}
+let secondaryData = [];   // {state, user, target, ach}
+let beatWiseData = [];    // {state, user, beat, sale}
 let currentPrimarySort = { key: null, dir: 1 };
+let currentSecondarySort = { key: null, dir: 1 };
+let currentBeatSort = { key: null, dir: 1 };
+let currentExecRsmSort = { key: null, dir: 1 };
+let stateFilters = {}; // key ('exec' | 'primary' | 'secondary' | 'beatwiseState' | 'beatwiseUser') -> array of selected values ([] = All)
 
 /* ============ TAB NAVIGATION ============ */
 document.querySelectorAll('.nav-item').forEach(item => {
@@ -502,16 +841,25 @@ async function loadAllData(){
   document.getElementById('primary-status').style.display = 'block';
   document.getElementById('primary-content').style.display = 'none';
   document.getElementById('primary-error').innerHTML = '';
+  document.getElementById('secondary-status').style.display = 'block';
+  document.getElementById('secondary-content').style.display = 'none';
+  document.getElementById('secondary-error').innerHTML = '';
+  document.getElementById('beatwise-status').style.display = 'block';
+  document.getElementById('beatwise-content').style.display = 'none';
+  document.getElementById('beatwise-error').innerHTML = '';
 
   try{
-    const [tva, pw] = await Promise.all([
+    const [tva, pw, sec, rep] = await Promise.all([
       fetchSheetTab(TAB_TARGET_VS_ACH),
-      fetchSheetTab(TAB_PARTY_WISE)
+      fetchSheetTab(TAB_PARTY_WISE),
+      fetchSheetTab(TAB_SECONDARY),
+      fetchSheetTab(TAB_REPORT)
     ]);
 
-    const bIdx = colLetterToIndex('B'), dIdx = colLetterToIndex('D'), eIdx = colLetterToIndex('E');
+    const aIdx0 = colLetterToIndex('A'), bIdx = colLetterToIndex('B'), dIdx = colLetterToIndex('D'), eIdx = colLetterToIndex('E');
     targetVsAchData = tva.rows
       .map(r => ({
+        rsm: (r[aIdx0] || '').toString().trim(),
         state: (r[bIdx] || '').toString().trim(),
         target: toNumber(r[dIdx]),
         sale: toNumber(r[eIdx])
@@ -527,14 +875,42 @@ async function loadAllData(){
       }))
       .filter(r => r.party && r.party.toUpperCase() !== 'PARTY NAME');
 
+    const sAIdx = colLetterToIndex('A'), sBIdx = colLetterToIndex('B'), sDIdx = colLetterToIndex('D'), sEIdx = colLetterToIndex('E');
+    secondaryData = sec.rows
+      .map(r => ({
+        state: (r[sAIdx] || '').toString().trim(),
+        user: (r[sBIdx] || '').toString().trim(),
+        target: toNumber(r[sDIdx]),
+        ach: toNumber(r[sEIdx])
+      }))
+      .filter(r => r.state && r.state.toUpperCase() !== 'STATE' && r.user && r.user.toUpperCase() !== 'USER');
+
+    const rDIdx = colLetterToIndex('D'), rGIdx = colLetterToIndex('G'), rIIdx = colLetterToIndex('I'), rNIdx = colLetterToIndex('N'), rJIdx = colLetterToIndex('J'), rRIdx = colLetterToIndex('R');
+    beatWiseData = rep.rows
+      .map(r => ({
+        user: (r[rDIdx] || '').toString().trim(),
+        beat: (r[rGIdx] || '').toString().trim(),
+        state: (r[rIIdx] || '').toString().trim(),
+        sale: toNumber(r[rNIdx]),
+        shop: (r[rJIdx] || '').toString().trim(),
+        shopType: (r[rRIdx] || '').toString().trim()
+      }))
+      .filter(r => r.beat && r.beat.toUpperCase() !== 'BEAT' && r.state && r.state.toUpperCase() !== 'STATE');
+
     populateStateFilters();
-    renderExecutive('ALL');
-    renderPrimaryTable('ALL');
+    renderExecutive(stateFilters.exec || []);
+    renderPrimaryTable(stateFilters.primary || []);
+    renderSecondaryTable(stateFilters.secondary || []);
+    renderBeatWise();
 
     document.getElementById('exec-status').style.display = 'none';
     document.getElementById('exec-content').style.display = 'block';
     document.getElementById('primary-status').style.display = 'none';
     document.getElementById('primary-content').style.display = 'block';
+    document.getElementById('secondary-status').style.display = 'none';
+    document.getElementById('secondary-content').style.display = 'block';
+    document.getElementById('beatwise-status').style.display = 'none';
+    document.getElementById('beatwise-content').style.display = 'block';
 
     const now = new Date();
     document.getElementById('last-updated').textContent = 'Updated ' + now.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
@@ -542,11 +918,15 @@ async function loadAllData(){
     console.error(err);
     const msg = `<div class="error-box">⚠️ Could not load live data: ${err.message}<br><br>
       Make sure the Google Sheet is shared as <b>"Anyone with the link – Viewer"</b>, and that the tab names exactly match:<br>
-      • "${TAB_TARGET_VS_ACH}"<br>• "${TAB_PARTY_WISE}"</div>`;
+      • "${TAB_TARGET_VS_ACH}"<br>• "${TAB_PARTY_WISE}"<br>• "${TAB_SECONDARY}"<br>• "${TAB_REPORT}"</div>`;
     document.getElementById('exec-status').style.display = 'none';
     document.getElementById('primary-status').style.display = 'none';
+    document.getElementById('secondary-status').style.display = 'none';
+    document.getElementById('beatwise-status').style.display = 'none';
     document.getElementById('exec-error').innerHTML = msg;
     document.getElementById('primary-error').innerHTML = msg;
+    document.getElementById('secondary-error').innerHTML = msg;
+    document.getElementById('beatwise-error').innerHTML = msg;
   }finally{
     btn.disabled = false;
     btn.textContent = '⟳ Refresh Data';
@@ -554,18 +934,90 @@ async function loadAllData(){
 }
 
 function populateStateFilters(){
-  const states = Array.from(new Set(targetVsAchData.map(r => r.state))).sort();
-  [document.getElementById('stateFilterExec'), document.getElementById('stateFilterPrimary')].forEach(sel => {
-    const current = sel.value;
-    sel.innerHTML = '<option value="ALL">All States</option>' +
-      states.map(s => `<option value="${s}">${s}</option>`).join('');
-    if(states.includes(current)) sel.value = current;
+  const statesPrimary = Array.from(new Set(targetVsAchData.map(r => r.state))).sort();
+  const statesSecondary = Array.from(new Set(secondaryData.map(r => r.state))).sort();
+  const allStates = Array.from(new Set([...statesPrimary, ...statesSecondary])).sort();
+
+  buildMultiSelect('exec', allStates.length ? allStates : statesPrimary, renderExecutive);
+  buildMultiSelect('primary', statesPrimary.length ? statesPrimary : allStates, renderPrimaryTable);
+  buildMultiSelect('secondary', statesSecondary.length ? statesSecondary : allStates, renderSecondaryTable);
+
+  const statesBeat = Array.from(new Set(beatWiseData.map(r => r.state))).sort();
+  buildMultiSelect('beatwiseState', statesBeat, (selStates) => {
+    rebuildBeatUserFilter(selStates);
+    renderBeatWise();
   });
+  rebuildBeatUserFilter(stateFilters.beatwiseState || []);
 }
 
+/* Rebuild the User filter options for Beat Wise tab based on currently selected states */
+function rebuildBeatUserFilter(selectedStates){
+  selectedStates = selectedStates || [];
+  const scoped = selectedStates.length === 0 ? beatWiseData : beatWiseData.filter(r => selectedStates.includes(r.state));
+  const users = Array.from(new Set(scoped.map(r => r.user))).filter(Boolean).sort();
+  buildMultiSelect('beatwiseUser', users, () => renderBeatWise());
+}
+
+/* ============ MULTI-SELECT STATE FILTER WIDGET ============ */
+function buildMultiSelect(key, states, onChange){
+  const menu = document.getElementById('msMenu-' + key);
+  const toggleBtn = document.getElementById('msToggle-' + key);
+
+  // keep previous selection only where the option is still valid
+  const prev = (stateFilters[key] || []).filter(s => states.includes(s));
+  stateFilters[key] = prev;
+
+  menu.innerHTML =
+    `<label class="ms-item"><input type="checkbox" class="ms-all" ${prev.length === 0 ? 'checked' : ''}><b>All States</b></label>
+     <div class="ms-sep"></div>` +
+    states.map(s => `<label class="ms-item"><input type="checkbox" value="${s}" ${prev.includes(s) ? 'checked' : ''}>${s}</label>`).join('');
+
+  updateMsToggleLabel(key);
+
+  menu.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const allCb = menu.querySelector('.ms-all');
+      if(cb.classList.contains('ms-all')){
+        if(cb.checked){
+          menu.querySelectorAll('input[type=checkbox]:not(.ms-all)').forEach(c => c.checked = false);
+          stateFilters[key] = [];
+        }
+      } else {
+        const checked = Array.from(menu.querySelectorAll('input[type=checkbox]:not(.ms-all):checked')).map(c => c.value);
+        if(checked.length === 0){ allCb.checked = true; }
+        else { allCb.checked = false; }
+        stateFilters[key] = checked;
+      }
+      updateMsToggleLabel(key);
+      onChange(stateFilters[key]);
+    });
+  });
+
+  toggleBtn.onclick = (e) => {
+    e.stopPropagation();
+    document.querySelectorAll('.ms-menu.open').forEach(m => { if(m !== menu) m.classList.remove('open'); });
+    menu.classList.toggle('open');
+  };
+}
+
+function updateMsToggleLabel(key){
+  const sel = stateFilters[key] || [];
+  const toggleBtn = document.getElementById('msToggle-' + key);
+  if(sel.length === 0) toggleBtn.textContent = 'All States ▾';
+  else if(sel.length === 1) toggleBtn.textContent = sel[0] + ' ▾';
+  else toggleBtn.textContent = sel.length + ' States Selected ▾';
+}
+
+document.addEventListener('click', (e) => {
+  document.querySelectorAll('.ms-menu.open').forEach(m => {
+    if(!m.parentElement.contains(e.target)) m.classList.remove('open');
+  });
+});
+
 /* ============ RENDER EXECUTIVE ============ */
-function renderExecutive(stateFilter){
-  const filtered = stateFilter === 'ALL' ? targetVsAchData : targetVsAchData.filter(r => r.state === stateFilter);
+function renderExecutive(selectedStates){
+  selectedStates = selectedStates || [];
+  const filtered = selectedStates.length === 0 ? targetVsAchData : targetVsAchData.filter(r => selectedStates.includes(r.state));
   const totalTarget = filtered.reduce((s,r) => s + r.target, 0);
   const totalAch = filtered.reduce((s,r) => s + r.sale, 0);
   const pct = totalTarget > 0 ? (totalAch / totalTarget * 100) : 0;
@@ -583,16 +1035,105 @@ function renderExecutive(stateFilter){
   const gapCard = document.getElementById('p-gap-card');
   gapCard.className = 'kpi-card' + (gap === 0 ? ' green' : pct >= 60 ? '' : ' red');
 
-  // Secondary placeholders (no source yet)
-  ['s-target','s-ach','s-pct','s-gap'].forEach(id => document.getElementById(id).textContent = '—');
-  document.getElementById('s-pct-bar').style.width = '0%';
+  // Secondary KPIs — live from "Secondary & Tertiary Sale" tab
+  const filteredSec = selectedStates.length === 0 ? secondaryData : secondaryData.filter(r => selectedStates.includes(r.state));
+  const sTotalTarget = filteredSec.reduce((s,r) => s + r.target, 0);
+  const sTotalAch = filteredSec.reduce((s,r) => s + r.ach, 0);
+  const sPct = sTotalTarget > 0 ? (sTotalAch / sTotalTarget * 100) : 0;
+  const sGap = Math.max(sTotalTarget - sTotalAch, 0);
+
+  document.getElementById('s-target').textContent = '₹ ' + fmtNum(sTotalTarget);
+  document.getElementById('s-ach').textContent = '₹ ' + fmtNum(sTotalAch);
+  document.getElementById('s-pct').textContent = sPct.toFixed(1) + '%';
+  document.getElementById('s-gap').textContent = '₹ ' + fmtNum(sGap);
+
+  const sBar = document.getElementById('s-pct-bar');
+  sBar.style.width = Math.min(sPct,100) + '%';
+  sBar.className = 'progress-bar-fill' + (sPct >= 90 ? '' : sPct >= 60 ? ' amber' : ' red');
+
+  const sGapCard = document.getElementById('s-gap-card');
+  sGapCard.className = 'kpi-card' + (sGap === 0 ? ' green' : sPct >= 60 ? '' : ' red');
+
+  renderGauge('gauge-primary', pct);
+  document.getElementById('gauge-primary-sub').textContent = '₹ ' + fmtCompact(totalAch) + ' of ₹ ' + fmtCompact(totalTarget);
+  renderGauge('gauge-secondary', sPct);
+  document.getElementById('gauge-secondary-sub').textContent = '₹ ' + fmtCompact(sTotalAch) + ' of ₹ ' + fmtCompact(sTotalTarget);
+  const COLOR = { blue:'#1a56db', blueDark:'#0f3d91', green:'#0e9f6e', amber:'#d97706', red:'#e02424' };
+  const achColor = (p) => pctClass(p) === 'green' ? COLOR.green : pctClass(p) === 'amber' ? COLOR.amber : COLOR.red;
+  renderComparisonBar('bar-comparison', [
+    { label: 'Primary Target', value: totalTarget, color: COLOR.blue },
+    { label: 'Primary Ach.', value: totalAch, color: achColor(pct) },
+    { label: 'Secondary Target', value: sTotalTarget, color: COLOR.blueDark },
+    { label: 'Secondary Ach.', value: sTotalAch, color: achColor(sPct) }
+  ]);
+
+  renderExecRsmTable(filtered);
 }
 
-document.getElementById('stateFilterExec').addEventListener('change', e => renderExecutive(e.target.value));
+/* ============ RENDER EXECUTIVE · RSM/ASM TABLE ============ */
+function renderExecRsmTable(filteredRows){
+  let rows = filteredRows.map(r => {
+    const pct = r.target > 0 ? (r.sale / r.target * 100) : 0;
+    const gap = Math.max(r.target - r.sale, 0);
+    return { ...r, pct, gap };
+  });
+
+  if(currentExecRsmSort.key){
+    const k = currentExecRsmSort.key, dir = currentExecRsmSort.dir;
+    rows = [...rows].sort((a,b) => {
+      const av = a[k], bv = b[k];
+      if(typeof av === 'number') return (av - bv) * dir;
+      return String(av).localeCompare(String(bv)) * dir;
+    });
+  }
+
+  const tbody = document.getElementById('exec-rsm-tbody');
+  if(rows.length === 0){
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:24px;">No records found</td></tr>';
+  } else {
+    tbody.innerHTML = rows.map(r => {
+      const cls = pctClass(r.pct);
+      const rowTint = cls === 'green' ? 'row-rag-green' : cls === 'amber' ? 'row-rag-amber' : 'row-rag-red';
+      const medal = r.pct >= 100 ? '🏆 ' : '';
+      return `
+      <tr class="${rowTint}">
+        <td>${r.rsm}</td>
+        <td class="state-link" data-state="${r.state.replace(/"/g,'&quot;')}">${r.state}</td>
+        <td>₹ ${fmtNum(r.target)}</td>
+        <td class="state-link" data-state="${r.state.replace(/"/g,'&quot;')}">₹ ${fmtNum(r.sale)}</td>
+        <td><span class="mini-bar-bg"><span class="mini-bar-fill ${cls === 'green' ? '' : cls}" style="width:${Math.min(r.pct,100)}%"></span></span><span class="pct-pill ${cls}">${medal}${r.pct.toFixed(1)}%</span></td>
+        <td>₹ ${fmtNum(r.gap)}</td>
+      </tr>`;
+    }).join('');
+    tbody.querySelectorAll('td.state-link').forEach(td => {
+      td.addEventListener('click', () => openPartyDrilldown(td.dataset.state));
+    });
+  }
+
+  const subTarget = rows.reduce((s,r) => s + r.target, 0);
+  const subSale = rows.reduce((s,r) => s + r.sale, 0);
+  const subPct = subTarget > 0 ? (subSale / subTarget * 100) : 0;
+  const subGap = Math.max(subTarget - subSale, 0);
+  document.getElementById('exec-rsm-count').textContent = rows.length;
+  document.getElementById('exec-rsm-subtotal-target').textContent = '₹ ' + fmtNum(subTarget);
+  document.getElementById('exec-rsm-subtotal-sale').textContent = '₹ ' + fmtNum(subSale);
+  document.getElementById('exec-rsm-subtotal-pct').textContent = subPct.toFixed(1) + '%';
+  document.getElementById('exec-rsm-subtotal-gap').textContent = '₹ ' + fmtNum(subGap);
+}
+
+document.querySelectorAll('#tab-exec thead th').forEach(th => {
+  th.addEventListener('click', () => {
+    const key = th.dataset.key;
+    if(currentExecRsmSort.key === key){ currentExecRsmSort.dir *= -1; }
+    else { currentExecRsmSort = { key, dir: 1 }; }
+    renderExecutive(stateFilters.exec || []);
+  });
+});
 
 /* ============ RENDER PRIMARY TABLE ============ */
-function renderPrimaryTable(stateFilter){
-  let rows = stateFilter === 'ALL' ? partyWiseData : partyWiseData.filter(r => r.state === stateFilter);
+function renderPrimaryTable(selectedStates){
+  selectedStates = selectedStates || [];
+  let rows = selectedStates.length === 0 ? partyWiseData : partyWiseData.filter(r => selectedStates.includes(r.state));
   const search = document.getElementById('primarySearch').value.trim().toLowerCase();
   if(search) rows = rows.filter(r => r.party.toLowerCase().includes(search));
 
@@ -608,27 +1149,303 @@ function renderPrimaryTable(stateFilter){
   const tbody = document.getElementById('primary-tbody');
   if(rows.length === 0){
     tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:24px;">No records found</td></tr>';
-    return;
+  } else {
+    // Rank medals based on sale amount regardless of current sort/search
+    const ranked = [...rows].sort((a,b) => b.sale - a.sale);
+    const medalMap = new Map();
+    if(ranked[0]) medalMap.set(ranked[0], '🥇 ');
+    if(ranked[1]) medalMap.set(ranked[1], '🥈 ');
+    if(ranked[2]) medalMap.set(ranked[2], '🥉 ');
+    tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td>${r.state}</td>
+        <td>${medalMap.get(r) || ''}${r.party}</td>
+        <td>₹ ${fmtNum(r.sale)}</td>
+      </tr>
+    `).join('');
   }
-  tbody.innerHTML = rows.map(r => `
-    <tr>
-      <td>${r.state}</td>
-      <td>${r.party}</td>
-      <td>₹ ${fmtNum(r.sale)}</td>
-    </tr>
-  `).join('');
+
+  // Subtotal for the currently filtered/searched rows
+  const subtotal = rows.reduce((s,r) => s + r.sale, 0);
+  document.getElementById('primary-subtotal-count').textContent = rows.length;
+  document.getElementById('primary-subtotal').textContent = '₹ ' + fmtNum(subtotal);
 }
 
-document.getElementById('stateFilterPrimary').addEventListener('change', e => renderPrimaryTable(e.target.value));
-document.getElementById('primarySearch').addEventListener('input', () => renderPrimaryTable(document.getElementById('stateFilterPrimary').value));
+document.getElementById('primarySearch').addEventListener('input', () => renderPrimaryTable(stateFilters.primary || []));
 
 document.querySelectorAll('#tab-primary thead th').forEach(th => {
   th.addEventListener('click', () => {
     const key = th.dataset.key;
     if(currentPrimarySort.key === key){ currentPrimarySort.dir *= -1; }
     else { currentPrimarySort = { key, dir: 1 }; }
-    renderPrimaryTable(document.getElementById('stateFilterPrimary').value);
+    renderPrimaryTable(stateFilters.primary || []);
   });
+});
+
+/* ============ RENDER SECONDARY TABLE (User Wise) ============ */
+function renderSecondaryTable(selectedStates){
+  selectedStates = selectedStates || [];
+  let rows = selectedStates.length === 0 ? secondaryData : secondaryData.filter(r => selectedStates.includes(r.state));
+  const search = document.getElementById('secondarySearch').value.trim().toLowerCase();
+  if(search) rows = rows.filter(r => r.user.toLowerCase().includes(search));
+
+  // Aggregate by state + user in case a user has multiple rows in the sheet
+  const map = new Map();
+  rows.forEach(r => {
+    const k = r.state + '||' + r.user;
+    if(!map.has(k)) map.set(k, { state: r.state, user: r.user, target: 0, ach: 0 });
+    const o = map.get(k);
+    o.target += r.target;
+    o.ach += r.ach;
+  });
+  let agg = Array.from(map.values()).map(o => ({ ...o, pct: o.target > 0 ? (o.ach / o.target * 100) : 0 }));
+
+  if(currentSecondarySort.key){
+    const k = currentSecondarySort.key, dir = currentSecondarySort.dir;
+    agg = [...agg].sort((a,b) => {
+      const av = a[k], bv = b[k];
+      if(typeof av === 'number') return (av - bv) * dir;
+      return String(av).localeCompare(String(bv)) * dir;
+    });
+  }
+
+  const tbody = document.getElementById('secondary-tbody');
+  if(agg.length === 0){
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:24px;">No records found</td></tr>';
+  } else {
+    tbody.innerHTML = agg.map(r => {
+      const cls = pctClass(r.pct);
+      const rowTint = cls === 'green' ? 'row-rag-green' : cls === 'amber' ? 'row-rag-amber' : 'row-rag-red';
+      const medal = r.pct >= 100 ? '🏆 ' : '';
+      return `
+      <tr class="${rowTint}">
+        <td>${r.state}</td>
+        <td>${r.user}</td>
+        <td>₹ ${fmtNum(r.target)}</td>
+        <td>₹ ${fmtNum(r.ach)}</td>
+        <td><span class="mini-bar-bg"><span class="mini-bar-fill ${cls === 'green' ? '' : cls}" style="width:${Math.min(r.pct,100)}%"></span></span><span class="pct-pill ${cls}">${medal}${r.pct.toFixed(1)}%</span></td>
+      </tr>`;
+    }).join('');
+  }
+
+  const totalTarget = agg.reduce((s,r) => s + r.target, 0);
+  const totalAch = agg.reduce((s,r) => s + r.ach, 0);
+  const totalPct = totalTarget > 0 ? (totalAch / totalTarget * 100) : 0;
+  document.getElementById('secondary-subtotal-count').textContent = agg.length;
+  document.getElementById('secondary-subtotal-target').textContent = '₹ ' + fmtNum(totalTarget);
+  document.getElementById('secondary-subtotal-ach').textContent = '₹ ' + fmtNum(totalAch);
+  document.getElementById('secondary-subtotal-pct').textContent = totalPct.toFixed(1) + '%';
+}
+
+document.getElementById('secondarySearch').addEventListener('input', () => renderSecondaryTable(stateFilters.secondary || []));
+
+document.querySelectorAll('#tab-secondary thead th').forEach(th => {
+  th.addEventListener('click', () => {
+    const key = th.dataset.key;
+    if(currentSecondarySort.key === key){ currentSecondarySort.dir *= -1; }
+    else { currentSecondarySort = { key, dir: 1 }; }
+    renderSecondaryTable(stateFilters.secondary || []);
+  });
+});
+
+/* ============ RENDER BEAT WISE TABLE ============ */
+function renderBeatWise(){
+  const selStates = stateFilters.beatwiseState || [];
+  const selUsers = stateFilters.beatwiseUser || [];
+
+  let rows = selStates.length === 0 ? beatWiseData : beatWiseData.filter(r => selStates.includes(r.state));
+  if(selUsers.length > 0) rows = rows.filter(r => selUsers.includes(r.user));
+
+  const search = document.getElementById('beatSearch').value.trim().toLowerCase();
+  if(search) rows = rows.filter(r => r.beat.toLowerCase().includes(search));
+
+  // Aggregate by Beat Name (a beat can have multiple report rows)
+  const map = new Map();
+  rows.forEach(r => {
+    if(!map.has(r.beat)) map.set(r.beat, { beat: r.beat, sale: 0 });
+    map.get(r.beat).sale += r.sale;
+  });
+  let agg = Array.from(map.values());
+
+  if(currentBeatSort.key){
+    const k = currentBeatSort.key, dir = currentBeatSort.dir;
+    agg = [...agg].sort((a,b) => {
+      const av = a[k], bv = b[k];
+      if(typeof av === 'number') return (av - bv) * dir;
+      return String(av).localeCompare(String(bv)) * dir;
+    });
+  }
+
+  const tbody = document.getElementById('beatwise-tbody');
+  if(agg.length === 0){
+    tbody.innerHTML = '<tr><td colspan="2" style="text-align:center; color:var(--text-muted); padding:24px;">No records found</td></tr>';
+  } else {
+    const ranked = [...agg].sort((a,b) => b.sale - a.sale);
+    const medalMap = new Map();
+    if(ranked[0]) medalMap.set(ranked[0], '🥇 ');
+    if(ranked[1]) medalMap.set(ranked[1], '🥈 ');
+    if(ranked[2]) medalMap.set(ranked[2], '🥉 ');
+    tbody.innerHTML = agg.map(r => `
+      <tr class="beat-row" data-beat="${r.beat.replace(/"/g,'&quot;')}">
+        <td class="beat-link">${medalMap.get(r) || ''}${r.beat}</td>
+        <td>₹ ${fmtNum(r.sale)}</td>
+      </tr>
+    `).join('');
+    tbody.querySelectorAll('tr.beat-row').forEach(tr => {
+      tr.addEventListener('click', () => openBeatDrilldown(tr.dataset.beat, rows));
+    });
+  }
+
+  const subtotal = agg.reduce((s,r) => s + r.sale, 0);
+  document.getElementById('beatwise-subtotal-count').textContent = agg.length;
+  document.getElementById('beatwise-subtotal').textContent = '₹ ' + fmtNum(subtotal);
+}
+
+document.getElementById('beatSearch').addEventListener('input', renderBeatWise);
+
+document.querySelectorAll('#tab-beatwise thead th').forEach(th => {
+  th.addEventListener('click', () => {
+    const key = th.dataset.key;
+    if(currentBeatSort.key === key){ currentBeatSort.dir *= -1; }
+    else { currentBeatSort = { key, dir: 1 }; }
+    renderBeatWise();
+  });
+});
+
+/* ============ SHOP-WISE DRILLDOWN MODAL ============ */
+let currentShopSort = { key: null, dir: 1 };
+let currentDrilldownRows = [];
+let currentDrilldownBeat = '';
+
+function openBeatDrilldown(beatName, scopedRows){
+  currentDrilldownBeat = beatName;
+  currentDrilldownRows = scopedRows.filter(r => r.beat === beatName);
+  currentShopSort = { key: null, dir: 1 };
+  document.getElementById('drilldown-title').textContent = '🏬 ' + beatName + ' — Shop Wise Sale';
+  renderShopDrilldown();
+  document.getElementById('drilldown-overlay').classList.add('open');
+}
+
+function closeBeatDrilldown(){
+  document.getElementById('drilldown-overlay').classList.remove('open');
+}
+
+function renderShopDrilldown(){
+  // Aggregate by Shop Name + Shop Type
+  const map = new Map();
+  currentDrilldownRows.forEach(r => {
+    const shopName = r.shop || '(Unnamed Shop)';
+    const shopType = r.shopType || '—';
+    const k = shopName + '||' + shopType;
+    if(!map.has(k)) map.set(k, { shop: shopName, shopType: shopType, sale: 0 });
+    map.get(k).sale += r.sale;
+  });
+  let agg = Array.from(map.values());
+
+  if(currentShopSort.key){
+    const k = currentShopSort.key, dir = currentShopSort.dir;
+    agg = [...agg].sort((a,b) => {
+      const av = a[k], bv = b[k];
+      if(typeof av === 'number') return (av - bv) * dir;
+      return String(av).localeCompare(String(bv)) * dir;
+    });
+  }
+
+  const tbody = document.getElementById('drilldown-tbody');
+  if(agg.length === 0){
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:24px;">No shop records found</td></tr>';
+  } else {
+    tbody.innerHTML = agg.map(r => `
+      <tr>
+        <td>${r.shop}</td>
+        <td>${r.shopType}</td>
+        <td>₹ ${fmtNum(r.sale)}</td>
+      </tr>
+    `).join('');
+  }
+
+  const subtotal = agg.reduce((s,r) => s + r.sale, 0);
+  document.getElementById('drilldown-count').textContent = agg.length;
+  document.getElementById('drilldown-subtotal').textContent = '₹ ' + fmtNum(subtotal);
+}
+
+document.querySelectorAll('#drilldown-modal thead th').forEach(th => {
+  th.addEventListener('click', () => {
+    const key = th.dataset.key;
+    if(currentShopSort.key === key){ currentShopSort.dir *= -1; }
+    else { currentShopSort = { key, dir: 1 }; }
+    renderShopDrilldown();
+  });
+});
+
+document.getElementById('drilldown-close').addEventListener('click', closeBeatDrilldown);
+document.getElementById('drilldown-overlay').addEventListener('click', (e) => {
+  if(e.target.id === 'drilldown-overlay') closeBeatDrilldown();
+});
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Escape') closeBeatDrilldown();
+});
+
+/* ============ PARTY-WISE DRILLDOWN MODAL (Executive Summary → RSM table) ============ */
+let currentPartyDrillSort = { key: null, dir: 1 };
+let currentPartyDrillState = '';
+
+function openPartyDrilldown(stateName){
+  currentPartyDrillState = stateName;
+  currentPartyDrillSort = { key: null, dir: 1 };
+  document.getElementById('party-drilldown-title').textContent = '🏪 ' + stateName + ' — Party Wise Sale';
+  renderPartyDrilldown();
+  document.getElementById('party-drilldown-overlay').classList.add('open');
+}
+
+function closePartyDrilldown(){
+  document.getElementById('party-drilldown-overlay').classList.remove('open');
+}
+
+function renderPartyDrilldown(){
+  let rows = partyWiseData.filter(r => r.state === currentPartyDrillState);
+
+  if(currentPartyDrillSort.key){
+    const k = currentPartyDrillSort.key, dir = currentPartyDrillSort.dir;
+    rows = [...rows].sort((a,b) => {
+      const av = a[k], bv = b[k];
+      if(typeof av === 'number') return (av - bv) * dir;
+      return String(av).localeCompare(String(bv)) * dir;
+    });
+  }
+
+  const tbody = document.getElementById('party-drilldown-tbody');
+  if(rows.length === 0){
+    tbody.innerHTML = '<tr><td colspan="2" style="text-align:center; color:var(--text-muted); padding:24px;">No party records found</td></tr>';
+  } else {
+    tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td>${r.party}</td>
+        <td>₹ ${fmtNum(r.sale)}</td>
+      </tr>
+    `).join('');
+  }
+
+  const subtotal = rows.reduce((s,r) => s + r.sale, 0);
+  document.getElementById('party-drilldown-count').textContent = rows.length;
+  document.getElementById('party-drilldown-subtotal').textContent = '₹ ' + fmtNum(subtotal);
+}
+
+document.querySelectorAll('#party-drilldown-modal thead th').forEach(th => {
+  th.addEventListener('click', () => {
+    const key = th.dataset.key;
+    if(currentPartyDrillSort.key === key){ currentPartyDrillSort.dir *= -1; }
+    else { currentPartyDrillSort = { key, dir: 1 }; }
+    renderPartyDrilldown();
+  });
+});
+
+document.getElementById('party-drilldown-close').addEventListener('click', closePartyDrilldown);
+document.getElementById('party-drilldown-overlay').addEventListener('click', (e) => {
+  if(e.target.id === 'party-drilldown-overlay') closePartyDrilldown();
+});
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Escape') closePartyDrilldown();
 });
 
 /* ============ REFRESH BUTTON + AUTO REFRESH ============ */
