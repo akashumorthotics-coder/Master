@@ -408,6 +408,24 @@
   .modal-close:hover{ background:var(--red-light); color:var(--red); }
   .modal-table-wrap{ margin:0 20px 20px; max-height:400px; }
 
+  .calls-modal-box{ max-width:820px; }
+  .calls-kpi-row{ display:flex; gap:10px; flex-wrap:wrap; padding:0 20px 12px; }
+  .calls-kpi-card{
+    flex:1; min-width:110px; background:var(--bg); border-radius:10px; padding:10px 12px;
+    border-left:3px solid var(--blue); text-align:left;
+  }
+  .calls-kpi-card.unique{ border-left-color:var(--green); }
+  .calls-kpi-label{ font-size:10.5px; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.3px; }
+  .calls-kpi-value{ font-size:17px; font-weight:800; color:var(--blue-dark); margin-top:3px; }
+  .calls-kpi-card.unique .calls-kpi-value{ color:var(--green); }
+  .calls-kpi-sub{ font-size:11px; font-weight:700; color:var(--text-muted); }
+  .calls-table-wrap table{ font-size:12.5px; }
+  .calls-table-wrap th, .calls-table-wrap td{ padding:8px 10px; white-space:nowrap; }
+  .calls-table-wrap td.calls-total-cell, .calls-table-wrap th.calls-total-col{ font-weight:800; background:var(--blue-light); color:var(--blue-dark); }
+  .calls-table-wrap tr.calls-grand-total td{ font-weight:800; background:var(--blue-light); color:var(--blue-dark); position:sticky; bottom:0; }
+  .calls-count-cell{ color:var(--blue); font-weight:700; text-decoration:underline; text-decoration-color:transparent; cursor:pointer; transition:text-decoration-color 0.15s; }
+  .calls-count-cell:hover{ text-decoration-color:var(--blue); background:var(--blue-light); }
+
   @media (max-width:900px){
     .kpi-grid{ grid-template-columns:repeat(2,1fr); }
     .sidebar{ width:70px; }
@@ -687,6 +705,82 @@
     </div>
   </div>
 
+  <!-- USER CALLS PIVOT DRILLDOWN MODAL (from Secondary Sale table) -->
+  <div class="modal-overlay" id="calls-drilldown-overlay">
+    <div class="modal-box calls-modal-box" id="calls-drilldown-modal">
+      <div class="modal-header">
+        <h3 id="calls-drilldown-title">📞 Date &amp; Shop Type Wise Calls</h3>
+        <button type="button" id="calls-drilldown-close" class="modal-close">✕</button>
+      </div>
+
+      <div class="calls-kpi-row" id="calls-kpi-target-row">
+        <div class="calls-kpi-card"><div class="calls-kpi-label">🎯 Target</div><div class="calls-kpi-value" id="calls-kpi-target">–</div></div>
+        <div class="calls-kpi-card"><div class="calls-kpi-label">✅ Ach.</div><div class="calls-kpi-value" id="calls-kpi-ach">–</div></div>
+        <div class="calls-kpi-card" id="calls-kpi-pct-card"><div class="calls-kpi-label">📊 Ach. %</div><div class="calls-kpi-value" id="calls-kpi-pct">–</div></div>
+        <div class="calls-kpi-card"><div class="calls-kpi-label">📅 DOJ</div><div class="calls-kpi-value" id="calls-kpi-doj">–</div></div>
+        <div class="calls-kpi-card"><div class="calls-kpi-label">⏳ Tenure</div><div class="calls-kpi-value" id="calls-kpi-tenure">–</div></div>
+      </div>
+
+      <div class="calls-kpi-row" id="calls-kpi-unique-row"></div>
+
+      <div class="table-wrap modal-table-wrap calls-table-wrap" id="calls-pivot-wrap"></div>
+    </div>
+  </div>
+
+  <!-- SHOP VISITS DRILLDOWN MODAL (from clicking a call count cell) -->
+  <div class="modal-overlay" id="shopvisits-drilldown-overlay">
+    <div class="modal-box" id="shopvisits-drilldown-modal">
+      <div class="modal-header">
+        <h3 id="shopvisits-drilldown-title">🏬 Shop Visit Details</h3>
+        <button type="button" id="shopvisits-drilldown-close" class="modal-close">✕</button>
+      </div>
+      <div class="subtotal-bar" style="margin:0 20px 12px;">
+        <span>Showing <b id="shopvisits-count">0</b> shops</span>
+        <span>Total Visits: <b id="shopvisits-total-visits">0</b></span>
+        <span>Total Sale: <b id="shopvisits-total-sale">₹ 0</b></span>
+      </div>
+      <div class="table-wrap modal-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th data-key="shop">🏬 Shop Name ⬍</th>
+              <th data-key="visits">📞 Total Visits ⬍</th>
+              <th data-key="sale">💰 Sale Amount ⬍</th>
+            </tr>
+          </thead>
+          <tbody id="shopvisits-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHOP VISIT DATES DRILLDOWN MODAL (level 4, from clicking Total Visits number) -->
+  <div class="modal-overlay" id="shopdates-drilldown-overlay">
+    <div class="modal-box" id="shopdates-drilldown-modal">
+      <div class="modal-header">
+        <h3 id="shopdates-drilldown-title">📅 Visit Dates</h3>
+        <button type="button" id="shopdates-drilldown-close" class="modal-close">✕</button>
+      </div>
+      <div class="subtotal-bar" style="margin:0 20px 12px;">
+        <span>Showing <b id="shopdates-count">0</b> dates</span>
+        <span>Total Visits: <b id="shopdates-total-visits">0</b></span>
+        <span>Total Sale: <b id="shopdates-total-sale">₹ 0</b></span>
+      </div>
+      <div class="table-wrap modal-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th data-key="date">📅 Date ⬍</th>
+              <th data-key="visits">📞 Visits ⬍</th>
+              <th data-key="sale">💰 Sale Amount ⬍</th>
+            </tr>
+          </thead>
+          <tbody id="shopdates-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -696,7 +790,7 @@ const TAB_TARGET_VS_ACH = "Primary Sale Target vs ach."; // B=State, D=Target, E
 const TAB_PARTY_WISE   = "Party -Wise Primary";           // A=Party, C=Sale, D=State
 const TAB_SECONDARY    = "Secondary & Tertiary Sale";     // A=State, B=User, D=Target, E=Ach.
 const TAB_REPORT       = "Report";                        // D=User, G=Beat, I=State, N=Sale Amount
-const REFRESH_INTERVAL_MS = 5 * 60 * 1000; // auto-refresh every 5 minutes
+const REFRESH_INTERVAL_MS = 2 * 60 * 60 * 1000; // auto-refresh every 2 hours
 
 let _jsonpCounter = 0;
 
@@ -760,6 +854,27 @@ function fmtNum(n){
 }
 
 function pctClass(pct){ return pct >= 90 ? 'green' : pct >= 60 ? 'amber' : 'red'; }
+
+function parseGvizDate(raw){
+  if(typeof raw === 'string'){
+    const m = raw.match(/^Date\((\d+),(\d+),(\d+)/);
+    if(m){
+      const y = +m[1], mo = +m[2], d = +m[3];
+      const dt = new Date(y, mo, d);
+      return dt.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+    }
+  }
+  return (raw || '').toString().trim();
+}
+
+const SHOP_TYPE_CATEGORIES = ['Chemist/Retail', 'Dr./Hospital', 'Sub-Dist/Dealer', 'Others'];
+function categorizeShopType(raw){
+  const v = (raw || '').toString().trim();
+  if(v === 'Chemist/Retail') return 'Chemist/Retail';
+  if(v === 'Dr./Hospital') return 'Dr./Hospital';
+  if(v === 'Sub-Dist/Dealer') return 'Sub-Dist/Dealer';
+  return 'Others';
+}
 
 /* ============ SVG CHART HELPERS ============ */
 function renderGauge(containerId, pct){
@@ -875,17 +990,19 @@ async function loadAllData(){
       }))
       .filter(r => r.party && r.party.toUpperCase() !== 'PARTY NAME');
 
-    const sAIdx = colLetterToIndex('A'), sBIdx = colLetterToIndex('B'), sDIdx = colLetterToIndex('D'), sEIdx = colLetterToIndex('E');
+    const sAIdx = colLetterToIndex('A'), sBIdx = colLetterToIndex('B'), sDIdx = colLetterToIndex('D'), sEIdx = colLetterToIndex('E'), sGIdx = colLetterToIndex('G'), sHIdx = colLetterToIndex('H');
     secondaryData = sec.rows
       .map(r => ({
         state: (r[sAIdx] || '').toString().trim(),
         user: (r[sBIdx] || '').toString().trim(),
         target: toNumber(r[sDIdx]),
-        ach: toNumber(r[sEIdx])
+        ach: toNumber(r[sEIdx]),
+        doj: parseGvizDate(r[sGIdx]),
+        tenure: (r[sHIdx] || '').toString().trim()
       }))
       .filter(r => r.state && r.state.toUpperCase() !== 'STATE' && r.user && r.user.toUpperCase() !== 'USER');
 
-    const rDIdx = colLetterToIndex('D'), rGIdx = colLetterToIndex('G'), rIIdx = colLetterToIndex('I'), rNIdx = colLetterToIndex('N'), rJIdx = colLetterToIndex('J'), rRIdx = colLetterToIndex('R');
+    const rDIdx = colLetterToIndex('D'), rGIdx = colLetterToIndex('G'), rIIdx = colLetterToIndex('I'), rNIdx = colLetterToIndex('N'), rJIdx = colLetterToIndex('J'), rRIdx = colLetterToIndex('R'), rMIdx = colLetterToIndex('M');
     beatWiseData = rep.rows
       .map(r => ({
         user: (r[rDIdx] || '').toString().trim(),
@@ -893,7 +1010,8 @@ async function loadAllData(){
         state: (r[rIIdx] || '').toString().trim(),
         sale: toNumber(r[rNIdx]),
         shop: (r[rJIdx] || '').toString().trim(),
-        shopType: (r[rRIdx] || '').toString().trim()
+        shopType: (r[rRIdx] || '').toString().trim(),
+        date: parseGvizDate(r[rMIdx])
       }))
       .filter(r => r.beat && r.beat.toUpperCase() !== 'BEAT' && r.state && r.state.toUpperCase() !== 'STATE');
 
@@ -1220,12 +1338,15 @@ function renderSecondaryTable(selectedStates){
       return `
       <tr class="${rowTint}">
         <td>${r.state}</td>
-        <td>${r.user}</td>
+        <td class="state-link" data-user="${r.user.replace(/"/g,'&quot;')}" data-state2="${r.state.replace(/"/g,'&quot;')}">${r.user}</td>
         <td>₹ ${fmtNum(r.target)}</td>
         <td>₹ ${fmtNum(r.ach)}</td>
         <td><span class="mini-bar-bg"><span class="mini-bar-fill ${cls === 'green' ? '' : cls}" style="width:${Math.min(r.pct,100)}%"></span></span><span class="pct-pill ${cls}">${medal}${r.pct.toFixed(1)}%</span></td>
       </tr>`;
     }).join('');
+    tbody.querySelectorAll('td.state-link').forEach(td => {
+      td.addEventListener('click', () => openUserCallsDrilldown(td.dataset.user));
+    });
   }
 
   const totalTarget = agg.reduce((s,r) => s + r.target, 0);
@@ -1446,6 +1567,320 @@ document.getElementById('party-drilldown-overlay').addEventListener('click', (e)
 });
 document.addEventListener('keydown', (e) => {
   if(e.key === 'Escape') closePartyDrilldown();
+});
+
+/* ============ USER CALLS PIVOT DRILLDOWN (Secondary Sale → User click) ============ */
+function openUserCallsDrilldown(userName){
+  document.getElementById('calls-drilldown-title').textContent = '📞 ' + userName + ' — Date & Shop Type Wise Calls';
+  renderUserCallsDrilldown(userName);
+  document.getElementById('calls-drilldown-overlay').classList.add('open');
+}
+
+function closeUserCallsDrilldown(){
+  document.getElementById('calls-drilldown-overlay').classList.remove('open');
+}
+
+function renderUserCallsDrilldown(userName){
+  // Target vs Ach. for this user (summed across any duplicate rows)
+  const userTargetRows = secondaryData.filter(r => r.user === userName);
+  const target = userTargetRows.reduce((s,r) => s + r.target, 0);
+  const ach = userTargetRows.reduce((s,r) => s + r.ach, 0);
+  const pct = target > 0 ? (ach / target * 100) : 0;
+  const cls = pctClass(pct);
+  document.getElementById('calls-kpi-target').textContent = '₹ ' + fmtNum(target);
+  document.getElementById('calls-kpi-ach').textContent = '₹ ' + fmtNum(ach);
+  document.getElementById('calls-kpi-pct').textContent = pct.toFixed(1) + '%';
+  document.getElementById('calls-kpi-pct-card').className = 'calls-kpi-card' + (cls === 'green' ? '' : cls === 'amber' ? '' : '');
+  document.getElementById('calls-kpi-pct').style.color = cls === 'green' ? '#0e9f6e' : cls === 'amber' ? '#d97706' : '#e02424';
+
+  // DOJ / Tenure (take from first matching row, since these are per-user profile fields)
+  document.getElementById('calls-kpi-doj').textContent = userTargetRows[0]?.doj || '–';
+  document.getElementById('calls-kpi-tenure').textContent = userTargetRows[0]?.tenure || '–';
+
+  // All Report rows for this user
+  const userRows = beatWiseData.filter(r => r.user === userName).map(r => ({ ...r, cat: categorizeShopType(r.shopType) }));
+
+  // Unique shop counts per category (KPI row), enriched with sale-generating shop count, sale amount, and % of total Ach.
+  const uniqueRow = document.getElementById('calls-kpi-unique-row');
+  uniqueRow.innerHTML = SHOP_TYPE_CATEGORIES.map(cat => {
+    const catRows = userRows.filter(r => r.cat === cat);
+    const uniqueShops = new Set(catRows.map(r => r.shop)).size;
+
+    // Aggregate sale per shop within this category, to find how many distinct shops generated any sale
+    const salePerShop = new Map();
+    catRows.forEach(r => {
+      salePerShop.set(r.shop, (salePerShop.get(r.shop) || 0) + r.sale);
+    });
+    const shopsWithSale = Array.from(salePerShop.values()).filter(v => v > 0).length;
+    const catSale = catRows.reduce((s,r) => s + r.sale, 0);
+    const catPctOfAch = ach > 0 ? (catSale / ach * 100) : 0;
+
+    return `<div class="calls-kpi-card unique">
+      <div class="calls-kpi-label">🏬 ${cat} Unique</div>
+      <div class="calls-kpi-value">${uniqueShops} <span class="calls-kpi-sub">(${shopsWithSale} | ₹ ${fmtNum(catSale)} | ${catPctOfAch.toFixed(1)}%)</span></div>
+    </div>`;
+  }).join('');
+
+  // Pivot: Date rows x Shop Type category columns, value = total calls (row count)
+  const dateSet = Array.from(new Set(userRows.map(r => r.date))).filter(Boolean);
+  // Sort dates chronologically where possible, fallback to string sort
+  dateSet.sort((a,b) => {
+    const da = new Date(a), db = new Date(b);
+    if(!isNaN(da) && !isNaN(db)) return da - db;
+    return a.localeCompare(b);
+  });
+
+  const pivot = {}; // date -> {cat: count}
+  dateSet.forEach(d => { pivot[d] = {}; SHOP_TYPE_CATEGORIES.forEach(c => pivot[d][c] = 0); });
+  userRows.forEach(r => {
+    if(!r.date) return;
+    if(!pivot[r.date]) { pivot[r.date] = {}; SHOP_TYPE_CATEGORIES.forEach(c => pivot[r.date][c] = 0); }
+    pivot[r.date][r.cat] = (pivot[r.date][r.cat] || 0) + 1;
+  });
+
+  const colTotals = {}; SHOP_TYPE_CATEGORIES.forEach(c => colTotals[c] = 0);
+  let grandTotal = 0;
+  const esc = (s) => (s || '').toString().replace(/"/g,'&quot;');
+
+  const cellHtml = (v, cat, date) => {
+    if(v === 0) return `<td>0</td>`;
+    return `<td class="calls-count-cell" data-user="${esc(userName)}" data-cat="${esc(cat)}" data-date="${date === null ? '' : esc(date)}">${v}</td>`;
+  };
+
+  const bodyRows = dateSet.map(d => {
+    let rowTotal = 0;
+    const cells = SHOP_TYPE_CATEGORIES.map(c => {
+      const v = pivot[d][c] || 0;
+      rowTotal += v;
+      colTotals[c] += v;
+      return cellHtml(v, c, d);
+    }).join('');
+    grandTotal += rowTotal;
+    const rowTotalCell = rowTotal === 0
+      ? `<td class="calls-total-cell">0</td>`
+      : `<td class="calls-total-cell calls-count-cell" data-user="${esc(userName)}" data-cat="" data-date="${esc(d)}">${rowTotal}</td>`;
+    return `<tr><td>${d}</td>${cells}${rowTotalCell}</tr>`;
+  }).join('');
+
+  const footerCells = SHOP_TYPE_CATEGORIES.map(c => {
+    if(colTotals[c] === 0) return `<td class="calls-total-cell">0</td>`;
+    return `<td class="calls-total-cell calls-count-cell" data-user="${esc(userName)}" data-cat="${esc(c)}" data-date="">${colTotals[c]}</td>`;
+  }).join('');
+  const grandTotalCell = grandTotal === 0
+    ? `<td class="calls-total-cell">0</td>`
+    : `<td class="calls-total-cell calls-count-cell" data-user="${esc(userName)}" data-cat="" data-date="">${grandTotal}</td>`;
+
+  const wrap = document.getElementById('calls-pivot-wrap');
+  if(dateSet.length === 0){
+    wrap.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:24px;">No call records found for this user</div>';
+  } else {
+    wrap.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>📅 Date</th>
+            ${SHOP_TYPE_CATEGORIES.map(c => `<th>${c}</th>`).join('')}
+            <th class="calls-total-col">Grand Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${bodyRows}
+          <tr class="calls-grand-total">
+            <td>Grand Total</td>
+            ${footerCells}
+            ${grandTotalCell}
+          </tr>
+        </tbody>
+      </table>`;
+    wrap.querySelectorAll('td.calls-count-cell').forEach(td => {
+      td.addEventListener('click', () => {
+        openShopVisitsDrilldown(td.dataset.user, td.dataset.cat || null, td.dataset.date || null);
+      });
+    });
+  }
+}
+
+document.getElementById('calls-drilldown-close').addEventListener('click', closeUserCallsDrilldown);
+document.getElementById('calls-drilldown-overlay').addEventListener('click', (e) => {
+  if(e.target.id === 'calls-drilldown-overlay') closeUserCallsDrilldown();
+});
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Escape') closeUserCallsDrilldown();
+});
+
+/* ============ SHOP VISITS DRILLDOWN (level 3, from clicking a call count) ============ */
+let currentShopVisitsSort = { key: null, dir: 1 };
+let currentShopVisitsRows = [];
+
+let currentShopVisitsContext = { userName: '', category: null, date: null };
+
+function openShopVisitsDrilldown(userName, category, date){
+  currentShopVisitsContext = { userName, category, date };
+  const rows = beatWiseData.filter(r => {
+    if(r.user !== userName) return false;
+    if(category && categorizeShopType(r.shopType) !== category) return false;
+    if(date && r.date !== date) return false;
+    return true;
+  });
+
+  const titleParts = [userName];
+  if(category) titleParts.push(category);
+  if(date) titleParts.push(date);
+  document.getElementById('shopvisits-drilldown-title').textContent = '🏬 ' + titleParts.join(' — ');
+
+  // Aggregate by shop: visits (row count) + total sale
+  const map = new Map();
+  rows.forEach(r => {
+    const key = r.shop || '(Unnamed Shop)';
+    if(!map.has(key)) map.set(key, { shop: key, visits: 0, sale: 0 });
+    const o = map.get(key);
+    o.visits += 1;
+    o.sale += r.sale;
+  });
+  currentShopVisitsRows = Array.from(map.values());
+  currentShopVisitsSort = { key: null, dir: 1 };
+
+  renderShopVisitsDrilldown();
+  document.getElementById('shopvisits-drilldown-overlay').classList.add('open');
+}
+
+function closeShopVisitsDrilldown(){
+  document.getElementById('shopvisits-drilldown-overlay').classList.remove('open');
+}
+
+function renderShopVisitsDrilldown(){
+  let rows = currentShopVisitsRows;
+  if(currentShopVisitsSort.key){
+    const k = currentShopVisitsSort.key, dir = currentShopVisitsSort.dir;
+    rows = [...rows].sort((a,b) => {
+      const av = a[k], bv = b[k];
+      if(typeof av === 'number') return (av - bv) * dir;
+      return String(av).localeCompare(String(bv)) * dir;
+    });
+  }
+
+  const tbody = document.getElementById('shopvisits-tbody');
+  if(rows.length === 0){
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:24px;">No shop records found</td></tr>';
+  } else {
+    tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td>${r.shop}</td>
+        <td class="calls-count-cell" data-shop="${(r.shop || '').replace(/"/g,'&quot;')}">${r.visits}</td>
+        <td>₹ ${fmtNum(r.sale)}</td>
+      </tr>
+    `).join('');
+    tbody.querySelectorAll('td.calls-count-cell').forEach(td => {
+      td.addEventListener('click', () => openShopDatesDrilldown(td.dataset.shop));
+    });
+  }
+
+  const totalVisits = rows.reduce((s,r) => s + r.visits, 0);
+  const totalSale = rows.reduce((s,r) => s + r.sale, 0);
+  document.getElementById('shopvisits-count').textContent = rows.length;
+  document.getElementById('shopvisits-total-visits').textContent = totalVisits;
+  document.getElementById('shopvisits-total-sale').textContent = '₹ ' + fmtNum(totalSale);
+}
+
+/* ============ SHOP VISIT DATES DRILLDOWN (level 4, from clicking Total Visits number) ============ */
+let currentShopDatesSort = { key: null, dir: 1 };
+let currentShopDatesRows = [];
+
+function openShopDatesDrilldown(shopName){
+  const ctx = currentShopVisitsContext;
+  const rows = beatWiseData.filter(r => {
+    if(r.user !== ctx.userName) return false;
+    if(r.shop !== shopName) return false;
+    if(ctx.category && categorizeShopType(r.shopType) !== ctx.category) return false;
+    if(ctx.date && r.date !== ctx.date) return false;
+    return true;
+  });
+
+  document.getElementById('shopdates-drilldown-title').textContent = '📅 ' + shopName + ' — Visit Dates';
+
+  // Aggregate by date: visits (row count) + total sale
+  const map = new Map();
+  rows.forEach(r => {
+    const key = r.date || '(No Date)';
+    if(!map.has(key)) map.set(key, { date: key, visits: 0, sale: 0 });
+    const o = map.get(key);
+    o.visits += 1;
+    o.sale += r.sale;
+  });
+  currentShopDatesRows = Array.from(map.values());
+  currentShopDatesSort = { key: null, dir: 1 };
+
+  renderShopDatesDrilldown();
+  document.getElementById('shopdates-drilldown-overlay').classList.add('open');
+}
+
+function closeShopDatesDrilldown(){
+  document.getElementById('shopdates-drilldown-overlay').classList.remove('open');
+}
+
+function renderShopDatesDrilldown(){
+  let rows = currentShopDatesRows;
+  if(currentShopDatesSort.key){
+    const k = currentShopDatesSort.key, dir = currentShopDatesSort.dir;
+    rows = [...rows].sort((a,b) => {
+      const av = a[k], bv = b[k];
+      if(typeof av === 'number') return (av - bv) * dir;
+      return String(av).localeCompare(String(bv)) * dir;
+    });
+  }
+
+  const tbody = document.getElementById('shopdates-tbody');
+  if(rows.length === 0){
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:24px;">No visit dates found</td></tr>';
+  } else {
+    tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td>${r.date}</td>
+        <td>${r.visits}</td>
+        <td>₹ ${fmtNum(r.sale)}</td>
+      </tr>
+    `).join('');
+  }
+
+  const totalVisits = rows.reduce((s,r) => s + r.visits, 0);
+  const totalSale = rows.reduce((s,r) => s + r.sale, 0);
+  document.getElementById('shopdates-count').textContent = rows.length;
+  document.getElementById('shopdates-total-visits').textContent = totalVisits;
+  document.getElementById('shopdates-total-sale').textContent = '₹ ' + fmtNum(totalSale);
+}
+
+document.querySelectorAll('#shopdates-drilldown-modal thead th').forEach(th => {
+  th.addEventListener('click', () => {
+    const key = th.dataset.key;
+    if(currentShopDatesSort.key === key){ currentShopDatesSort.dir *= -1; }
+    else { currentShopDatesSort = { key, dir: 1 }; }
+    renderShopDatesDrilldown();
+  });
+});
+
+document.getElementById('shopdates-drilldown-close').addEventListener('click', closeShopDatesDrilldown);
+document.getElementById('shopdates-drilldown-overlay').addEventListener('click', (e) => {
+  if(e.target.id === 'shopdates-drilldown-overlay') closeShopDatesDrilldown();
+});
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Escape') closeShopDatesDrilldown();
+});
+
+document.querySelectorAll('#shopvisits-drilldown-modal thead th').forEach(th => {
+  th.addEventListener('click', () => {
+    const key = th.dataset.key;
+    if(currentShopVisitsSort.key === key){ currentShopVisitsSort.dir *= -1; }
+    else { currentShopVisitsSort = { key, dir: 1 }; }
+    renderShopVisitsDrilldown();
+  });
+});
+
+document.getElementById('shopvisits-drilldown-close').addEventListener('click', closeShopVisitsDrilldown);
+document.getElementById('shopvisits-drilldown-overlay').addEventListener('click', (e) => {
+  if(e.target.id === 'shopvisits-drilldown-overlay') closeShopVisitsDrilldown();
+});
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Escape') closeShopVisitsDrilldown();
 });
 
 /* ============ REFRESH BUTTON + AUTO REFRESH ============ */
