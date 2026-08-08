@@ -1010,7 +1010,12 @@ function fmtNum(n){
 
 function pctClass(pct){ return pct >= 90 ? 'green' : pct >= 60 ? 'amber' : 'red'; }
 
-function inFilter(value, selectedArr){ return !selectedArr || selectedArr.length === 0 || selectedArr.includes(value); }
+function normFilterVal(v){ return (v == null ? '' : v.toString()).replace(/\s+/g, ' ').trim().toUpperCase(); }
+function inFilter(value, selectedArr){
+  if(!selectedArr || selectedArr.length === 0) return true;
+  const nv = normFilterVal(value);
+  return selectedArr.some(s => normFilterVal(s) === nv);
+}
 
 function parseGvizDate(raw){
   if(typeof raw === 'string'){
@@ -1176,7 +1181,14 @@ async function loadAllData(){
         tenure: (r[sHIdx] || '').toString().trim(),
         month: (r[sCIdx] || '').toString().trim()
       }))
-      .filter(r => r.state && r.state.toUpperCase() !== 'STATE' && r.user && r.user.toUpperCase() !== 'USER');
+      .filter(r => {
+        const st = r.state.toUpperCase(), us = r.user.toUpperCase(), mo = r.month.toUpperCase();
+        if(!r.state || !r.user) return false;
+        if(['STATE','REGION'].includes(st)) return false;
+        if(['USER','FIELD USER'].includes(us)) return false;
+        if(mo === 'MONTH') return false;
+        return true;
+      });
 
     const rDIdx = colLetterToIndex('D'), rGIdx = colLetterToIndex('G'), rIIdx = colLetterToIndex('I'), rNIdx = colLetterToIndex('N'), rJIdx = colLetterToIndex('J'), rRIdx = colLetterToIndex('R'), rMIdx = colLetterToIndex('M'), rSIdx = colLetterToIndex('S');
     beatWiseData = rep.rows
@@ -1253,9 +1265,9 @@ function populateStateFilters(){
   const monthsBeat = Array.from(new Set(beatWiseData.map(r => r.month))).filter(Boolean).sort(sortMonthStrings);
   const monthsExec = Array.from(new Set([...monthsPrimary, ...monthsSecondary])).sort(sortMonthStrings);
 
-  buildMultiSelect('execMonth', monthsExec, renderExecutive, 'Months');
-  buildMultiSelect('primaryMonth', monthsPartyWise.length ? monthsPartyWise : monthsPrimary, renderPrimaryTable, 'Months');
-  buildMultiSelect('secondaryMonth', monthsSecondary, renderSecondaryTable, 'Months');
+  buildMultiSelect('execMonth', monthsExec, () => renderExecutive(stateFilters.exec || []), 'Months');
+  buildMultiSelect('primaryMonth', monthsPartyWise.length ? monthsPartyWise : monthsPrimary, () => renderPrimaryTable(stateFilters.primary || []), 'Months');
+  buildMultiSelect('secondaryMonth', monthsSecondary, () => renderSecondaryTable(stateFilters.secondary || []), 'Months');
   buildMultiSelect('beatwiseMonth', monthsBeat, (selMonths) => {
     rebuildBeatUserFilter(stateFilters.beatwiseState || []);
     renderBeatWise();
