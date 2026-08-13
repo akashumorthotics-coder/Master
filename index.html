@@ -199,6 +199,7 @@
     display:flex;
     gap:12px;
     align-items:center;
+    flex-wrap:wrap;
   }
   select, .refresh-btn{
     padding:9px 14px;
@@ -361,10 +362,12 @@
   .table-wrap{
     max-height:520px;
     overflow-y:auto;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
     border-radius:12px;
     box-shadow:var(--shadow);
   }
-  .table-wrap table{ box-shadow:none; border-radius:0; }
+  .table-wrap table{ box-shadow:none; border-radius:0; min-width:520px; }
   .table-wrap thead th{ top:0; }
 
   .card-panel{
@@ -495,7 +498,7 @@
     cursor:pointer; font-size:14px; color:var(--text-muted);
   }
   .modal-close:hover{ background:var(--red-light); color:var(--red); }
-  .modal-table-wrap{ margin:0 20px 20px; max-height:400px; }
+  .modal-table-wrap{ margin:0 20px 20px; max-height:400px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
 
   .calls-modal-box{ max-width:820px; }
   .calls-kpi-row{ display:flex; gap:10px; flex-wrap:wrap; padding:0 20px 12px; }
@@ -513,14 +516,81 @@
   .calls-table-wrap td.calls-total-cell, .calls-table-wrap th.calls-total-col{ font-weight:800; background:var(--blue-light); color:var(--blue-dark); }
   .calls-table-wrap tr.calls-grand-total td{ font-weight:800; background:var(--blue-light); color:var(--blue-dark); position:sticky; bottom:0; }
   .calls-count-cell{ color:var(--blue); font-weight:700; text-decoration:underline; text-decoration-color:transparent; cursor:pointer; transition:text-decoration-color 0.15s; }
+
+  /* Shop-type coverage summary (Secondary Sale page-level) */
+  .shoptype-summary-grid{
+    display:grid; grid-template-columns:repeat(4, 1fr); gap:14px; margin-bottom:20px;
+  }
+  .shoptype-card{
+    background:#fff; border-radius:12px; padding:16px 18px; box-shadow:var(--shadow);
+    border-top:4px solid var(--blue);
+  }
+  .shoptype-card-title{ font-size:13px; font-weight:800; color:var(--blue-dark); margin-bottom:12px; }
+  .shoptype-card-row{
+    display:flex; justify-content:space-between; align-items:baseline;
+    font-size:12px; color:var(--text-muted); padding:5px 0; border-top:1px dashed var(--border);
+  }
+  .shoptype-card-row:first-of-type{ border-top:none; }
+  .shoptype-card-row .val{ font-weight:800; color:var(--text); font-size:13px; }
+  .shoptype-card-row .val.green{ color:var(--green); }
+  .shoptype-card-row .val.blue{ color:var(--blue); }
+  .shoptype-card-row .val.shoptype-clickable{
+    cursor:pointer; text-decoration:underline; text-decoration-color:transparent;
+    transition:text-decoration-color 0.15s, color 0.15s;
+  }
+  .shoptype-card-row .val.shoptype-clickable:hover{ color:var(--blue); text-decoration-color:var(--blue); }
+  @media (max-width:1000px){ .shoptype-summary-grid{ grid-template-columns:repeat(2, 1fr); } }
+  @media (max-width:560px){ .shoptype-summary-grid{ grid-template-columns:1fr; } }
   .calls-count-cell:hover{ text-decoration-color:var(--blue); background:var(--blue-light); }
+
+  html, body{ overflow-x:hidden; }
 
   @media (max-width:900px){
     .kpi-grid{ grid-template-columns:repeat(2,1fr); }
-    .sidebar{ width:70px; }
-    .sidebar-header h1, .sidebar-header p, .nav-item span:not(.emoji), .sidebar-footer{ display:none; }
+    .sidebar{ width:64px; }
+    .sidebar-header h1, .sidebar-header p, .nav-item span:not(.emoji), .sidebar-footer, .install-app-btn{ display:none; }
     .nav-item{ justify-content:center; }
-    .main{ max-width:calc(100vw - 70px); padding:20px; }
+    .main{ max-width:calc(100vw - 64px); padding:20px 16px; }
+  }
+
+  @media (max-width:600px){
+    .main{ padding:16px 12px; }
+    .topbar{ margin-bottom:16px; gap:10px; }
+    .topbar h2{ font-size:17px; }
+    .kpi-grid{ grid-template-columns:1fr 1fr; gap:10px; }
+    .kpi-card{ padding:12px 14px; }
+    .kpi-card .value{ font-size:19px; }
+    .kpi-card .label{ font-size:10.5px; }
+
+    .controls{ width:100%; gap:8px; }
+    .ms-wrap, .refresh-btn, .multiselect{ flex:1 1 auto; }
+    .ms-toggle{ min-width:0; width:100%; font-size:12.5px; padding:9px 10px; }
+    .ms-menu{ min-width:180px; max-width:80vw; }
+    .refresh-btn{ width:100%; justify-content:center; }
+
+    .section-label{ font-size:12px; margin:18px 0 10px; }
+    thead th{ font-size:10.5px; padding:9px 10px; }
+    tbody td{ font-size:12.5px; padding:9px 10px; }
+    .table-wrap table{ min-width:440px; }
+
+    .search-box{ max-width:100%; }
+    .subtotal-bar{ gap:10px 16px; padding:10px 14px; font-size:12px; }
+    .subtotal-bar b{ font-size:13px; }
+
+    .modal-overlay{ padding:10px; }
+    .modal-box, .calls-modal-box{ max-width:100%; max-height:92vh; }
+    .modal-header{ padding:14px 16px; }
+    .modal-header h3{ font-size:15px; }
+    .modal-table-wrap{ margin:0 12px 16px; }
+    .calls-kpi-row{ padding:0 12px 10px; gap:8px; }
+    .calls-kpi-card{ min-width:96px; padding:8px 10px; }
+    .calls-kpi-value{ font-size:15px; }
+
+    .shoptype-card{ padding:14px 16px; }
+    .chart-card{ padding:12px 14px; }
+
+    .login-box{ padding:28px 22px; }
+    .install-app-btn{ display:none; }
   }
 </style>
 </head>
@@ -726,6 +796,9 @@
     </div>
     <div id="secondary-status" class="loading"><div class="spinner"></div>Loading live data from Google Sheets…</div>
     <div id="secondary-content" style="display:none;">
+      <div class="section-label">🏬 Outlet Coverage Summary (by Shop Type)</div>
+      <div class="shoptype-summary-grid" id="secondary-shoptype-summary"></div>
+
       <input type="text" class="search-box" id="secondarySearch" placeholder="Search user name…">
       <div class="subtotal-bar" id="secondary-subtotal-bar">
         <span>Showing <b id="secondary-subtotal-count">0</b> users</span>
@@ -923,11 +996,16 @@
 
 <script>
 /* ============ LOGIN GATE ============ */
-const LOGIN_ID = "Ashish";
-const LOGIN_PASSWORD = "1234";
+const USERS = [
+  { id: "Ashish",  password: "1234", defaultState: null },
+  { id: "Sudipta", password: "1234", defaultState: "West Bengal" }
+];
 const LOGIN_SESSION_KEY = "salesMisMasterAuthed";
+const LOGIN_USER_KEY = "salesMisMasterUser";
 
 let dashboardUnlocked = false;
+let loggedInUser = null;
+let dashboardDefaultStateApplied = false;
 function unlockDashboard(){
   if(dashboardUnlocked) return;
   dashboardUnlocked = true;
@@ -1204,6 +1282,14 @@ async function loadAllData(){
       }))
       .filter(r => r.beat && r.beat.toUpperCase() !== 'BEAT' && r.state && r.state.toUpperCase() !== 'STATE');
 
+    if(loggedInUser && loggedInUser.defaultState && !dashboardDefaultStateApplied){
+      const ds = loggedInUser.defaultState;
+      stateFilters.exec = [ds];
+      stateFilters.primary = [ds];
+      stateFilters.secondary = [ds];
+      stateFilters.beatwiseState = [ds];
+      dashboardDefaultStateApplied = true;
+    }
     populateStateFilters();
     renderExecutive(stateFilters.exec || []);
     renderPrimaryTable(stateFilters.primary || []);
@@ -1580,6 +1666,51 @@ function renderSecondaryTable(selectedStates){
   document.getElementById('secondary-subtotal-target').textContent = '₹ ' + fmtNum(totalTarget);
   document.getElementById('secondary-subtotal-ach').textContent = '₹ ' + fmtNum(totalAch);
   document.getElementById('secondary-subtotal-pct').textContent = totalPct.toFixed(1) + '%';
+
+  renderSecondaryShopTypeSummary(selectedStates, selMonths);
+}
+
+/* ============ SECONDARY SALE PAGE-LEVEL SHOP-TYPE COVERAGE SUMMARY ============ */
+function renderSecondaryShopTypeSummary(selectedStates, selMonths){
+  const wrap = document.getElementById('secondary-shoptype-summary');
+  if(!wrap) return;
+
+  const scopedRows = beatWiseData
+    .filter(r => inFilter(r.state, selectedStates) && inFilter(r.month, selMonths))
+    .map(r => ({ ...r, cat: categorizeShopType(r.shopType) }));
+
+  const cardColors = { 'Chemist/Retail': 'var(--blue)', 'Dr./Hospital': 'var(--green)', 'Sub-Dist/Dealer': '#d97706', 'Others': 'var(--red)' };
+
+  wrap.innerHTML = SHOP_TYPE_CATEGORIES.map(cat => {
+    const catRows = scopedRows.filter(r => r.cat === cat);
+
+    // Sale per shop within this category, to find unique count + how many gave any sale
+    const salePerShop = new Map();
+    catRows.forEach(r => {
+      salePerShop.set(r.shop, (salePerShop.get(r.shop) || 0) + r.sale);
+    });
+    const uniqueCount = salePerShop.size;
+    const shopsWithSale = Array.from(salePerShop.values()).filter(v => v > 0).length;
+    const conversionPct = uniqueCount > 0 ? (shopsWithSale / uniqueCount * 100) : 0;
+    const catSale = catRows.reduce((s,r) => s + r.sale, 0);
+    const avgPerCounter = shopsWithSale > 0 ? (catSale / shopsWithSale) : 0;
+
+    return `
+      <div class="shoptype-card" style="border-top-color:${cardColors[cat]};">
+        <div class="shoptype-card-title">🏬 ${cat}</div>
+        <div class="shoptype-card-row"><span>Total Unique Met</span><span class="val shoptype-clickable" data-cat="${cat}" data-mode="all">${uniqueCount}</span></div>
+        <div class="shoptype-card-row"><span>Counters Giving Sale</span><span class="val shoptype-clickable" data-cat="${cat}" data-mode="sale">${shopsWithSale}</span></div>
+        <div class="shoptype-card-row"><span>% Conversion</span><span class="val ${conversionPct >= 60 ? 'green' : ''}">${conversionPct.toFixed(1)}%</span></div>
+        <div class="shoptype-card-row"><span>Sale Amount</span><span class="val blue">₹ ${fmtNum(catSale)}</span></div>
+        <div class="shoptype-card-row"><span>Avg. Sale / Counter</span><span class="val">₹ ${fmtNum(avgPerCounter)}</span></div>
+      </div>`;
+  }).join('');
+
+  wrap.querySelectorAll('.shoptype-clickable').forEach(el => {
+    el.addEventListener('click', () => {
+      openShopTypeCoverageDrilldown(el.dataset.cat, el.dataset.mode === 'sale', selectedStates, selMonths);
+    });
+  });
 }
 
 document.getElementById('secondarySearch').addEventListener('input', () => renderSecondaryTable(stateFilters.secondary || []));
@@ -1942,6 +2073,40 @@ let currentShopVisitsRows = [];
 
 let currentShopVisitsContext = { userName: '', category: null, date: null };
 
+/* Page-level drilldown from the Secondary Sale "Outlet Coverage Summary" cards.
+   Shows every shop (across all users) matching the category + current state/month filters,
+   optionally restricted to only shops that generated sale. */
+function openShopTypeCoverageDrilldown(category, onlySale, selectedStates, selMonths){
+  currentShopVisitsContext = { userName: null, category, date: null };
+  const rows = beatWiseData.filter(r => {
+    if(!inFilter(r.state, selectedStates)) return false;
+    if(!inFilter(r.month, selMonths)) return false;
+    if(categorizeShopType(r.shopType) !== category) return false;
+    return true;
+  });
+
+  const titleParts = [category, onlySale ? 'Counters Giving Sale' : 'All Unique Counters Met'];
+  document.getElementById('shopvisits-drilldown-title').textContent = '🏬 ' + titleParts.join(' — ');
+
+  // Aggregate by shop: visits (row count) + total sale
+  const map = new Map();
+  rows.forEach(r => {
+    const key = r.shop || '(Unnamed Shop)';
+    if(!map.has(key)) map.set(key, { shop: key, visits: 0, sale: 0 });
+    const o = map.get(key);
+    o.visits += 1;
+    o.sale += r.sale;
+  });
+  let shopRows = Array.from(map.values());
+  if(onlySale) shopRows = shopRows.filter(r => r.sale > 0);
+
+  currentShopVisitsRows = shopRows;
+  currentShopVisitsSort = { key: null, dir: 1 };
+
+  renderShopVisitsDrilldown();
+  document.getElementById('shopvisits-drilldown-overlay').classList.add('open');
+}
+
 function openShopVisitsDrilldown(userName, category, date){
   currentShopVisitsContext = { userName, category, date };
   const selMonths = stateFilters.secondaryMonth || [];
@@ -2018,10 +2183,12 @@ let currentShopDatesRows = [];
 
 function openShopDatesDrilldown(shopName){
   const ctx = currentShopVisitsContext;
+  const selStates = stateFilters.secondary || [];
   const selMonths = stateFilters.secondaryMonth || [];
   const rows = beatWiseData.filter(r => {
-    if(r.user !== ctx.userName) return false;
+    if(ctx.userName && r.user !== ctx.userName) return false;
     if(r.shop !== shopName) return false;
+    if(!inFilter(r.state, selStates)) return false;
     if(!inFilter(r.month, selMonths)) return false;
     if(ctx.category && categorizeShopType(r.shopType) !== ctx.category) return false;
     if(ctx.date && r.date !== ctx.date) return false;
@@ -2122,6 +2289,8 @@ document.getElementById('refreshBtn').addEventListener('click', loadAllData);
 /* ============ LOGIN GATE: INIT ============ */
 // Already logged in earlier this browser session? Skip the login screen.
 if(sessionStorage.getItem(LOGIN_SESSION_KEY) === 'yes'){
+  const savedUserId = sessionStorage.getItem(LOGIN_USER_KEY);
+  loggedInUser = USERS.find(u => u.id === savedUserId) || null;
   unlockDashboard();
 }
 
@@ -2131,8 +2300,11 @@ document.getElementById('loginForm').addEventListener('submit', (e) => {
   const pass = document.getElementById('loginPass').value;
   const errorBox = document.getElementById('loginError');
 
-  if(id === LOGIN_ID && pass === LOGIN_PASSWORD){
+  const matchedUser = USERS.find(u => u.id === id && u.password === pass);
+  if(matchedUser){
+    loggedInUser = matchedUser;
     sessionStorage.setItem(LOGIN_SESSION_KEY, 'yes');
+    sessionStorage.setItem(LOGIN_USER_KEY, matchedUser.id);
     errorBox.style.display = 'none';
     unlockDashboard();
   } else {
