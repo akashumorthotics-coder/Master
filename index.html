@@ -77,33 +77,23 @@
   .splash-overlay.hide{ opacity:0; visibility:hidden; pointer-events:none; }
   .splash-content{ text-align:center; }
   .splash-logo-wrap{
-    position:relative; width:150px; height:150px; margin:0 auto 22px;
+    position:relative; width:260px; height:260px; margin:0 auto 10px;
     display:flex; align-items:center; justify-content:center;
   }
   .splash-logo{
-    width:120px; height:120px; border-radius:26px; box-shadow:0 12px 40px rgba(0,0,0,0.35);
+    width:240px; height:240px; border-radius:50%; box-shadow:0 16px 46px rgba(0,0,0,0.35);
     opacity:0; transform:scale(0.4) rotate(-15deg);
     animation:splashLogoIn 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s forwards;
     position:relative; z-index:2;
   }
-  .splash-ring{
-    position:absolute; inset:0; border:2.5px solid rgba(255,255,255,0.55); border-radius:50%;
-    opacity:0; animation:splashRing 1.8s ease-out infinite;
-  }
-  .splash-ring-2{ animation-delay:0.6s; }
+  .splash-ring{ display:none; }
+  .splash-ring-2{ display:none; }
   @keyframes splashLogoIn{
     0%{ opacity:0; transform:scale(0.4) rotate(-15deg); }
     60%{ opacity:1; transform:scale(1.08) rotate(3deg); }
     100%{ opacity:1; transform:scale(1) rotate(0deg); }
   }
-  @keyframes splashRing{
-    0%{ transform:scale(0.7); opacity:0.7; }
-    100%{ transform:scale(1.6); opacity:0; }
-  }
-  .splash-text{
-    display:flex; flex-direction:column; gap:2px;
-    opacity:0; animation:splashTextIn 0.7s ease 0.55s forwards;
-  }
+  .splash-text{ display:none; }
   @keyframes splashTextIn{
     from{ opacity:0; transform:translateY(10px); }
     to{ opacity:1; transform:translateY(0); }
@@ -667,7 +657,7 @@
 <div class="splash-overlay hide" id="splashOverlay">
   <div class="splash-content">
     <div class="splash-logo-wrap">
-      <img src="./icon-512.png" alt="UM Orthotics" class="splash-logo" id="splashLogo">
+      <img src="./splash-logo.png" alt="UM Orthotics" class="splash-logo" id="splashLogo">
       <div class="splash-ring"></div>
       <div class="splash-ring splash-ring-2"></div>
     </div>
@@ -841,6 +831,10 @@
         <div class="ms-wrap" id="msWrap-secondaryMonth">
           <button type="button" class="ms-toggle" id="msToggle-secondaryMonth">📅 All Months ▾</button>
           <div class="ms-menu" id="msMenu-secondaryMonth"></div>
+        </div>
+        <div class="ms-wrap" id="msWrap-secondaryUser">
+          <button type="button" class="ms-toggle" id="msToggle-secondaryUser">👤 All Users ▾</button>
+          <div class="ms-menu" id="msMenu-secondaryUser"></div>
         </div>
       </div>
     </div>
@@ -1238,7 +1232,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
 /* ============ LOAD DATA ============ */
 /* ============ SPLASH SCREEN ============ */
 let splashStartTime = Date.now();
-const SPLASH_MIN_DURATION_MS = 1800; // let the logo animation finish even on a fast connection
+const SPLASH_MIN_DURATION_MS = 3000; // splash shows for exactly 3 seconds after login
 let splashHidden = false;
 
 function hideSplashScreen(){
@@ -1385,7 +1379,11 @@ function populateStateFilters(){
 
   buildMultiSelect('exec', allStates.length ? allStates : statesPrimary, renderExecutive);
   buildMultiSelect('primary', statesPrimary.length ? statesPrimary : allStates, renderPrimaryTable);
-  buildMultiSelect('secondary', statesSecondary.length ? statesSecondary : allStates, renderSecondaryTable);
+  buildMultiSelect('secondary', statesSecondary.length ? statesSecondary : allStates, (selStates) => {
+    rebuildSecondaryUserFilter(selStates);
+    renderSecondaryTable(selStates);
+  });
+  rebuildSecondaryUserFilter(stateFilters.secondary || []);
 
   const statesBeat = Array.from(new Set(beatWiseData.map(r => r.state))).sort();
   buildMultiSelect('beatwiseState', statesBeat, (selStates) => {
@@ -1403,11 +1401,23 @@ function populateStateFilters(){
 
   buildMultiSelect('execMonth', monthsExec, () => renderExecutive(stateFilters.exec || []), 'Months');
   buildMultiSelect('primaryMonth', monthsPartyWise.length ? monthsPartyWise : monthsPrimary, () => renderPrimaryTable(stateFilters.primary || []), 'Months');
-  buildMultiSelect('secondaryMonth', monthsSecondary, () => renderSecondaryTable(stateFilters.secondary || []), 'Months');
+  buildMultiSelect('secondaryMonth', monthsSecondary, () => {
+    rebuildSecondaryUserFilter(stateFilters.secondary || []);
+    renderSecondaryTable(stateFilters.secondary || []);
+  }, 'Months');
   buildMultiSelect('beatwiseMonth', monthsBeat, (selMonths) => {
     rebuildBeatUserFilter(stateFilters.beatwiseState || []);
     renderBeatWise();
   }, 'Months');
+}
+
+/* Rebuild the User filter options for Secondary Sale tab based on currently selected states + months */
+function rebuildSecondaryUserFilter(selectedStates){
+  selectedStates = selectedStates || [];
+  const selMonths = stateFilters.secondaryMonth || [];
+  const scoped = secondaryData.filter(r => inFilter(r.state, selectedStates) && inFilter(r.month, selMonths));
+  const users = Array.from(new Set(scoped.map(r => r.user))).filter(Boolean).sort();
+  buildMultiSelect('secondaryUser', users, () => renderSecondaryTable(stateFilters.secondary || []), 'Users');
 }
 
 /* Sort "Jul-26" / "July 2026" style month strings chronologically where possible, else alphabetically */
@@ -1477,7 +1487,7 @@ function updateMsToggleLabel(key){
   const toggleBtn = document.getElementById('msToggle-' + key);
   if(!toggleBtn) return;
   const labelWord = msLabelWords[key] || 'States';
-  const prefix = labelWord === 'Months' ? '📅 ' : '';
+  const prefix = labelWord === 'Months' ? '📅 ' : labelWord === 'Users' ? '👤 ' : '';
   if(sel.length === 0) toggleBtn.textContent = prefix + 'All ' + labelWord + ' ▾';
   else if(sel.length === 1) toggleBtn.textContent = prefix + sel[0] + ' ▾';
   else toggleBtn.textContent = prefix + sel.length + ' ' + labelWord + ' Selected ▾';
@@ -1663,7 +1673,8 @@ document.querySelectorAll('#tab-primary thead th').forEach(th => {
 function renderSecondaryTable(selectedStates){
   selectedStates = selectedStates || [];
   const selMonths = stateFilters.secondaryMonth || [];
-  let rows = secondaryData.filter(r => inFilter(r.state, selectedStates) && inFilter(r.month, selMonths));
+  const selUsers = stateFilters.secondaryUser || [];
+  let rows = secondaryData.filter(r => inFilter(r.state, selectedStates) && inFilter(r.month, selMonths) && inFilter(r.user, selUsers));
   const search = document.getElementById('secondarySearch').value.trim().toLowerCase();
   if(search) rows = rows.filter(r => r.user.toLowerCase().includes(search));
 
@@ -1717,16 +1728,17 @@ function renderSecondaryTable(selectedStates){
   document.getElementById('secondary-subtotal-ach').textContent = '₹ ' + fmtNum(totalAch);
   document.getElementById('secondary-subtotal-pct').textContent = totalPct.toFixed(1) + '%';
 
-  renderSecondaryShopTypeSummary(selectedStates, selMonths);
+  renderSecondaryShopTypeSummary(selectedStates, selMonths, selUsers);
 }
 
 /* ============ SECONDARY SALE PAGE-LEVEL SHOP-TYPE COVERAGE SUMMARY ============ */
-function renderSecondaryShopTypeSummary(selectedStates, selMonths){
+function renderSecondaryShopTypeSummary(selectedStates, selMonths, selUsers){
   const wrap = document.getElementById('secondary-shoptype-summary');
   if(!wrap) return;
+  selUsers = selUsers || [];
 
   const scopedRows = beatWiseData
-    .filter(r => inFilter(r.state, selectedStates) && inFilter(r.month, selMonths))
+    .filter(r => inFilter(r.state, selectedStates) && inFilter(r.month, selMonths) && inFilter(r.user, selUsers))
     .map(r => ({ ...r, cat: categorizeShopType(r.shopType) }));
 
   const cardColors = { 'Chemist/Retail': 'var(--blue)', 'Dr./Hospital': 'var(--green)', 'Sub-Dist/Dealer': '#d97706', 'Others': 'var(--red)' };
@@ -1758,7 +1770,7 @@ function renderSecondaryShopTypeSummary(selectedStates, selMonths){
 
   wrap.querySelectorAll('.shoptype-clickable').forEach(el => {
     el.addEventListener('click', () => {
-      openShopTypeCoverageDrilldown(el.dataset.cat, el.dataset.mode === 'sale', selectedStates, selMonths);
+      openShopTypeCoverageDrilldown(el.dataset.cat, el.dataset.mode === 'sale', selectedStates, selMonths, selUsers);
     });
   });
 }
