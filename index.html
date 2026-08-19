@@ -994,9 +994,9 @@
         <span>Total Visits: <b id="shopvisits-total-visits">0</b></span>
         <span>Total Sale: <b id="shopvisits-total-sale">₹ 0</b></span>
       </div>
-      <div class="table-wrap modal-table-wrap">
+      <div class="table-wrap modal-table-wrap calls-table-wrap" id="shopvisits-table-wrap">
         <table>
-          <thead>
+          <thead id="shopvisits-thead">
             <tr>
               <th data-key="shop">🏬 Shop Name ⬍</th>
               <th data-key="visits">📞 Total Visits ⬍</th>
@@ -1013,11 +1013,11 @@
   <div class="modal-overlay" id="shopdates-drilldown-overlay">
     <div class="modal-box" id="shopdates-drilldown-modal">
       <div class="modal-header">
-        <h3 id="shopdates-drilldown-title">📅 Visit Dates</h3>
+        <h3 id="shopdates-drilldown-title">🗓️ Month Wise Visits</h3>
         <button type="button" id="shopdates-drilldown-close" class="modal-close">✕</button>
       </div>
       <div class="subtotal-bar" style="margin:0 20px 12px;">
-        <span>Showing <b id="shopdates-count">0</b> dates</span>
+        <span>Showing <b id="shopdates-count">0</b> months</span>
         <span>Total Visits: <b id="shopdates-total-visits">0</b></span>
         <span>Total Sale: <b id="shopdates-total-sale">₹ 0</b></span>
       </div>
@@ -1025,7 +1025,7 @@
         <table>
           <thead>
             <tr>
-              <th data-key="date">📅 Date ⬍</th>
+              <th data-key="date">🗓️ Month ⬍</th>
               <th data-key="visits">📞 Visits ⬍</th>
               <th data-key="sale">💰 Sale Amount ⬍</th>
             </tr>
@@ -2115,7 +2115,7 @@ function renderUserCallsDrilldown(userName){
       </table>`;
     wrap.querySelectorAll('td.calls-count-cell').forEach(td => {
       td.addEventListener('click', () => {
-        openShopVisitsDrilldown(td.dataset.user, td.dataset.cat || null, td.dataset.date || null);
+        openShopMonthWiseDrilldown(td.dataset.user, td.dataset.cat || null, td.dataset.date || null);
       });
     });
   }
@@ -2134,6 +2134,52 @@ let currentShopVisitsSort = { key: null, dir: 1 };
 let currentShopVisitsRows = [];
 
 let currentShopVisitsContext = { userName: '', category: null, date: null };
+let shopVisitsMode = 'shop'; // 'shop' (3-col: Shop|Visits|Sale) or 'shopMonthPivot' (Shop rows x Month columns, each with Visit+Sale)
+let currentShopMonthColumns = []; // ordered list of month names for the pivot header
+
+/* ENTRY POINT for pivot table clicks (Grand Total, per-date cells, per-category totals).
+   Shows a pivoted table: Shop Name as rows, each Month as a column pair (Visit | Sale). */
+function openShopMonthWiseDrilldown(userName, category, date){
+  currentShopVisitsContext = { userName, category, date };
+  const selMonths = stateFilters.secondaryMonth || [];
+  const rows = beatWiseData.filter(r => {
+    if(r.user !== userName) return false;
+    if(!inFilter(r.month, selMonths)) return false;
+    if(category && categorizeShopType(r.shopType) !== category) return false;
+    if(date && r.date !== date) return false;
+    return true;
+  });
+
+  const titleParts = [userName];
+  if(category) titleParts.push(category);
+  if(date) titleParts.push(date);
+  document.getElementById('shopvisits-drilldown-title').textContent = '🏬 ' + titleParts.join(' — ') + ' — Shop & Month Wise';
+
+  // Build: shop -> { month -> {visits, sale} }, plus the distinct set of months present
+  const shopMap = new Map();
+  const monthSet = new Set();
+  rows.forEach(r => {
+    const shop = r.shop || '(Unnamed Shop)';
+    const month = r.month || '(No Month)';
+    monthSet.add(month);
+    if(!shopMap.has(shop)) shopMap.set(shop, new Map());
+    const monthMap = shopMap.get(shop);
+    if(!monthMap.has(month)) monthMap.set(month, { visits: 0, sale: 0 });
+    const o = monthMap.get(month);
+    o.visits += 1;
+    o.sale += r.sale;
+  });
+
+  currentShopMonthColumns = Array.from(monthSet).sort(sortMonthStrings);
+  currentShopVisitsRows = Array.from(shopMap.entries())
+    .map(([shop, monthMap]) => ({ shop, months: monthMap }))
+    .sort((a,b) => a.shop.localeCompare(b.shop));
+  currentShopVisitsSort = { key: null, dir: 1 };
+  shopVisitsMode = 'shopMonthPivot';
+
+  renderShopVisitsDrilldown();
+  document.getElementById('shopvisits-drilldown-overlay').classList.add('open');
+}
 
 /* Page-level drilldown from the Secondary Sale "Outlet Coverage Summary" cards.
    Shows every shop (across all users) matching the category + current state/month filters,
@@ -2164,6 +2210,7 @@ function openShopTypeCoverageDrilldown(category, onlySale, selectedStates, selMo
 
   currentShopVisitsRows = shopRows;
   currentShopVisitsSort = { key: null, dir: 1 };
+  shopVisitsMode = 'shop';
 
   renderShopVisitsDrilldown();
   document.getElementById('shopvisits-drilldown-overlay').classList.add('open');
@@ -2196,6 +2243,7 @@ function openShopVisitsDrilldown(userName, category, date){
   });
   currentShopVisitsRows = Array.from(map.values());
   currentShopVisitsSort = { key: null, dir: 1 };
+  shopVisitsMode = 'shop';
 
   renderShopVisitsDrilldown();
   document.getElementById('shopvisits-drilldown-overlay').classList.add('open');
@@ -2206,6 +2254,88 @@ function closeShopVisitsDrilldown(){
 }
 
 function renderShopVisitsDrilldown(){
+  const thead = document.getElementById('shopvisits-thead');
+  const tbody = document.getElementById('shopvisits-tbody');
+
+  if(shopVisitsMode === 'shopMonthPivot'){
+    const months = currentShopMonthColumns;
+
+    // Compute grand-total-per-shop (across months) for sorting + the Grand Total column
+    let rows = currentShopVisitsRows.map(r => {
+      let gtVisits = 0, gtSale = 0;
+      months.forEach(m => {
+        const cell = r.months.get(m);
+        if(cell){ gtVisits += cell.visits; gtSale += cell.sale; }
+      });
+      return { ...r, gtVisits, gtSale };
+    });
+
+    if(currentShopVisitsSort.key === 'shop'){
+      rows.sort((a,b) => a.shop.localeCompare(b.shop) * currentShopVisitsSort.dir);
+    } else if(currentShopVisitsSort.key === 'gtVisits' || currentShopVisitsSort.key === 'gtSale'){
+      const k = currentShopVisitsSort.key, dir = currentShopVisitsSort.dir;
+      rows.sort((a,b) => (a[k] - b[k]) * dir);
+    }
+
+    // Two-row header: month group labels on top, Visit/Sale sub-columns below
+    const monthHeaderCells = months.map(m => `<th colspan="2" style="text-align:center;">${m}</th>`).join('');
+    const subHeaderCells = months.map(() => `<th style="text-align:center;">📞 Visit</th><th style="text-align:center;">💰 Sale</th>`).join('');
+
+    thead.innerHTML = `
+      <tr>
+        <th rowspan="2" data-key="shop">🏬 Shop Name ⬍</th>
+        ${monthHeaderCells}
+        <th colspan="2" class="calls-total-col" style="text-align:center;">Grand Total</th>
+      </tr>
+      <tr>
+        ${subHeaderCells}
+        <th data-key="gtVisits" class="calls-total-col" style="text-align:center;">📞 Visit ⬍</th>
+        <th data-key="gtSale" class="calls-total-col" style="text-align:center;">💰 Sale ⬍</th>
+      </tr>`;
+
+    const colCount = 1 + months.length * 2 + 2;
+    if(rows.length === 0){
+      tbody.innerHTML = `<tr><td colspan="${colCount}" style="text-align:center; color:var(--text-muted); padding:24px;">No shop records found</td></tr>`;
+    } else {
+      tbody.innerHTML = rows.map(r => {
+        const monthCells = months.map(m => {
+          const cell = r.months.get(m);
+          const v = cell ? cell.visits : 0;
+          const s = cell ? cell.sale : 0;
+          return `<td style="text-align:center;">${v}</td><td style="text-align:center;">₹ ${fmtNum(s)}</td>`;
+        }).join('');
+        return `
+        <tr>
+          <td>${r.shop}</td>
+          ${monthCells}
+          <td class="calls-total-cell" style="text-align:center;">${r.gtVisits}</td>
+          <td class="calls-total-cell" style="text-align:center;">₹ ${fmtNum(r.gtSale)}</td>
+        </tr>`;
+      }).join('');
+      // Column-wise footer grand total row
+      const footerMonthCells = months.map(m => {
+        let v = 0, s = 0;
+        rows.forEach(r => { const c = r.months.get(m); if(c){ v += c.visits; s += c.sale; } });
+        return `<td style="text-align:center;">${v}</td><td style="text-align:center;">₹ ${fmtNum(s)}</td>`;
+      }).join('');
+      const grandTotalVisits = rows.reduce((s,r) => s + r.gtVisits, 0);
+      const grandTotalSale = rows.reduce((s,r) => s + r.gtSale, 0);
+      tbody.innerHTML += `
+        <tr class="calls-grand-total">
+          <td>Grand Total</td>
+          ${footerMonthCells}
+          <td style="text-align:center;">${grandTotalVisits}</td>
+          <td style="text-align:center;">₹ ${fmtNum(grandTotalSale)}</td>
+        </tr>`;
+    }
+
+    document.getElementById('shopvisits-count').textContent = rows.length;
+    document.getElementById('shopvisits-total-visits').textContent = rows.reduce((s,r) => s + r.gtVisits, 0);
+    document.getElementById('shopvisits-total-sale').textContent = '₹ ' + fmtNum(rows.reduce((s,r) => s + r.gtSale, 0));
+    return;
+  }
+
+  // ---- Plain 3-column shop-wise mode (used by Outlet Coverage Summary) ----
   let rows = currentShopVisitsRows;
   if(currentShopVisitsSort.key){
     const k = currentShopVisitsSort.key, dir = currentShopVisitsSort.dir;
@@ -2216,7 +2346,12 @@ function renderShopVisitsDrilldown(){
     });
   }
 
-  const tbody = document.getElementById('shopvisits-tbody');
+  thead.innerHTML = `<tr>
+    <th data-key="shop">🏬 Shop Name ⬍</th>
+    <th data-key="visits">📞 Total Visits ⬍</th>
+    <th data-key="sale">💰 Sale Amount ⬍</th>
+  </tr>`;
+
   if(rows.length === 0){
     tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:24px;">No shop records found</td></tr>';
   } else {
@@ -2257,19 +2392,20 @@ function openShopDatesDrilldown(shopName){
     return true;
   });
 
-  document.getElementById('shopdates-drilldown-title').textContent = '📅 ' + shopName + ' — Visit Dates';
+  document.getElementById('shopdates-drilldown-title').textContent = '🗓️ ' + shopName + ' — Month Wise Visits';
 
-  // Aggregate by date: visits (row count) + total sale
+  // Aggregate by month: visits (row count) + total sale
   const map = new Map();
   rows.forEach(r => {
-    const key = r.date || '(No Date)';
+    const key = r.month || '(No Month)';
     if(!map.has(key)) map.set(key, { date: key, visits: 0, sale: 0 });
     const o = map.get(key);
     o.visits += 1;
     o.sale += r.sale;
   });
-  currentShopDatesRows = Array.from(map.values());
+  currentShopDatesRows = Array.from(map.values()).sort((a,b) => sortMonthStrings(a.date, b.date));
   currentShopDatesSort = { key: null, dir: 1 };
+  shopDatesClickMode = 'terminal';
 
   renderShopDatesDrilldown();
   document.getElementById('shopdates-drilldown-overlay').classList.add('open');
@@ -2292,7 +2428,18 @@ function renderShopDatesDrilldown(){
 
   const tbody = document.getElementById('shopdates-tbody');
   if(rows.length === 0){
-    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:24px;">No visit dates found</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:24px;">No visits found</td></tr>';
+  } else if(shopDatesClickMode === 'toShopWise'){
+    tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td>${r.date}</td>
+        <td class="calls-count-cell" data-month="${(r.date || '').replace(/"/g,'&quot;')}">${r.visits}</td>
+        <td>₹ ${fmtNum(r.sale)}</td>
+      </tr>
+    `).join('');
+    tbody.querySelectorAll('td.calls-count-cell').forEach(td => {
+      td.addEventListener('click', () => openShopWiseForMonth(td.dataset.month));
+    });
   } else {
     tbody.innerHTML = rows.map(r => `
       <tr>
@@ -2327,13 +2474,13 @@ document.addEventListener('keydown', (e) => {
   if(e.key === 'Escape') closeShopDatesDrilldown();
 });
 
-document.querySelectorAll('#shopvisits-drilldown-modal thead th').forEach(th => {
-  th.addEventListener('click', () => {
-    const key = th.dataset.key;
-    if(currentShopVisitsSort.key === key){ currentShopVisitsSort.dir *= -1; }
-    else { currentShopVisitsSort = { key, dir: 1 }; }
-    renderShopVisitsDrilldown();
-  });
+document.getElementById('shopvisits-drilldown-modal').addEventListener('click', (e) => {
+  const th = e.target.closest('thead th');
+  if(!th) return;
+  const key = th.dataset.key;
+  if(currentShopVisitsSort.key === key){ currentShopVisitsSort.dir *= -1; }
+  else { currentShopVisitsSort = { key, dir: 1 }; }
+  renderShopVisitsDrilldown();
 });
 
 document.getElementById('shopvisits-drilldown-close').addEventListener('click', closeShopVisitsDrilldown);
