@@ -918,17 +918,12 @@
       </div>
       <div class="subtotal-bar" style="margin:0 20px 12px;">
         <span>Showing <b id="drilldown-count">0</b> shops</span>
-        <span>Subtotal Sale Amount: <b id="drilldown-subtotal">₹ 0</b></span>
+        <span>Total Visits: <b id="drilldown-total-visits">0</b></span>
+        <span>Total Sale: <b id="drilldown-subtotal">₹ 0</b></span>
       </div>
-      <div class="table-wrap modal-table-wrap">
+      <div class="table-wrap modal-table-wrap calls-table-wrap" id="drilldown-table-wrap">
         <table>
-          <thead>
-            <tr>
-              <th data-key="shop">🏪 Shop Name ⬍</th>
-              <th data-key="shopType">🏷️ Shop Type ⬍</th>
-              <th data-key="sale">💰 Sale Amount ⬍</th>
-            </tr>
-          </thead>
+          <thead id="drilldown-thead"></thead>
           <tbody id="drilldown-tbody"></tbody>
         </table>
       </div>
@@ -1860,7 +1855,7 @@ function openBeatDrilldown(beatName, scopedRows){
   currentDrilldownBeat = beatName;
   currentDrilldownRows = scopedRows.filter(r => r.beat === beatName);
   currentShopSort = { key: null, dir: 1 };
-  document.getElementById('drilldown-title').textContent = '🏬 ' + beatName + ' — Shop Wise Sale';
+  document.getElementById('drilldown-title').textContent = '🏬 ' + beatName + ' — Shop & Month Wise Sale';
   renderShopDrilldown();
   document.getElementById('drilldown-overlay').classList.add('open');
 }
@@ -1870,51 +1865,117 @@ function closeBeatDrilldown(){
 }
 
 function renderShopDrilldown(){
-  // Aggregate by Shop Name + Shop Type
-  const map = new Map();
+  // Build: shop -> { month -> {visits, sale} }, plus the distinct set of months present
+  const shopMap = new Map();
+  const monthSet = new Set();
   currentDrilldownRows.forEach(r => {
-    const shopName = r.shop || '(Unnamed Shop)';
-    const shopType = r.shopType || '—';
-    const k = shopName + '||' + shopType;
-    if(!map.has(k)) map.set(k, { shop: shopName, shopType: shopType, sale: 0 });
-    map.get(k).sale += r.sale;
+    const shop = r.shop || '(Unnamed Shop)';
+    const month = r.month || '(No Month)';
+    monthSet.add(month);
+    if(!shopMap.has(shop)) shopMap.set(shop, new Map());
+    const monthMap = shopMap.get(shop);
+    if(!monthMap.has(month)) monthMap.set(month, { visits: 0, sale: 0 });
+    const o = monthMap.get(month);
+    o.visits += 1;
+    o.sale += r.sale;
   });
-  let agg = Array.from(map.values());
 
+  const months = Array.from(monthSet).sort(sortMonthStrings);
+  let rows = Array.from(shopMap.entries()).map(([shop, monthMap]) => {
+    let gtVisits = 0, gtSale = 0;
+    monthMap.forEach(c => { gtVisits += c.visits; gtSale += c.sale; });
+    return { shop, months: monthMap, gtVisits, gtSale };
+  });
+
+  // Sorting: supports Shop Name, Grand Total columns, and any individual month's Visit/Sale column
   if(currentShopSort.key){
-    const k = currentShopSort.key, dir = currentShopSort.dir;
-    agg = [...agg].sort((a,b) => {
-      const av = a[k], bv = b[k];
-      if(typeof av === 'number') return (av - bv) * dir;
-      return String(av).localeCompare(String(bv)) * dir;
-    });
+    const key = currentShopSort.key, dir = currentShopSort.dir;
+    if(key === 'shop'){
+      rows.sort((a,b) => a.shop.localeCompare(b.shop) * dir);
+    } else if(key === 'gtVisits' || key === 'gtSale'){
+      rows.sort((a,b) => (a[key] - b[key]) * dir);
+    } else if(key.startsWith('m:')){
+      const [, month, field] = key.split(':');
+      rows.sort((a,b) => {
+        const av = (a.months.get(month) || { visits: 0, sale: 0 })[field];
+        const bv = (b.months.get(month) || { visits: 0, sale: 0 })[field];
+        return (av - bv) * dir;
+      });
+    }
   }
 
+  const thead = document.getElementById('drilldown-thead');
   const tbody = document.getElementById('drilldown-tbody');
-  if(agg.length === 0){
-    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:24px;">No shop records found</td></tr>';
+
+  const arrow = (key) => currentShopSort.key === key ? (currentShopSort.dir === 1 ? ' ▲' : ' ▼') : ' ⬍';
+
+  const monthHeaderCells = months.map(m => `<th colspan="2" style="text-align:center;">${m}</th>`).join('');
+  const subHeaderCells = months.map(m => `
+    <th data-key="m:${m}:visits" style="text-align:center;">📞 Visit${arrow('m:' + m + ':visits')}</th>
+    <th data-key="m:${m}:sale" style="text-align:center;">💰 Sale${arrow('m:' + m + ':sale')}</th>
+  `).join('');
+
+  thead.innerHTML = `
+    <tr>
+      <th rowspan="2" data-key="shop">🏪 Shop Name${arrow('shop')}</th>
+      ${monthHeaderCells}
+      <th colspan="2" class="calls-total-col" style="text-align:center;">Grand Total</th>
+    </tr>
+    <tr>
+      ${subHeaderCells}
+      <th data-key="gtVisits" class="calls-total-col" style="text-align:center;">📞 Visit${arrow('gtVisits')}</th>
+      <th data-key="gtSale" class="calls-total-col" style="text-align:center;">💰 Sale${arrow('gtSale')}</th>
+    </tr>`;
+
+  const colCount = 1 + months.length * 2 + 2;
+  if(rows.length === 0){
+    tbody.innerHTML = `<tr><td colspan="${colCount}" style="text-align:center; color:var(--text-muted); padding:24px;">No shop records found</td></tr>`;
   } else {
-    tbody.innerHTML = agg.map(r => `
+    tbody.innerHTML = rows.map(r => {
+      const monthCells = months.map(m => {
+        const cell = r.months.get(m);
+        const v = cell ? cell.visits : 0;
+        const s = cell ? cell.sale : 0;
+        return `<td style="text-align:center;">${v}</td><td style="text-align:center;">₹ ${fmtNum(s)}</td>`;
+      }).join('');
+      return `
       <tr>
         <td>${r.shop}</td>
-        <td>${r.shopType}</td>
-        <td>₹ ${fmtNum(r.sale)}</td>
-      </tr>
-    `).join('');
+        ${monthCells}
+        <td class="calls-total-cell" style="text-align:center;">${r.gtVisits}</td>
+        <td class="calls-total-cell" style="text-align:center;">₹ ${fmtNum(r.gtSale)}</td>
+      </tr>`;
+    }).join('');
+
+    // Column-wise footer grand total row
+    const footerMonthCells = months.map(m => {
+      let v = 0, s = 0;
+      rows.forEach(r => { const c = r.months.get(m); if(c){ v += c.visits; s += c.sale; } });
+      return `<td style="text-align:center;">${v}</td><td style="text-align:center;">₹ ${fmtNum(s)}</td>`;
+    }).join('');
+    const grandTotalVisits = rows.reduce((s,r) => s + r.gtVisits, 0);
+    const grandTotalSale = rows.reduce((s,r) => s + r.gtSale, 0);
+    tbody.innerHTML += `
+      <tr class="calls-grand-total">
+        <td>Grand Total</td>
+        ${footerMonthCells}
+        <td style="text-align:center;">${grandTotalVisits}</td>
+        <td style="text-align:center;">₹ ${fmtNum(grandTotalSale)}</td>
+      </tr>`;
   }
 
-  const subtotal = agg.reduce((s,r) => s + r.sale, 0);
-  document.getElementById('drilldown-count').textContent = agg.length;
-  document.getElementById('drilldown-subtotal').textContent = '₹ ' + fmtNum(subtotal);
+  document.getElementById('drilldown-count').textContent = rows.length;
+  document.getElementById('drilldown-total-visits').textContent = rows.reduce((s,r) => s + r.gtVisits, 0);
+  document.getElementById('drilldown-subtotal').textContent = '₹ ' + fmtNum(rows.reduce((s,r) => s + r.gtSale, 0));
 }
 
-document.querySelectorAll('#drilldown-modal thead th').forEach(th => {
-  th.addEventListener('click', () => {
-    const key = th.dataset.key;
-    if(currentShopSort.key === key){ currentShopSort.dir *= -1; }
-    else { currentShopSort = { key, dir: 1 }; }
-    renderShopDrilldown();
-  });
+document.getElementById('drilldown-modal').addEventListener('click', (e) => {
+  const th = e.target.closest('thead th');
+  if(!th || !th.dataset.key) return;
+  const key = th.dataset.key;
+  if(currentShopSort.key === key){ currentShopSort.dir *= -1; }
+  else { currentShopSort = { key, dir: 1 }; }
+  renderShopDrilldown();
 });
 
 document.getElementById('drilldown-close').addEventListener('click', closeBeatDrilldown);
