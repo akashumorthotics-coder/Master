@@ -513,9 +513,17 @@
   .modal-overlay.open .modal-box{ transform:scale(1) translateY(0); opacity:1; }
   .modal-header{
     display:flex; justify-content:space-between; align-items:center;
-    padding:18px 20px; border-bottom:1px solid var(--border);
+    padding:18px 20px; border-bottom:1px solid var(--border); gap:12px; flex-wrap:wrap;
   }
   .modal-header h3{ font-size:17px; color:var(--blue-dark); font-weight:700; }
+  .modal-header-actions{ display:flex; align-items:center; gap:10px; flex-shrink:0; }
+  .export-excel-btn{
+    padding:8px 14px; border-radius:8px; border:1px solid var(--green); background:var(--green-light);
+    color:#0c8760; font-size:12.5px; font-weight:700; cursor:pointer; white-space:nowrap;
+    transition:background 0.15s ease, transform 0.12s ease, box-shadow 0.15s ease;
+  }
+  .export-excel-btn:hover{ background:var(--green); color:#fff; box-shadow:0 4px 12px rgba(14,159,110,0.3); }
+  .export-excel-btn:active{ transform:scale(0.96); }
   .modal-close{
     background:var(--bg); border:none; width:30px; height:30px; border-radius:50%;
     cursor:pointer; font-size:14px; color:var(--text-muted);
@@ -525,6 +533,17 @@
   .modal-table-wrap{ margin:0 20px 20px; max-height:400px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
 
   .calls-modal-box{ max-width:820px; }
+
+  /* Pivot modals (Shop x Month) size themselves to the data - wider box, taller table area,
+     so more months/shops are visible before needing to scroll. */
+  #drilldown-modal, #shopvisits-drilldown-modal{
+    max-width:min(96vw, 1200px);
+    width:auto;
+    max-height:90vh;
+  }
+  #drilldown-table-wrap, #shopvisits-table-wrap{
+    max-height:min(60vh, 620px);
+  }
   .calls-kpi-row{ display:flex; gap:10px; flex-wrap:wrap; padding:0 20px 12px; }
   .calls-kpi-card{
     flex:1; min-width:110px; background:var(--bg); border-radius:10px; padding:10px 12px;
@@ -914,7 +933,10 @@
     <div class="modal-box" id="drilldown-modal">
       <div class="modal-header">
         <h3 id="drilldown-title">🏬 Shop Wise Sale</h3>
-        <button type="button" id="drilldown-close" class="modal-close">✕</button>
+        <div class="modal-header-actions">
+          <button type="button" class="export-excel-btn" onclick="exportCurrentPivotToExcel('Beat_ShopMonth')">📥 Export to Excel</button>
+          <button type="button" id="drilldown-close" class="modal-close">✕</button>
+        </div>
       </div>
       <div class="subtotal-bar" style="margin:0 20px 12px;">
         <span>Showing <b id="drilldown-count">0</b> shops</span>
@@ -982,7 +1004,10 @@
     <div class="modal-box" id="shopvisits-drilldown-modal">
       <div class="modal-header">
         <h3 id="shopvisits-drilldown-title">🏬 Shop Visit Details</h3>
-        <button type="button" id="shopvisits-drilldown-close" class="modal-close">✕</button>
+        <div class="modal-header-actions">
+          <button type="button" class="export-excel-btn" onclick="exportCurrentPivotToExcel('Secondary_ShopMonth')">📥 Export to Excel</button>
+          <button type="button" id="shopvisits-drilldown-close" class="modal-close">✕</button>
+        </div>
       </div>
       <div class="subtotal-bar" style="margin:0 20px 12px;">
         <span>Showing <b id="shopvisits-count">0</b> shops</span>
@@ -1123,6 +1148,57 @@ function toNumber(v){
 
 function fmtNum(n){
   return Math.round(n).toLocaleString('en-IN');
+}
+
+/* ============ EXPORT PIVOT TABLE TO EXCEL (CSV) ============ */
+/* Whichever pivot modal (Shop x Month) is currently open stores its data here on render,
+   so the Export button can build a properly-aligned CSV (colspan/rowspan headers don't
+   translate cleanly from the DOM, so we build the export from the underlying data instead). */
+let currentPivotExportData = null;
+
+function exportCurrentPivotToExcel(filenamePrefix){
+  if(!currentPivotExportData){ return; }
+  const { entityLabel, months, rows, grandTotalVisits, grandTotalSale } = currentPivotExportData;
+
+  const escapeCell = (val) => {
+    const t = (val === null || val === undefined) ? '' : String(val).replace(/"/g, '""');
+    return `"${t}"`;
+  };
+
+  const header = [entityLabel, ...months.flatMap(m => [`${m} Visit`, `${m} Sale`]), 'Grand Total Visit', 'Grand Total Sale'];
+  const lines = [header.map(escapeCell).join(',')];
+
+  rows.forEach(r => {
+    const cells = [r.label];
+    months.forEach(m => {
+      const cell = r.months.get(m);
+      cells.push(cell ? cell.visits : 0);
+      cells.push(cell ? cell.sale : 0);
+    });
+    cells.push(r.gtVisits, r.gtSale);
+    lines.push(cells.map(escapeCell).join(','));
+  });
+
+  const footerCells = ['Grand Total'];
+  months.forEach(m => {
+    let v = 0, s = 0;
+    rows.forEach(r => { const c = r.months.get(m); if(c){ v += c.visits; s += c.sale; } });
+    footerCells.push(v, s);
+  });
+  footerCells.push(grandTotalVisits, grandTotalSale);
+  lines.push(footerCells.map(escapeCell).join(','));
+
+  const csvContent = '\uFEFF' + lines.join('\r\n'); // BOM so Excel opens ₹ and non-ASCII correctly
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `${filenamePrefix}_${stamp}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 function pctClass(pct){ return pct >= 90 ? 'green' : pct >= 60 ? 'amber' : 'red'; }
@@ -1967,6 +2043,14 @@ function renderShopDrilldown(){
   document.getElementById('drilldown-count').textContent = rows.length;
   document.getElementById('drilldown-total-visits').textContent = rows.reduce((s,r) => s + r.gtVisits, 0);
   document.getElementById('drilldown-subtotal').textContent = '₹ ' + fmtNum(rows.reduce((s,r) => s + r.gtSale, 0));
+
+  currentPivotExportData = {
+    entityLabel: 'Shop Name',
+    months,
+    rows: rows.map(r => ({ label: r.shop, months: r.months, gtVisits: r.gtVisits, gtSale: r.gtSale })),
+    grandTotalVisits: rows.reduce((s,r) => s + r.gtVisits, 0),
+    grandTotalSale: rows.reduce((s,r) => s + r.gtSale, 0)
+  };
 }
 
 document.getElementById('drilldown-modal').addEventListener('click', (e) => {
@@ -2331,27 +2415,39 @@ function renderShopVisitsDrilldown(){
       return { ...r, gtVisits, gtSale };
     });
 
-    if(currentShopVisitsSort.key === 'shop'){
-      rows.sort((a,b) => a.shop.localeCompare(b.shop) * currentShopVisitsSort.dir);
-    } else if(currentShopVisitsSort.key === 'gtVisits' || currentShopVisitsSort.key === 'gtSale'){
-      const k = currentShopVisitsSort.key, dir = currentShopVisitsSort.dir;
-      rows.sort((a,b) => (a[k] - b[k]) * dir);
+    const sKey = currentShopVisitsSort.key, sDir = currentShopVisitsSort.dir;
+    if(sKey === 'shop'){
+      rows.sort((a,b) => a.shop.localeCompare(b.shop) * sDir);
+    } else if(sKey === 'gtVisits' || sKey === 'gtSale'){
+      rows.sort((a,b) => (a[sKey] - b[sKey]) * sDir);
+    } else if(sKey && sKey.startsWith('m:')){
+      const [, month, field] = sKey.split(':');
+      rows.sort((a,b) => {
+        const av = (a.months.get(month) || { visits: 0, sale: 0 })[field];
+        const bv = (b.months.get(month) || { visits: 0, sale: 0 })[field];
+        return (av - bv) * sDir;
+      });
     }
 
-    // Two-row header: month group labels on top, Visit/Sale sub-columns below
+    const arrow = (key) => sKey === key ? (sDir === 1 ? ' ▲' : ' ▼') : ' ⬍';
+
+    // Two-row header: month group labels on top, Visit/Sale sub-columns below (fully sortable)
     const monthHeaderCells = months.map(m => `<th colspan="2" style="text-align:center;">${m}</th>`).join('');
-    const subHeaderCells = months.map(() => `<th style="text-align:center;">📞 Visit</th><th style="text-align:center;">💰 Sale</th>`).join('');
+    const subHeaderCells = months.map(m => `
+      <th data-key="m:${m}:visits" style="text-align:center;">📞 Visit${arrow('m:' + m + ':visits')}</th>
+      <th data-key="m:${m}:sale" style="text-align:center;">💰 Sale${arrow('m:' + m + ':sale')}</th>
+    `).join('');
 
     thead.innerHTML = `
       <tr>
-        <th rowspan="2" data-key="shop">🏬 Shop Name ⬍</th>
+        <th rowspan="2" data-key="shop">🏬 Shop Name${arrow('shop')}</th>
         ${monthHeaderCells}
         <th colspan="2" class="calls-total-col" style="text-align:center;">Grand Total</th>
       </tr>
       <tr>
         ${subHeaderCells}
-        <th data-key="gtVisits" class="calls-total-col" style="text-align:center;">📞 Visit ⬍</th>
-        <th data-key="gtSale" class="calls-total-col" style="text-align:center;">💰 Sale ⬍</th>
+        <th data-key="gtVisits" class="calls-total-col" style="text-align:center;">📞 Visit${arrow('gtVisits')}</th>
+        <th data-key="gtSale" class="calls-total-col" style="text-align:center;">💰 Sale${arrow('gtSale')}</th>
       </tr>`;
 
     const colCount = 1 + months.length * 2 + 2;
@@ -2393,6 +2489,14 @@ function renderShopVisitsDrilldown(){
     document.getElementById('shopvisits-count').textContent = rows.length;
     document.getElementById('shopvisits-total-visits').textContent = rows.reduce((s,r) => s + r.gtVisits, 0);
     document.getElementById('shopvisits-total-sale').textContent = '₹ ' + fmtNum(rows.reduce((s,r) => s + r.gtSale, 0));
+
+    currentPivotExportData = {
+      entityLabel: 'Shop Name',
+      months,
+      rows: rows.map(r => ({ label: r.shop, months: r.months, gtVisits: r.gtVisits, gtSale: r.gtSale })),
+      grandTotalVisits: rows.reduce((s,r) => s + r.gtVisits, 0),
+      grandTotalSale: rows.reduce((s,r) => s + r.gtSale, 0)
+    };
     return;
   }
 
@@ -2433,6 +2537,14 @@ function renderShopVisitsDrilldown(){
   document.getElementById('shopvisits-count').textContent = rows.length;
   document.getElementById('shopvisits-total-visits').textContent = totalVisits;
   document.getElementById('shopvisits-total-sale').textContent = '₹ ' + fmtNum(totalSale);
+
+  currentPivotExportData = {
+    entityLabel: 'Shop Name',
+    months: [],
+    rows: rows.map(r => ({ label: r.shop, months: new Map(), gtVisits: r.visits, gtSale: r.sale })),
+    grandTotalVisits: totalVisits,
+    grandTotalSale: totalSale
+  };
 }
 
 /* ============ SHOP VISIT DATES DRILLDOWN (level 4, from clicking Total Visits number) ============ */
@@ -2537,7 +2649,7 @@ document.addEventListener('keydown', (e) => {
 
 document.getElementById('shopvisits-drilldown-modal').addEventListener('click', (e) => {
   const th = e.target.closest('thead th');
-  if(!th) return;
+  if(!th || !th.dataset.key) return;
   const key = th.dataset.key;
   if(currentShopVisitsSort.key === key){ currentShopVisitsSort.dir *= -1; }
   else { currentShopVisitsSort = { key, dir: 1 }; }
