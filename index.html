@@ -559,6 +559,7 @@
   .calls-table-wrap td.calls-total-cell, .calls-table-wrap th.calls-total-col{ font-weight:800; background:var(--blue-light); color:var(--blue-dark); }
   .calls-table-wrap tr.calls-grand-total td{ font-weight:800; background:var(--blue-light); color:var(--blue-dark); position:sticky; bottom:0; }
   .calls-count-cell{ color:var(--blue); font-weight:700; text-decoration:underline; text-decoration-color:transparent; cursor:pointer; transition:text-decoration-color 0.15s; }
+  .pc-badge{ font-size:10.5px; font-weight:700; color:var(--green); white-space:nowrap; }
 
   /* Shop-type coverage summary (Secondary Sale page-level) */
   .shoptype-summary-grid{
@@ -2197,15 +2198,18 @@ function renderUserCallsDrilldown(userName){
   });
 
   const pivot = {}; // date -> {cat: count}
-  dateSet.forEach(d => { pivot[d] = {}; SHOP_TYPE_CATEGORIES.forEach(c => pivot[d][c] = 0); });
+  const rowPC = {}; // date -> productive call count (any category, sale > 0)
+  dateSet.forEach(d => { pivot[d] = {}; SHOP_TYPE_CATEGORIES.forEach(c => pivot[d][c] = 0); rowPC[d] = 0; });
   userRows.forEach(r => {
     if(!r.date) return;
-    if(!pivot[r.date]) { pivot[r.date] = {}; SHOP_TYPE_CATEGORIES.forEach(c => pivot[r.date][c] = 0); }
+    if(!pivot[r.date]) { pivot[r.date] = {}; SHOP_TYPE_CATEGORIES.forEach(c => pivot[r.date][c] = 0); rowPC[r.date] = 0; }
     pivot[r.date][r.cat] = (pivot[r.date][r.cat] || 0) + 1;
+    if(r.sale > 0) rowPC[r.date] = (rowPC[r.date] || 0) + 1;
   });
 
   const colTotals = {}; SHOP_TYPE_CATEGORIES.forEach(c => colTotals[c] = 0);
   let grandTotal = 0;
+  let grandTotalPC = 0;
   const esc = (s) => (s || '').toString().replace(/"/g,'&quot;');
 
   const cellHtml = (v, cat, date) => {
@@ -2222,9 +2226,11 @@ function renderUserCallsDrilldown(userName){
       return cellHtml(v, c, d);
     }).join('');
     grandTotal += rowTotal;
+    const pc = rowPC[d] || 0;
+    grandTotalPC += pc;
     const rowTotalCell = rowTotal === 0
       ? `<td class="calls-total-cell">0</td>`
-      : `<td class="calls-total-cell calls-count-cell" data-user="${esc(userName)}" data-cat="" data-date="${esc(d)}">${rowTotal}</td>`;
+      : `<td class="calls-total-cell calls-count-cell" data-user="${esc(userName)}" data-cat="" data-date="${esc(d)}">${rowTotal} <span class="pc-badge">(${pc} PC)</span></td>`;
     return `<tr><td>${d}</td>${cells}${rowTotalCell}</tr>`;
   }).join('');
 
@@ -2234,7 +2240,7 @@ function renderUserCallsDrilldown(userName){
   }).join('');
   const grandTotalCell = grandTotal === 0
     ? `<td class="calls-total-cell">0</td>`
-    : `<td class="calls-total-cell calls-count-cell" data-user="${esc(userName)}" data-cat="" data-date="">${grandTotal}</td>`;
+    : `<td class="calls-total-cell calls-count-cell" data-user="${esc(userName)}" data-cat="" data-date="">${grandTotal} <span class="pc-badge">(${grandTotalPC} PC)</span></td>`;
 
   const wrap = document.getElementById('calls-pivot-wrap');
   if(dateSet.length === 0){
@@ -2246,7 +2252,7 @@ function renderUserCallsDrilldown(userName){
           <tr>
             <th>📅 Date</th>
             ${SHOP_TYPE_CATEGORIES.map(c => `<th>${c}</th>`).join('')}
-            <th class="calls-total-col">Grand Total</th>
+            <th class="calls-total-col">Grand Total (Visit | PC)</th>
           </tr>
         </thead>
         <tbody>
