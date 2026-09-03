@@ -4,10 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sales Performance Dashboard</title>
-<link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#1a56db">
-<link rel="icon" href="./icon-192.png">
-<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAACoklEQVR4nO3dQW7aQBiAUah6CrrtmcgZeya67T26yAYpiwR/8GMm760x45E+2UgzNsfT+XKArX48+wR4bQIiERCJgEgERCIgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZEIiERAJAIiERCJgEgERCIgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZEIiERAJAIiERCJgEgERCIgEgGRCIhEQCQCIvn57BPgq/79+X3T53+9/X3QmVw7ns6XgWEobk3n2qMzcgvbu1JPP/xTAiIR0K7d5frx0IuQgEgERCIgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZGs/GDhPp/EW8yaAW17DuH9KBndZMFb2M6fxFvMggExabWA9v8k3mJWC4hhAiIREImASAREIiASAZEIiERAJAIiERCJgEgERLLmhrJh33nro4ASWx/dwraz9fEgICIBbWTr4zsBkQiIREAkAiIREImASARE8pyljO+8eLSY6YAsHi1m9BZm8Wg9fgORzAVk8WhJrkAkAiIREImASAREIiASAZEIiERAJAIiERCJgEgERCIgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZEIiERAJAIiERDJXEB3eUnvp18yM8rYQGPT2eyVrkAz74keexv1GtMZDahM5uvHzowyNtDYdLY5ns6XR4/x0cxfHYz9ocJi07nJcwJiGa/0G4gdEhCJgEgERCIgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZEIiERAJAIiERCJgEgERCIgEgGRCIhEQCQCIvkPlbllBWNzSLgAAAAASUVORK5CYII=">
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAACoklEQVR4nO3dQW7aQBiAUah6CrrtmcgZeya67T26yAYpiwR/8GMm760x45E+2UgzNsfT+XKArX48+wR4bQIiERCJgEgERCIgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZEIiERAJAIiERCJgEgERCIgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZEIiERAJAIiERCJgEgERCIgEgGRCIhEQCQCIvn57BPgq/79+X3T53+9/X3QmVw7ns6XgWEobk3n2qMzcgvbu1JPP/xTAiIR0K7d5frx0IuQgEgERCIgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZGs/GDhPp/EW8yaAW17DuH9KBndZMFb2M6fxFvMggExabWA9v8k3mJWC4hhAiIREImASAREIiASAZEIiERAJAIiERCJgEgERLLmhrJh33nro4ASWx/dwraz9fEgICIBbWTr4zsBkQiIREAkAiIREImASARE8pyljO+8eLSY6YAsHi1m9BZm8Wg9fgORzAVk8WhJrkAkAiIREImASAREIiASAZEIiERAJAIiERCJgEgERCIgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZEIiERAJAIiERDJXEB3eUnvp18yM8rYQGPT2eyVrkAz74keexv1GtMZDahM5uvHzowyNtDYdLY5ns6XR4/x0cxfHYz9ocJi07nJcwJiGa/0G4gdEhCJgEgERCIgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZEIiERAJAIiERCJgEgERCIgEgGRCIhEQCQCIvkPlbllBWNzSLgAAAAASUVORK5CYII=">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Sales MIS">
@@ -2985,6 +2984,44 @@ document.getElementById('loginForm').addEventListener('submit', (e) => {
 </script>
 
 <script>
+/* ============ PWA: dynamically-built manifest (self-contained, no external files) ============ */
+(function buildManifest(){
+  const icon192 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAACoklEQVR4nO3dQW7aQBiAUah6CrrtmcgZeya67T26yAYpiwR/8GMm760x45E+2UgzNsfT+XKArX48+wR4bQIiERCJgEgERCIgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZEIiERAJAIiERCJgEgERCIgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZEIiERAJAIiERCJgEgERCIgEgGRCIhEQCQCIvn57BPgq/79+X3T53+9/X3QmVw7ns6XgWEobk3n2qMzcgvbu1JPP/xTAiIR0K7d5frx0IuQgEgERCIgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZGs/GDhPp/EW8yaAW17DuH9KBndZMFb2M6fxFvMggExabWA9v8k3mJWC4hhAiIREImASAREIiASAZEIiERAJAIiERCJgEgERLLmhrJh33nro4ASWx/dwraz9fEgICIBbWTr4zsBkQiIREAkAiIREImASARE8pyljO+8eLSY6YAsHi1m9BZm8Wg9fgORzAVk8WhJrkAkAiIREImASAREIiASAZEIiERAJAIiERCJgEgERCIgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZEIiERAJAIiERDJXEB3eUnvp18yM8rYQGPT2eyVrkAz74keexv1GtMZDahM5uvHzowyNtDYdLY5ns6XR4/x0cxfHYz9ocJi07nJcwJiGa/0G4gdEhCJgEgERCIgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZEIiERAJAIiERCJgEgERCIgEgGRCIhEQCQCIvkPlbllBWNzSLgAAAAASUVORK5CYII=";
+  const icon512 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAIAAAB7GkOtAAAJQklEQVR4nO3dS04cSxBAUfuJVZgpa4I1siYzZR9vgIRsdwP9q8pM7jkLoEKhUtx298A/fz3+/gFAz3+jBwBgDAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAqLvRAwA5r88POz/x/ull5ycu4eevx9+jZwAS9r/7h5TgTwIAbG6G0/8nGXjjNwBgW7Nd/x9TjjSEAAAbmvbUTjvYngQA2MrkR3by8XYgAMAmljivSwy5HQEAbm+hw7rQqDcnAABRAgDc2HKfqZcb+FYEACBKAACiBAC4pUW/Tll07CsJAECUAABECQBAlAAARAkAQJQAAEQJAECUAABECQBAlAAARAkAQJQAAEQJAECUAABECQBAlAAARAkAQJQAAEQJAECUAABECQBAlAAARAkAQJQAAEQJAECUAABECQBAlAAARAkAQJQAAEQJAECUAABECQBAlAAARAkAQJQAAEQJAECUAABECQBAlAAARAkAQJQAAEQJAECUAABECQBAlAAARAkAQJQAAEQJAECUAABECQBAlAAARN2NHoDv4/X5Yf+H3j+97P9Q+B4EgGsNufuHT1cCOJcAcLmxp/8fb8PIAJzObwBcaKrr/27OqWBOAsAlZr6zM88GUxEAzjb/hZ1/QpiBAHCeVW7rKnPCQALAGda6qmtNC/sTAIAoAeBUK36gXnFm2I0AAEQJAECUAHCSdb9LWXdy2JoAAEQJAECUAABECQBAlAAARAkAQJQAAEQJAECUAABECQBAlAAARAkAQJQAAEQJAECUAABECQBAlAAARAkAQJQAAEQJAECUAABECQBAlAAARAkAQJQAAEQJAECUAABECQBAlAAARAkAQJQAAEQJAECUAABECQBAlAAARAkAQNTd6AHgO3t9ftj/ofdPL/s/lBUJANzekLt/+HQl4HMCALc09vT/420YGeAjfgOAm5nq+r+bcypmIABwGzPf2ZlnYyABgBuY/8LOPyH7EwC41iq3dZU52Y0AwFXWuqprTcvWBAAgSgDgcit+oF5xZjYiAABRAgAQJQBwoXW/S1l3cm5LAACiBAAgSgAAogQAIEoAAKIEACBKAACiBAAgSgAAogQAIEoAAKIEACBKAACiBAAgSgAAogQAIEoAAKIEACBKAACiBAAg6m70AKsa8t9q3z+97P9Q4LsSgPMMufuHT1cC4HoCcKqxp/8fb8PIAHANvwGcZKrr/27OqYBVCMDXZr6zM88GTE4AvjD/hZ1/QmBOAvCZVW7rKnMCUxGAD611VdeaFpiBAABECcBxK36gXnFmYCABAIgSAIAoAThi3e9S1p0c2J8AAEQJAECUAABECQBAlAAARAkAQJQAAEQJAECUAABECQBAlAAARAkAQJQAAEQJAECUAABECQBAlAAARAkAQJQAAEQJAECUAABECQBAlAAARAkAQJQAAEQJAECUAABECQBAlAAARAkAQJQAAEQJAECUAABECQBAlAAARAkAQJQAAEQJAECUAABECQBAlAAARAkAQJQAAEQJAECUAABECQBAlAAARAkAQJQAAEQJAECUAABECQBAlAAARAkAQJQAAEQJAECUAABECQBAlAAARAkAQJQAAEQJAECUAABECQBAlAAARAkAQJQAAEQJAECUAABECQBAlAAARAkAQJQAAEQJAECUAABECQBAlAAARAkAQJQAAEQJAECUAABECQBAlAAARAkAQJQAAEQJAECUAABECQBAlAAARAkAQJQAAEQJwBH3Ty+jR7jQdpPbyZ5/eWubTr7oWhYd+0oCABAlAABRAnDciv8e3HpmO9n/729hh5mXW8tyA9+KAHwT2Tf4E3ZyyE4OlXciAB8qvxYfsZNDdnKUtSxBAD6zyku855x2MvZZ19h5ziXWssSQ2xGAL8z/fuw/oZ3M8MRzDZlw8rVMPt4OBOBrM78lo2azk3mee4qBs027lmkH29PPX4+/R8+whtfnh9Ej/GWG19dODtnJUVOtZZKdzEAAzjPJezzVG2wnh+zkqBnWMttOxhKACw15lSd/d+3kkJ0ctf9a5t/JEAIAEOVHYIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIgSAIAoAQCIEgCAKAEAiBIAgCgBAIj6H2yV/NcyjmHpAAAAAElFTkSuQmCC";
+  const scopeUrl = location.pathname.replace(/[^/]*$/, ''); // folder this page lives in
+  const manifest = {
+    name: "Sales MIS - UM Orthotics",
+    short_name: "Sales MIS",
+    description: "Live Sales Performance Dashboard pulling data from Google Sheets",
+    start_url: scopeUrl,
+    scope: scopeUrl,
+    display: "standalone",
+    background_color: "#f4f7fa",
+    theme_color: "#1a56db",
+    orientation: "any",
+    icons: [
+      { src: icon192, sizes: "192x192", type: "image/png", purpose: "any maskable" },
+      { src: icon512, sizes: "512x512", type: "image/png", purpose: "any maskable" }
+    ]
+  };
+  const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+  const manifestUrl = URL.createObjectURL(manifestBlob);
+  const link = document.createElement('link');
+  link.rel = 'manifest';
+  link.href = manifestUrl;
+  document.head.appendChild(link);
+
+  const iconLink = document.createElement('link');
+  iconLink.rel = 'icon';
+  iconLink.href = icon192;
+  document.head.appendChild(iconLink);
+
+  const appleIconLink = document.createElement('link');
+  appleIconLink.rel = 'apple-touch-icon';
+  appleIconLink.href = icon192;
+  document.head.appendChild(appleIconLink);
+})();
+
 /* ============ PWA: install prompt + service worker ============ */
 let deferredInstallPrompt = null;
 const installBtn = document.getElementById('installAppBtn');
@@ -3012,7 +3049,40 @@ window.addEventListener('appinstalled', () => {
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./service-worker.js').catch((err) => {
+    const swSource = `const CACHE_NAME = 'sales-mis-shell-v1';
+
+self.addEventListener('install', (event) => {
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+    )
+  );
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', (event) => {
+  const url = event.request.url;
+  if (url.includes('docs.google.com') || url.includes('cdnjs.cloudflare.com')) return;
+  if (event.request.method !== 'GET') return;
+
+  event.respondWith(
+    fetch(event.request)
+      .then((res) => {
+        const resClone = res.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, resClone));
+        return res;
+      })
+      .catch(() => caches.match(event.request))
+  );
+});
+`;
+    const swBlob = new Blob([swSource], { type: 'text/javascript' });
+    const swUrl = URL.createObjectURL(swBlob);
+    navigator.serviceWorker.register(swUrl).catch((err) => {
       console.warn('Service worker registration failed:', err);
     });
   });
