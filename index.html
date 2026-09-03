@@ -13,6 +13,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.1/echarts.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
     --white:#ffffff;
@@ -31,7 +35,7 @@
   }
   *{box-sizing:border-box; margin:0; padding:0;}
   body{
-    font-family:'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    font-family:'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
     background:var(--bg);
     color:var(--text);
     display:flex;
@@ -349,31 +353,37 @@
     gap:16px;
   }
   .kpi-card{
-    background:#fff;
-    border-radius:12px;
+    background:linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
+    border-radius:14px;
     padding:18px 20px;
-    box-shadow:var(--shadow);
-    border-left:4px solid var(--blue);
+    box-shadow:0 1px 2px rgba(15,23,42,0.04), 0 1px 3px rgba(15,23,42,0.03);
+    border:1px solid rgba(15,23,42,0.05);
     position:relative;
     overflow:hidden;
-    transition:transform 0.2s ease, box-shadow 0.2s ease;
+    transition:transform 0.25s cubic-bezier(.2,.8,.2,1), box-shadow 0.25s ease;
   }
-  .kpi-card:hover{ transform:translateY(-3px); box-shadow:0 8px 22px rgba(15,23,42,0.1); }
-  .kpi-card.green{ border-left-color:var(--green); }
-  .kpi-card.amber{ border-left-color:#d97706; }
-  .kpi-card.red{ border-left-color:var(--red); }
+  .kpi-card::before{
+    content:''; position:absolute; top:0; left:0; right:0; height:3px;
+    background:linear-gradient(90deg, var(--blue), var(--blue-light));
+  }
+  .kpi-card.green::before{ background:linear-gradient(90deg, var(--green), var(--green-light)); }
+  .kpi-card.amber::before{ background:linear-gradient(90deg, #d97706, #fde9c8); }
+  .kpi-card.red::before{ background:linear-gradient(90deg, var(--red), var(--red-light)); }
+  .kpi-card:hover{ transform:translateY(-4px); box-shadow:0 14px 28px rgba(15,23,42,0.1); }
   .kpi-card .label{
-    font-size:12px;
+    font-size:11.5px;
     color:var(--text-muted);
     font-weight:600;
     text-transform:uppercase;
-    letter-spacing:0.4px;
+    letter-spacing:0.5px;
   }
   .kpi-card .value{
-    font-size:26px;
+    font-size:27px;
     font-weight:800;
     color:var(--blue-dark);
     margin-top:8px;
+    letter-spacing:-0.4px;
+    font-variant-numeric:tabular-nums;
   }
   .kpi-card.green .value{ color:var(--green); }
   .kpi-card .sub{
@@ -390,14 +400,16 @@
     overflow:hidden;
     box-shadow:var(--shadow);
   }
+  tbody tr{ transition:background 0.12s ease; }
+  tbody tr:hover{ background:#f8fafc; }
   thead th{
     background:var(--blue-light);
     color:var(--blue-dark);
     text-align:left;
     padding:12px 16px;
-    font-size:12px;
+    font-size:11.5px;
     text-transform:uppercase;
-    letter-spacing:0.4px;
+    letter-spacing:0.5px;
     cursor:pointer;
     position:sticky;
     top:0;
@@ -536,6 +548,8 @@
   .chart-card:hover{ transform:translateY(-3px); box-shadow:0 8px 22px rgba(15,23,42,0.1); }
   .chart-card h4{ font-size:12.5px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:8px; align-self:flex-start; }
   .chart-card .gauge-sub{ font-size:11.5px; color:var(--text-muted); margin-top:4px; }
+  #gauge-primary, #gauge-secondary{ width:150px; height:150px; }
+  #bar-comparison{ width:100%; height:220px; }
   @media (max-width:1100px){ .chart-grid{ grid-template-columns:1fr 1fr; } .chart-card.wide{ grid-column:1 / -1; } }
   @media (max-width:640px){ .chart-grid{ grid-template-columns:1fr; } }
 
@@ -1484,42 +1498,99 @@ function categorizeShopType(raw){
 }
 
 /* ============ SVG CHART HELPERS ============ */
-function renderGauge(containerId, pct){
+const _echartsInstances = {};
+function _getEchart(containerId){
   const el = document.getElementById(containerId);
-  if(!el) return;
+  if(!el || typeof echarts === 'undefined') return null;
+  if(_echartsInstances[containerId]){
+    _echartsInstances[containerId].dispose();
+  }
+  const inst = echarts.init(el, null, { renderer: 'svg' });
+  _echartsInstances[containerId] = inst;
+  if(!_getEchart._resizeBound){
+    window.addEventListener('resize', () => {
+      Object.values(_echartsInstances).forEach(c => { try{ c.resize(); }catch(e){} });
+    });
+    _getEchart._resizeBound = true;
+  }
+  return inst;
+}
+
+function renderGauge(containerId, pct){
+  const chart = _getEchart(containerId);
+  if(!chart) return;
   const clamped = Math.max(0, Math.min(pct, 100));
-  const radius = 52, cx = 70, cy = 70, sw = 14;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (clamped / 100) * circumference;
-  const color = pctClass(pct) === 'green' ? '#0e9f6e' : pctClass(pct) === 'amber' ? '#d97706' : '#e02424';
-  el.innerHTML = `
-    <svg viewBox="0 0 140 140" width="140" height="140">
-      <circle cx="${cx}" cy="${cy}" r="${radius}" fill="none" stroke="#eef0f3" stroke-width="${sw}"/>
-      <circle cx="${cx}" cy="${cy}" r="${radius}" fill="none" stroke="${color}" stroke-width="${sw}"
-        stroke-dasharray="${circumference}" stroke-dashoffset="${offset}"
-        stroke-linecap="round" transform="rotate(-90 ${cx} ${cy})"
-        style="transition:stroke-dashoffset 0.6s ease;"/>
-      <text x="${cx}" y="${cy + 7}" text-anchor="middle" font-size="22" font-weight="800" fill="${color}" font-family="Segoe UI, sans-serif">${pct.toFixed(1)}%</text>
-    </svg>`;
+  const cls = pctClass(pct);
+  const color = cls === 'green' ? '#0e9f6e' : cls === 'amber' ? '#d97706' : '#e02424';
+  const colorLight = cls === 'green' ? '#6ee7c0' : cls === 'amber' ? '#fbbf24' : '#f87171';
+  chart.setOption({
+    series: [{
+      type: 'gauge',
+      startAngle: 90,
+      endAngle: -270,
+      radius: '92%',
+      pointer: { show: false },
+      progress: {
+        show: true, overlap: false, roundCap: true, clip: false,
+        itemStyle: {
+          color: { type:'linear', x:0, y:0, x2:1, y2:0, colorStops:[{offset:0,color:colorLight},{offset:1,color:color}] }
+        }
+      },
+      axisLine: { lineStyle: { width: 14, color: [[1, '#eef0f3']] } },
+      splitLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: { show: false },
+      data: [{ value: clamped }],
+      title: { show: false },
+      detail: {
+        valueAnimation: true,
+        offsetCenter: [0, 0],
+        formatter: (v) => v.toFixed(1) + '%',
+        fontSize: 22, fontWeight: 800, color: color, fontFamily: 'Inter, sans-serif'
+      },
+      animationDuration: 700,
+      animationEasing: 'cubicOut'
+    }]
+  });
 }
 
 function renderComparisonBar(containerId, items){
-  const el = document.getElementById(containerId);
-  if(!el) return;
-  const max = Math.max(...items.map(i => i.value), 1);
-  const barWidth = 52, gap = 26, chartHeight = 190, topPad = 30;
-  const chartWidth = items.length * (barWidth + gap) + gap;
-  const bars = items.map((item, i) => {
-    const h = Math.max((item.value / max) * (chartHeight - topPad - 34), 2);
-    const x = gap + i * (barWidth + gap);
-    const y = chartHeight - h - 30;
-    return `
-      <rect x="${x}" y="${y}" width="${barWidth}" height="${h}" rx="6" fill="${item.color}"/>
-      <text x="${x + barWidth/2}" y="${y - 8}" text-anchor="middle" font-size="11.5" font-weight="700" fill="#1f2937" font-family="Segoe UI, sans-serif">₹${fmtCompact(item.value)}</text>
-      <text x="${x + barWidth/2}" y="${chartHeight - 10}" text-anchor="middle" font-size="10.5" fill="#6b7280" font-family="Segoe UI, sans-serif">${item.label}</text>
-    `;
-  }).join('');
-  el.innerHTML = `<svg viewBox="0 0 ${chartWidth} ${chartHeight}" width="100%" height="200" preserveAspectRatio="xMidYMid meet">${bars}</svg>`;
+  const chart = _getEchart(containerId);
+  if(!chart) return;
+  chart.setOption({
+    grid: { left: 8, right: 8, top: 34, bottom: 30, containLabel: true },
+    tooltip: {
+      trigger: 'item',
+      formatter: (p) => `${p.name}: <b>₹${fmtCompact(p.value)}</b>`,
+      textStyle: { fontFamily: 'Inter, sans-serif' }
+    },
+    xAxis: {
+      type: 'category',
+      data: items.map(i => i.label),
+      axisLine: { lineStyle: { color: '#e5e7eb' } },
+      axisTick: { show: false },
+      axisLabel: { color: '#6b7280', fontSize: 10.5, fontFamily: 'Inter, sans-serif' }
+    },
+    yAxis: { show: false },
+    series: [{
+      type: 'bar',
+      data: items.map(i => ({
+        value: i.value,
+        itemStyle: {
+          borderRadius: [6, 6, 0, 0],
+          color: { type:'linear', x:0, y:0, x2:0, y2:1, colorStops:[{offset:0,color:i.color},{offset:1,color:i.color+'99'}] }
+        }
+      })),
+      barMaxWidth: 46,
+      label: {
+        show: true, position: 'top', fontSize: 11.5, fontWeight: 700, color: '#1f2937',
+        fontFamily: 'Inter, sans-serif',
+        formatter: (p) => '₹' + fmtCompact(p.value)
+      },
+      animationDuration: 700,
+      animationEasing: 'cubicOut'
+    }]
+  });
 }
 
 function fmtCompact(n){
@@ -1550,6 +1621,9 @@ document.querySelectorAll('.nav-item').forEach(item => {
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     item.classList.add('active');
     document.getElementById('tab-' + item.dataset.tab).classList.add('active');
+    setTimeout(() => {
+      Object.values(_echartsInstances).forEach(c => { try{ c.resize(); }catch(e){} });
+    }, 50);
   });
 });
 
