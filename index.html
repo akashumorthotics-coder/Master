@@ -4,6 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sales Performance Dashboard</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#1a56db">
+<link rel="icon" href="./icon-192.png">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sales MIS">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <style>
   :root{
     --white:#ffffff;
@@ -176,6 +186,12 @@
     border-top:1px solid rgba(255,255,255,0.15);
   }
   #last-updated{ display:block; margin-top:4px; color:rgba(255,255,255,0.8); }
+  .install-app-btn{
+    margin-top:12px; width:100%; padding:9px 10px; border:1px solid rgba(255,255,255,0.3);
+    border-radius:8px; background:rgba(255,255,255,0.12); color:#fff; font-size:12px;
+    font-weight:600; cursor:pointer; transition:background 0.15s ease;
+  }
+  .install-app-btn:hover{ background:rgba(255,255,255,0.22); }
 
   /* Main */
   .main{
@@ -496,6 +512,27 @@
   @media (max-width:1100px){ .chart-grid{ grid-template-columns:1fr 1fr; } .chart-card.wide{ grid-column:1 / -1; } }
   @media (max-width:640px){ .chart-grid{ grid-template-columns:1fr; } }
 
+  /* Product Training */
+  .training-grid{
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:16px;
+  }
+  .training-card{
+    background:var(--white); border:1px solid #e4e9f0; border-radius:12px; padding:18px;
+    display:flex; flex-direction:column; gap:12px; transition:box-shadow 0.15s ease, transform 0.15s ease;
+  }
+  .training-card:hover{ box-shadow:0 6px 18px rgba(26,86,219,0.12); transform:translateY(-2px); }
+  .training-card .training-icon{
+    width:40px; height:40px; border-radius:10px; background:var(--blue-light); color:var(--blue);
+    display:flex; align-items:center; justify-content:center; font-size:18px;
+  }
+  .training-card h4{ font-size:14.5px; color:#1f2a3d; line-height:1.35; margin:0; }
+  .training-card a.watch-btn{
+    margin-top:auto; display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    background:var(--blue); color:#fff; text-decoration:none; font-size:13px; font-weight:600;
+    padding:9px 12px; border-radius:8px; transition:background 0.15s ease;
+  }
+  .training-card a.watch-btn:hover{ background:var(--blue-dark); }
+
   .modal-overlay{
     position:fixed; inset:0; background:rgba(15,23,42,0.5);
     display:flex; align-items:center; justify-content:center; z-index:100; padding:20px;
@@ -524,6 +561,13 @@
   }
   .export-excel-btn:hover{ background:var(--green); color:#fff; box-shadow:0 4px 12px rgba(14,159,110,0.3); }
   .export-excel-btn:active{ transform:scale(0.96); }
+  .export-pdf-btn{
+    padding:8px 14px; border-radius:8px; border:1px solid var(--red); background:var(--red-light);
+    color:#b91c1c; font-size:12.5px; font-weight:700; cursor:pointer; white-space:nowrap;
+    transition:background 0.15s ease, transform 0.12s ease, box-shadow 0.15s ease;
+  }
+  .export-pdf-btn:hover{ background:var(--red); color:#fff; box-shadow:0 4px 12px rgba(224,36,36,0.3); }
+  .export-pdf-btn:active{ transform:scale(0.96); }
   .modal-close{
     background:var(--bg); border:none; width:30px; height:30px; border-radius:50%;
     cursor:pointer; font-size:14px; color:var(--text-muted);
@@ -707,10 +751,14 @@
     <div class="nav-item" data-tab="beatwise">
       <span class="emoji">🧭</span><span>Beat Wise Secondary</span>
     </div>
+    <div class="nav-item" data-tab="training">
+      <span class="emoji">🎓</span><span>Product Training</span>
+    </div>
   </div>
   <div class="sidebar-footer">
     Live data from Google Sheets
     <span id="last-updated">Not loaded yet</span>
+    <button type="button" class="install-app-btn" id="installAppBtn" style="display:none;">⬇️ Install App</button>
   </div>
 </div>
 
@@ -929,6 +977,25 @@
     <div id="beatwise-error"></div>
   </div>
 
+  <!-- PRODUCT TRAINING -->
+  <div class="tab-content" id="tab-training">
+    <div class="topbar">
+      <h2>🎓 Product Training</h2>
+      <div class="controls">
+        <button class="refresh-btn" id="trainingRefreshBtn">⟳ Refresh</button>
+      </div>
+    </div>
+    <div id="training-status" class="loading"><div class="spinner"></div>Loading training videos…</div>
+    <div id="training-content" style="display:none;">
+      <input type="text" class="search-box" id="trainingSearch" placeholder="Search topic…">
+      <div class="subtotal-bar" id="training-subtotal-bar">
+        <span>Showing <b id="training-subtotal-count">0</b> topics</span>
+      </div>
+      <div class="training-grid" id="training-grid"></div>
+    </div>
+    <div id="training-error"></div>
+  </div>
+
   <!-- SHOP-WISE DRILLDOWN MODAL -->
   <div class="modal-overlay" id="drilldown-overlay">
     <div class="modal-box" id="drilldown-modal">
@@ -936,6 +1003,7 @@
         <h3 id="drilldown-title">🏬 Shop Wise Sale</h3>
         <div class="modal-header-actions">
           <button type="button" class="export-excel-btn" onclick="exportCurrentPivotToExcel('Beat_ShopMonth')">📥 Export to Excel</button>
+          <button type="button" class="export-pdf-btn" onclick="exportCurrentPivotToPdf('Beat_ShopMonth', 'Beat Wise - Shop & Month Wise Sale')">📄 Export to PDF</button>
           <button type="button" id="drilldown-close" class="modal-close">✕</button>
         </div>
       </div>
@@ -1007,6 +1075,7 @@
         <h3 id="shopvisits-drilldown-title">🏬 Shop Visit Details</h3>
         <div class="modal-header-actions">
           <button type="button" class="export-excel-btn" onclick="exportCurrentPivotToExcel('Secondary_ShopMonth')">📥 Export to Excel</button>
+          <button type="button" class="export-pdf-btn" onclick="exportCurrentPivotToPdf('Secondary_ShopMonth', 'Secondary Sale - Shop & Month Wise')">📄 Export to PDF</button>
           <button type="button" id="shopvisits-drilldown-close" class="modal-close">✕</button>
         </div>
       </div>
@@ -1088,6 +1157,7 @@ const TAB_TARGET_VS_ACH = "Primary Sale Target vs ach."; // B=State, D=Target, E
 const TAB_PARTY_WISE   = "Party -Wise Primary";           // A=Party, C=Sale, D=State
 const TAB_SECONDARY    = "Secondary & Tertiary Sale";     // A=State, B=User, D=Target, E=Ach.
 const TAB_REPORT       = "Report";                        // D=User, G=Beat, I=State, N=Sale Amount
+const TAB_TRAINING     = "Training";                       // A=Topic, B=Video Link
 const REFRESH_INTERVAL_MS = 2 * 60 * 60 * 1000; // auto-refresh every 2 hours
 
 let _jsonpCounter = 0;
@@ -1151,15 +1221,78 @@ function fmtNum(n){
   return Math.round(n).toLocaleString('en-IN');
 }
 
-/* ============ EXPORT PIVOT TABLE TO EXCEL (CSV) ============ */
+/* ============ EXPORT PIVOT TABLE TO EXCEL (.xlsx) ============ */
 /* Whichever pivot modal (Shop x Month) is currently open stores its data here on render,
-   so the Export button can build a properly-aligned CSV (colspan/rowspan headers don't
+   so the Export button can build a properly-structured file (colspan/rowspan headers don't
    translate cleanly from the DOM, so we build the export from the underlying data instead). */
 let currentPivotExportData = null;
 
 function exportCurrentPivotToExcel(filenamePrefix){
   if(!currentPivotExportData){ return; }
-  const { entityLabel, months, rows, grandTotalVisits, grandTotalSale } = currentPivotExportData;
+  const stamp = new Date().toISOString().slice(0,10);
+
+  // Preferred path: real .xlsx via SheetJS, with genuine merged cells for the month headers
+  if(typeof XLSX !== 'undefined'){
+    try{
+      exportAsXlsx(currentPivotExportData, `${filenamePrefix}_${stamp}.xlsx`);
+      return;
+    }catch(err){
+      console.warn('XLSX export failed, falling back to CSV:', err);
+    }
+  }
+  exportAsCsv(currentPivotExportData, `${filenamePrefix}_${stamp}.csv`);
+}
+
+function exportAsXlsx(data, filename){
+  const { entityLabel, months, rows, grandTotalVisits, grandTotalSale } = data;
+
+  // Row 1: entity label (merged down 2 rows) + each month spanning 2 cols + Grand Total spanning 2 cols
+  const headerRow1 = [entityLabel, ...months.flatMap(m => [m, null]), 'Grand Total', null];
+  // Row 2: blank under entity label + Visit/Sale sub-labels repeating
+  const headerRow2 = [null, ...months.flatMap(() => ['Visit', 'Sale']), 'Visit', 'Sale'];
+
+  const dataRows = rows.map(r => {
+    const cells = [r.label];
+    months.forEach(m => {
+      const cell = r.months.get(m);
+      cells.push(cell ? cell.visits : 0);
+      cells.push(cell ? cell.sale : 0);
+    });
+    cells.push(r.gtVisits, r.gtSale);
+    return cells;
+  });
+
+  const footerRow = ['Grand Total'];
+  months.forEach(m => {
+    let v = 0, s = 0;
+    rows.forEach(r => { const c = r.months.get(m); if(c){ v += c.visits; s += c.sale; } });
+    footerRow.push(v, s);
+  });
+  footerRow.push(grandTotalVisits, grandTotalSale);
+
+  const aoa = [headerRow1, headerRow2, ...dataRows, footerRow];
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+  // Merge: entity label spans both header rows; each month label spans its 2 sub-columns; Grand Total too
+  const merges = [{ s: { r: 0, c: 0 }, e: { r: 1, c: 0 } }];
+  months.forEach((m, i) => {
+    const col = 1 + i * 2;
+    merges.push({ s: { r: 0, c: col }, e: { r: 0, c: col + 1 } });
+  });
+  const gtCol = 1 + months.length * 2;
+  merges.push({ s: { r: 0, c: gtCol }, e: { r: 0, c: gtCol + 1 } });
+  ws['!merges'] = merges;
+
+  // Reasonable column widths so it's readable without manual resizing
+  ws['!cols'] = [{ wch: 26 }, ...Array(months.length * 2 + 2).fill({ wch: 12 })];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+  XLSX.writeFile(wb, filename);
+}
+
+function exportAsCsv(data, filename){
+  const { entityLabel, months, rows, grandTotalVisits, grandTotalSale } = data;
 
   const escapeCell = (val) => {
     const t = (val === null || val === undefined) ? '' : String(val).replace(/"/g, '""');
@@ -1193,13 +1326,92 @@ function exportCurrentPivotToExcel(filenamePrefix){
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  const stamp = new Date().toISOString().slice(0,10);
   a.href = url;
-  a.download = `${filenamePrefix}_${stamp}.csv`;
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+/* ============ EXPORT PIVOT TABLE TO PDF (full data, auto-paginated) ============ */
+/* Builds the PDF from the same underlying data used for the Excel export - NOT a screenshot
+   of whatever is currently scrolled into view - so every row and every month column is
+   included, spanning as many pages as needed. */
+function exportCurrentPivotToPdf(filenamePrefix, titleText){
+  if(!currentPivotExportData){ return; }
+  if(typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined'){
+    alert('PDF export library is still loading - please wait a moment and try again.');
+    return;
+  }
+
+  const { entityLabel, months, rows, grandTotalVisits, grandTotalSale } = currentPivotExportData;
+  const { jsPDF } = window.jspdf;
+
+  // Wide pivots (many months) get landscape orientation so more columns fit per page
+  const doc = new jsPDF({ orientation: months.length > 2 ? 'landscape' : 'portrait', unit: 'pt' });
+
+  const head = [
+    [
+      { content: entityLabel, rowSpan: 2, styles: { valign: 'middle' } },
+      ...months.map(m => ({ content: m, colSpan: 2, styles: { halign: 'center' } })),
+      { content: 'Grand Total', colSpan: 2, styles: { halign: 'center', fillColor: [26,86,219] } }
+    ],
+    [
+      ...months.flatMap(() => ['Visit', 'Sale']),
+      'Visit', 'Sale'
+    ]
+  ];
+
+  const body = rows.map(r => {
+    const cells = [r.label];
+    months.forEach(m => {
+      const cell = r.months.get(m);
+      cells.push(cell ? cell.visits : 0);
+      cells.push(cell ? fmtNum(cell.sale) : '0');
+    });
+    cells.push(r.gtVisits, fmtNum(r.gtSale));
+    return cells;
+  });
+
+  const footRow = ['Grand Total'];
+  months.forEach(m => {
+    let v = 0, s = 0;
+    rows.forEach(r => { const c = r.months.get(m); if(c){ v += c.visits; s += c.sale; } });
+    footRow.push(v, fmtNum(s));
+  });
+  footRow.push(grandTotalVisits, fmtNum(grandTotalSale));
+
+  doc.setFontSize(13);
+  doc.setTextColor(15, 61, 145);
+  doc.text(titleText || 'Sales MIS Export', 40, 30);
+  doc.setFontSize(9);
+  doc.setTextColor(107, 114, 128);
+  doc.text('Generated ' + new Date().toLocaleString('en-IN'), 40, 44);
+
+  doc.autoTable({
+    head,
+    body,
+    foot: [footRow],
+    startY: 56,
+    theme: 'grid',
+    styles: { fontSize: 8, cellPadding: 4, halign: 'center' },
+    columnStyles: { 0: { halign: 'left', cellWidth: 140 } },
+    headStyles: { fillColor: [15, 61, 145], textColor: 255, fontStyle: 'bold' },
+    footStyles: { fillColor: [232, 240, 254], textColor: [15, 61, 145], fontStyle: 'bold' },
+    didParseCell: (data) => {
+      // Highlight the Grand Total sub-columns (last two) throughout the body too
+      if(data.section === 'body' && body[0] && data.column.index >= body[0].length - 2){
+        data.cell.styles.fillColor = [232, 240, 254];
+        data.cell.styles.textColor = [15, 61, 145];
+        data.cell.styles.fontStyle = 'bold';
+      }
+    },
+    margin: { left: 40, right: 40 }
+  });
+
+  const stamp = new Date().toISOString().slice(0,10);
+  doc.save(`${filenamePrefix}_${stamp}.pdf`);
 }
 
 function pctClass(pct){ return pct >= 90 ? 'green' : pct >= 60 ? 'amber' : 'red'; }
@@ -1285,6 +1497,7 @@ let targetVsAchData = []; // {state, target, sale}
 let partyWiseData = [];   // {party, sale, state}
 let secondaryData = [];   // {state, user, target, ach}
 let beatWiseData = [];    // {state, user, beat, sale}
+let trainingData = [];    // {topic, link}
 let currentPrimarySort = { key: null, dir: 1 };
 let currentSecondarySort = { key: null, dir: 1 };
 let currentBeatSort = { key: null, dir: 1 };
@@ -1411,6 +1624,7 @@ async function loadAllData(){
     renderPrimaryTable(stateFilters.primary || []);
     renderSecondaryTable(stateFilters.secondary || []);
     renderBeatWise();
+    loadTrainingData(); // independent — a missing/renamed Training tab shouldn't break the other tabs
 
     document.getElementById('exec-status').style.display = 'none';
     document.getElementById('exec-content').style.display = 'block';
@@ -1443,6 +1657,74 @@ async function loadAllData(){
     btn.textContent = '⟳ Refresh Data';
   }
 }
+
+/* ============ PRODUCT TRAINING ============ */
+function escapeHtml(str){
+  return (str || '').toString()
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function normalizeVideoUrl(raw){
+  let url = (raw || '').toString().trim();
+  if(!url) return '';
+  if(!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  return url;
+}
+
+async function loadTrainingData(){
+  const statusEl = document.getElementById('training-status');
+  const contentEl = document.getElementById('training-content');
+  const errorEl = document.getElementById('training-error');
+  statusEl.style.display = 'block';
+  contentEl.style.display = 'none';
+  errorEl.innerHTML = '';
+  try{
+    const tr = await fetchSheetTab(TAB_TRAINING);
+    const aIdx = colLetterToIndex('A'), bIdx = colLetterToIndex('B');
+    trainingData = tr.rows
+      .map(r => ({
+        topic: (r[aIdx] || '').toString().trim(),
+        link: normalizeVideoUrl(r[bIdx])
+      }))
+      .filter(r => r.topic && r.topic.toUpperCase() !== 'TOPIC');
+
+    renderTraining();
+    statusEl.style.display = 'none';
+    contentEl.style.display = 'block';
+  }catch(err){
+    console.error(err);
+    statusEl.style.display = 'none';
+    errorEl.innerHTML = `<div class="error-box">⚠️ Could not load training videos: ${err.message}<br><br>
+      Make sure the Google Sheet has a tab named exactly <b>"${TAB_TRAINING}"</b> with Topic in column A and the video link in column B.</div>`;
+  }
+}
+
+function renderTraining(){
+  const searchBox = document.getElementById('trainingSearch');
+  const q = (searchBox && searchBox.value ? searchBox.value : '').trim().toLowerCase();
+  const rows = trainingData.filter(r => !q || r.topic.toLowerCase().includes(q));
+
+  document.getElementById('training-subtotal-count').textContent = rows.length;
+
+  const grid = document.getElementById('training-grid');
+  if(!rows.length){
+    grid.innerHTML = '<div style="padding:24px;color:#8a94a6;">No training videos found.</div>';
+    return;
+  }
+  grid.innerHTML = rows.map(r => `
+    <div class="training-card">
+      <div class="training-icon">🎬</div>
+      <h4>${escapeHtml(r.topic)}</h4>
+      ${r.link
+        ? `<a class="watch-btn" href="${escapeHtml(r.link)}" target="_blank" rel="noopener noreferrer">▶ Watch Video</a>`
+        : `<span class="watch-btn" style="background:#c7d0dc;cursor:not-allowed;">No link</span>`}
+    </div>
+  `).join('');
+}
+
+document.getElementById('trainingSearch') && document.getElementById('trainingSearch').addEventListener('input', renderTraining);
+document.getElementById('trainingRefreshBtn') && document.getElementById('trainingRefreshBtn').addEventListener('click', loadTrainingData);
 
 function populateStateFilters(){
   const statesPrimary = Array.from(new Set(targetVsAchData.map(r => r.state))).sort();
@@ -2702,5 +2984,39 @@ document.getElementById('loginForm').addEventListener('submit', (e) => {
 });
 </script>
 
+<script>
+/* ============ PWA: install prompt + service worker ============ */
+let deferredInstallPrompt = null;
+const installBtn = document.getElementById('installAppBtn');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  if(installBtn) installBtn.style.display = 'block';
+});
+
+if(installBtn){
+  installBtn.addEventListener('click', async () => {
+    if(!deferredInstallPrompt) return;
+    installBtn.style.display = 'none';
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+  });
+}
+
+window.addEventListener('appinstalled', () => {
+  if(installBtn) installBtn.style.display = 'none';
+  deferredInstallPrompt = null;
+});
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js').catch((err) => {
+      console.warn('Service worker registration failed:', err);
+    });
+  });
+}
+</script>
 </body>
 </html>
