@@ -1169,12 +1169,16 @@
 
 <script>
 /* ============ LOGIN GATE ============ */
+// Credentials now come from the "Credential" sheet tab (A = ID, B = Password, C = State).
+// If State is blank / "All" / "ALL", the user can see every state.
+const TAB_CREDENTIAL = "Credential";
 const USERS = [
   { id: "Ashish",  password: "1234", defaultState: null },
   { id: "Sudipta", password: "1234", defaultState: "West Bengal" }
 ];
 const LOGIN_SESSION_KEY = "salesMisMasterAuthed";
 const LOGIN_USER_KEY = "salesMisMasterUser";
+const LOGIN_USER_STATE_KEY = "salesMisMasterUserState";
 
 let dashboardUnlocked = false;
 let loggedInUser = null;
@@ -1766,9 +1770,20 @@ document.getElementById('trainingSearch') && document.getElementById('trainingSe
 document.getElementById('trainingRefreshBtn') && document.getElementById('trainingRefreshBtn').addEventListener('click', loadTrainingData);
 
 function populateStateFilters(){
-  const statesPrimary = Array.from(new Set(targetVsAchData.map(r => r.state))).sort();
-  const statesSecondary = Array.from(new Set(secondaryData.map(r => r.state))).sort();
-  const allStates = Array.from(new Set([...statesPrimary, ...statesSecondary])).sort();
+  let statesPrimary = Array.from(new Set(targetVsAchData.map(r => r.state))).sort();
+  let statesSecondary = Array.from(new Set(secondaryData.map(r => r.state))).sort();
+  let allStates = Array.from(new Set([...statesPrimary, ...statesSecondary])).sort();
+  let statesBeat = Array.from(new Set(beatWiseData.map(r => r.state))).sort();
+
+  // If this user is locked to a single state, restrict every state picker's
+  // option list to just that state so nothing else can ever be selected.
+  const lockedState = loggedInUser && loggedInUser.defaultState;
+  if(lockedState){
+    statesPrimary = statesPrimary.includes(lockedState) ? [lockedState] : [];
+    statesSecondary = statesSecondary.includes(lockedState) ? [lockedState] : [];
+    allStates = allStates.includes(lockedState) ? [lockedState] : [];
+    statesBeat = statesBeat.includes(lockedState) ? [lockedState] : [];
+  }
 
   buildMultiSelect('exec', allStates.length ? allStates : statesPrimary, renderExecutive);
   buildMultiSelect('primary', statesPrimary.length ? statesPrimary : allStates, renderPrimaryTable);
@@ -1778,12 +1793,18 @@ function populateStateFilters(){
   });
   rebuildSecondaryUserFilter(stateFilters.secondary || []);
 
-  const statesBeat = Array.from(new Set(beatWiseData.map(r => r.state))).sort();
   buildMultiSelect('beatwiseState', statesBeat, (selStates) => {
     rebuildBeatUserFilter(selStates);
     renderBeatWise();
   });
   rebuildBeatUserFilter(stateFilters.beatwiseState || []);
+
+  // Lock the state pickers themselves (hide the "All States" master option,
+  // disable the checkbox for the locked state, and grey out the dropdown)
+  // so a locked-in user can't reopen the menu and add other states.
+  if(lockedState){
+    ['exec','primary','secondary','beatwiseState'].forEach(lockStateMultiSelect);
+  }
 
   // Month filters — each tab pulls month options from its own source sheet
   const monthsPrimary = Array.from(new Set(targetVsAchData.map(r => r.month))).filter(Boolean).sort(sortMonthStrings);
@@ -1891,6 +1912,33 @@ document.addEventListener('click', (e) => {
     if(!m.parentElement.contains(e.target)) m.classList.remove('open');
   });
 });
+
+// Locks a state multi-select to whatever single state is already selected in it
+// (the logged-in user's assigned state): removes the "All States" master option,
+// disables/checks the one remaining state checkbox, and disables the dropdown
+// button itself so the menu can't even be opened.
+function lockStateMultiSelect(key){
+  const menu = document.getElementById('msMenu-' + key);
+  const toggleBtn = document.getElementById('msToggle-' + key);
+  if(!menu || !toggleBtn) return;
+
+  const allCb = menu.querySelector('.ms-all');
+  if(allCb){
+    const allLabel = allCb.closest('.ms-item');
+    if(allLabel) allLabel.style.display = 'none';
+  }
+  menu.querySelectorAll('input[type=checkbox]:not(.ms-all)').forEach(cb => {
+    cb.checked = true;
+    cb.disabled = true;
+  });
+
+  toggleBtn.disabled = true;
+  toggleBtn.style.opacity = '0.7';
+  toggleBtn.style.cursor = 'not-allowed';
+  toggleBtn.title = 'State is locked to your assigned login';
+  toggleBtn.onclick = (e) => e.stopPropagation();
+  menu.classList.remove('open');
+}
 
 /* ============ RENDER EXECUTIVE ============ */
 function renderExecutive(selectedStates){
@@ -2999,21 +3047,48 @@ document.getElementById('refreshBtn').addEventListener('click', loadAllData);
 // Already logged in earlier this browser session? Skip the login screen.
 if(sessionStorage.getItem(LOGIN_SESSION_KEY) === 'yes'){
   const savedUserId = sessionStorage.getItem(LOGIN_USER_KEY);
-  loggedInUser = USERS.find(u => u.id === savedUserId) || null;
+  const savedState = sessionStorage.getItem(LOGIN_USER_STATE_KEY);
+  loggedInUser = USERS.find(u => u.id === savedUserId)
+    || (savedUserId ? { id: savedUserId, password: null, defaultState: savedState || null } : null);
   unlockDashboard();
 }
 
-document.getElementById('loginForm').addEventListener('submit', (e) => {
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const id = document.getElementById('loginId').value.trim();
   const pass = document.getElementById('loginPass').value;
   const errorBox = document.getElementById('loginError');
+  const submitBtn = e.target.querySelector('button[type="submit"]');
 
-  const matchedUser = USERS.find(u => u.id === id && u.password === pass);
+  // 1) Check the hardcoded USERS list first (kept for backward compatibility).
+  let matchedUser = USERS.find(u => u.id === id && u.password === pass);
+
+  // 2) If not found, check the "Credential" sheet tab (A=ID, B=Password, C=State).
+  if(!matchedUser){
+    if(submitBtn) submitBtn.disabled = true;
+    try{
+      const { rows } = await fetchSheetTab(TAB_CREDENTIAL);
+      const match = rows.find(r => {
+        const rowId = r[0] != null ? String(r[0]).trim() : '';
+        const rowPass = r[1] != null ? String(r[1]).trim() : '';
+        return rowId === id && rowPass === pass;
+      });
+      if(match){
+        const stateRaw = match[2] != null ? String(match[2]).trim() : '';
+        const state = (!stateRaw || stateRaw.toLowerCase() === 'all') ? null : stateRaw;
+        matchedUser = { id, password: pass, defaultState: state };
+      }
+    }catch(err){
+      console.error('Credential sheet lookup failed:', err);
+    }
+    if(submitBtn) submitBtn.disabled = false;
+  }
+
   if(matchedUser){
     loggedInUser = matchedUser;
     sessionStorage.setItem(LOGIN_SESSION_KEY, 'yes');
     sessionStorage.setItem(LOGIN_USER_KEY, matchedUser.id);
+    sessionStorage.setItem(LOGIN_USER_STATE_KEY, matchedUser.defaultState || '');
     errorBox.style.display = 'none';
     unlockDashboard();
   } else {
