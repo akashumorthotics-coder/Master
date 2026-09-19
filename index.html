@@ -2182,6 +2182,21 @@ function renderSecondaryShopTypeSummary(selectedStates, selMonths, selUsers){
     .filter(r => inFilter(r.state, selectedStates) && inFilter(r.month, selMonths) && inFilter(r.user, selUsers))
     .map(r => ({ ...r, cat: categorizeShopType(r.shopType) }));
 
+  // Full history (state/user filters applied, but NOT month filter) — needed to know whether a
+  // counter gave sale in any month *before* the currently selected month(s).
+  const historyRows = beatWiseData
+    .filter(r => inFilter(r.state, selectedStates) && inFilter(r.user, selUsers))
+    .map(r => ({ ...r, cat: categorizeShopType(r.shopType) }));
+
+  // Earliest actual visit date among the currently-scoped (filtered) rows — the cutoff before
+  // which a sale counts as "previous". Built from the real per-row date, not the month label,
+  // since the month field alone (e.g. "September") doesn't reliably parse into a JS Date.
+  let thresholdDate = null;
+  if(selMonths && selMonths.length){
+    const validDates = scopedRows.map(r => new Date(r.date)).filter(d => !isNaN(d));
+    if(validDates.length) thresholdDate = new Date(Math.min(...validDates.map(d => d.getTime())));
+  }
+
   const cardColors = { 'Chemist/Retail': 'var(--blue)', 'Dr./Hospital': 'var(--green)', 'Sub-Dist/Dealer': '#d97706', 'Others': 'var(--red)' };
 
   wrap.innerHTML = SHOP_TYPE_CATEGORIES.map(cat => {
@@ -2193,16 +2208,41 @@ function renderSecondaryShopTypeSummary(selectedStates, selMonths, selUsers){
       salePerShop.set(r.shop, (salePerShop.get(r.shop) || 0) + r.sale);
     });
     const uniqueCount = salePerShop.size;
-    const shopsWithSale = Array.from(salePerShop.values()).filter(v => v > 0).length;
+    const shopsGivingSale = Array.from(salePerShop.entries()).filter(([,v]) => v > 0).map(([shop]) => shop);
+    const shopsWithSale = shopsGivingSale.length;
     const conversionPct = uniqueCount > 0 ? (shopsWithSale / uniqueCount * 100) : 0;
     const catSale = catRows.reduce((s,r) => s + r.sale, 0);
     const avgPerCounter = shopsWithSale > 0 ? (catSale / shopsWithSale) : 0;
+
+    // Earliest-ever sale date per shop in this category, from the full history.
+    let repeatCount = 0, newCount = 0;
+    if(thresholdDate){
+      const catHistory = historyRows.filter(r => r.cat === cat && r.sale > 0);
+      const firstSaleDate = new Map();
+      catHistory.forEach(r => {
+        const d = new Date(r.date);
+        if(isNaN(d)) return;
+        const existing = firstSaleDate.get(r.shop);
+        if(!existing || d < existing) firstSaleDate.set(r.shop, d);
+      });
+      shopsGivingSale.forEach(shop => {
+        const firstDate = firstSaleDate.get(shop);
+        if(firstDate && firstDate < thresholdDate) repeatCount++;
+        else newCount++;
+      });
+    } else {
+      // No specific month selected — there's no "previous month" reference to compare against.
+      newCount = shopsWithSale;
+      repeatCount = 0;
+    }
 
     return `
       <div class="shoptype-card" style="border-top-color:${cardColors[cat]};">
         <div class="shoptype-card-title">🏬 ${cat}</div>
         <div class="shoptype-card-row"><span>Total Unique Met</span><span class="val shoptype-clickable" data-cat="${cat}" data-mode="all">${uniqueCount}</span></div>
         <div class="shoptype-card-row"><span>Counters Giving Sale</span><span class="val shoptype-clickable" data-cat="${cat}" data-mode="sale">${shopsWithSale}</span></div>
+        <div class="shoptype-card-row"><span>Repeat Sale Giving Counter</span><span class="val green shoptype-clickable" data-cat="${cat}" data-mode="repeat">${repeatCount}</span></div>
+        <div class="shoptype-card-row"><span>New Counter Added</span><span class="val blue shoptype-clickable" data-cat="${cat}" data-mode="new">${newCount}</span></div>
         <div class="shoptype-card-row"><span>% Conversion</span><span class="val ${conversionPct >= 60 ? 'green' : ''}">${conversionPct.toFixed(1)}%</span></div>
         <div class="shoptype-card-row"><span>Sale Amount</span><span class="val blue">₹ ${fmtNum(catSale)}</span></div>
         <div class="shoptype-card-row"><span>Avg. Sale / Counter</span><span class="val">₹ ${fmtNum(avgPerCounter)}</span></div>
@@ -2211,7 +2251,12 @@ function renderSecondaryShopTypeSummary(selectedStates, selMonths, selUsers){
 
   wrap.querySelectorAll('.shoptype-clickable').forEach(el => {
     el.addEventListener('click', () => {
-      openShopTypeCoverageDrilldown(el.dataset.cat, el.dataset.mode === 'sale', selectedStates, selMonths, selUsers);
+      const mode = el.dataset.mode;
+      if(mode === 'repeat' || mode === 'new'){
+        openShopTypeRepeatNewDrilldown(el.dataset.cat, mode, selectedStates, selMonths, selUsers);
+      } else {
+        openShopTypeCoverageDrilldown(el.dataset.cat, mode === 'sale', selectedStates, selMonths, selUsers);
+      }
     });
   });
 }
@@ -2736,6 +2781,76 @@ function openShopTypeCoverageDrilldown(category, onlySale, selectedStates, selMo
   document.getElementById('shopvisits-drilldown-overlay').classList.add('open');
 }
 
+/* ============ REPEAT / NEW COUNTER DRILLDOWN (from the two new shop-type-summary rows) ============ */
+function openShopTypeRepeatNewDrilldown(category, mode, selectedStates, selMonths, selUsers){
+  currentShopVisitsContext = { userName: null, category, date: null };
+  selUsers = selUsers || [];
+
+  // Rows within the currently selected filter window (state/month/user), this category only.
+  const scopedRows = beatWiseData.filter(r =>
+    inFilter(r.state, selectedStates) && inFilter(r.month, selMonths) && inFilter(r.user, selUsers) &&
+    categorizeShopType(r.shopType) === category
+  );
+
+  // Full sale history for these shops (state/user filters kept, month filter dropped) to find each
+  // shop's earliest-ever sale date.
+  const historyRows = beatWiseData.filter(r =>
+    inFilter(r.state, selectedStates) && inFilter(r.user, selUsers) &&
+    categorizeShopType(r.shopType) === category && r.sale > 0
+  );
+
+  let thresholdDate = null;
+  if(selMonths && selMonths.length){
+    const validDates = scopedRows.map(r => new Date(r.date)).filter(d => !isNaN(d));
+    if(validDates.length) thresholdDate = new Date(Math.min(...validDates.map(d => d.getTime())));
+  }
+
+  const firstSaleDate = new Map();
+  historyRows.forEach(r => {
+    const key = r.shop || '(Unnamed Shop)';
+    const d = new Date(r.date);
+    if(isNaN(d)) return;
+    const existing = firstSaleDate.get(key);
+    if(!existing || d < existing) firstSaleDate.set(key, d);
+  });
+
+  // Aggregate the scoped (currently filtered) rows by shop: visits + sale.
+  const map = new Map();
+  scopedRows.forEach(r => {
+    const key = r.shop || '(Unnamed Shop)';
+    if(!map.has(key)) map.set(key, { shop: key, visits: 0, sale: 0 });
+    const o = map.get(key);
+    o.visits += 1;
+    o.sale += r.sale;
+  });
+
+  let shopRows = Array.from(map.values()).filter(r => r.sale > 0);
+
+  shopRows = shopRows.filter(r => {
+    const firstDate = firstSaleDate.get(r.shop);
+    const isRepeat = !!(thresholdDate && firstDate && firstDate < thresholdDate);
+    return mode === 'repeat' ? isRepeat : !isRepeat;
+  });
+
+  shopRows = shopRows.map(r => {
+    const firstDate = firstSaleDate.get(r.shop);
+    return {
+      ...r,
+      firstSale: firstDate ? firstDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'
+    };
+  });
+
+  const titleParts = [category, mode === 'repeat' ? 'Repeat Sale Giving Counters' : 'New Counters Added'];
+  document.getElementById('shopvisits-drilldown-title').textContent = '🏬 ' + titleParts.join(' — ');
+
+  currentShopVisitsRows = shopRows;
+  currentShopVisitsSort = { key: null, dir: 1 };
+  shopVisitsMode = 'shop';
+
+  renderShopVisitsDrilldown();
+  document.getElementById('shopvisits-drilldown-overlay').classList.add('open');
+}
+
 function openShopVisitsDrilldown(userName, category, date){
   currentShopVisitsContext = { userName, category, date };
   const selMonths = stateFilters.secondaryMonth || [];
@@ -2886,20 +3001,25 @@ function renderShopVisitsDrilldown(){
     });
   }
 
+  const hasFirstSale = rows.length > 0 && rows.some(r => r.firstSale !== undefined);
+
   thead.innerHTML = `<tr>
     <th data-key="shop">🏬 Shop Name ⬍</th>
     <th data-key="visits">📞 Total Visits ⬍</th>
     <th data-key="sale">💰 Sale Amount ⬍</th>
+    ${hasFirstSale ? '<th data-key="firstSale">📅 First Sale (Ever) ⬍</th>' : ''}
   </tr>`;
 
+  const colCount = hasFirstSale ? 4 : 3;
   if(rows.length === 0){
-    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:24px;">No shop records found</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="${colCount}" style="text-align:center; color:var(--text-muted); padding:24px;">No shop records found</td></tr>`;
   } else {
     tbody.innerHTML = rows.map(r => `
       <tr>
         <td>${r.shop}</td>
         <td class="calls-count-cell" data-shop="${(r.shop || '').replace(/"/g,'&quot;')}">${r.visits}</td>
         <td>₹ ${fmtNum(r.sale)}</td>
+        ${hasFirstSale ? `<td>${r.firstSale}</td>` : ''}
       </tr>
     `).join('');
     tbody.querySelectorAll('td.calls-count-cell').forEach(td => {
