@@ -1190,8 +1190,11 @@ function unlockDashboard(){
   document.getElementById('loginOverlay').style.display = 'none';
   document.getElementById('splashOverlay').classList.remove('hide');
   splashStartTime = Date.now();
-  loadAllData();
-  setInterval(loadAllData, REFRESH_INTERVAL_MS);
+
+  // Show cached data instantly (if we have any) while the real fetch runs quietly in the background.
+  const usedCache = loadCacheAndRender();
+  loadAllData(usedCache); // silent=true when we already showed cached data, so there's no loading flicker
+  setInterval(() => loadAllData(true), REFRESH_INTERVAL_MS);
 }
 
 /* ============ CONFIG ============ */
@@ -1558,6 +1561,72 @@ document.querySelectorAll('.nav-item').forEach(item => {
 });
 
 /* ============ LOAD DATA ============ */
+/* ============ LOCAL CACHE (instant load on open, refreshed silently from Sheets) ============ */
+const DASHBOARD_CACHE_KEY = 'salesMisDashboardCache_v1';
+
+function saveDashboardCache(){
+  try{
+    localStorage.setItem(DASHBOARD_CACHE_KEY, JSON.stringify({
+      ts: Date.now(),
+      targetVsAchData,
+      partyWiseData,
+      secondaryData,
+      beatWiseData
+    }));
+  }catch(e){
+    // localStorage can fail (quota, private browsing) — caching is a nice-to-have, never block on it
+    console.warn('Could not save dashboard cache:', e);
+  }
+}
+
+// Reads any cached data and renders it immediately. Returns true if cached data was found and rendered.
+function loadCacheAndRender(){
+  let cached;
+  try{
+    const raw = localStorage.getItem(DASHBOARD_CACHE_KEY);
+    if(!raw) return false;
+    cached = JSON.parse(raw);
+  }catch(e){
+    return false;
+  }
+  if(!cached || !Array.isArray(cached.beatWiseData)) return false;
+
+  targetVsAchData = cached.targetVsAchData || [];
+  partyWiseData = cached.partyWiseData || [];
+  secondaryData = cached.secondaryData || [];
+  beatWiseData = cached.beatWiseData || [];
+
+  if(loggedInUser && loggedInUser.defaultState && !dashboardDefaultStateApplied){
+    const ds = loggedInUser.defaultState;
+    stateFilters.exec = [ds];
+    stateFilters.primary = [ds];
+    stateFilters.secondary = [ds];
+    stateFilters.beatwiseState = [ds];
+    dashboardDefaultStateApplied = true;
+  }
+  populateStateFilters();
+  renderExecutive(stateFilters.exec || []);
+  renderPrimaryTable(stateFilters.primary || []);
+  renderSecondaryTable(stateFilters.secondary || []);
+  renderBeatWise();
+  loadTrainingData();
+
+  document.getElementById('exec-status').style.display = 'none';
+  document.getElementById('exec-content').style.display = 'block';
+  document.getElementById('primary-status').style.display = 'none';
+  document.getElementById('primary-content').style.display = 'block';
+  document.getElementById('secondary-status').style.display = 'none';
+  document.getElementById('secondary-content').style.display = 'block';
+  document.getElementById('beatwise-status').style.display = 'none';
+  document.getElementById('beatwise-content').style.display = 'block';
+
+  const cachedDate = new Date(cached.ts);
+  document.getElementById('last-updated').textContent =
+    'Showing cached data from ' + cachedDate.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}) + ' — refreshing…';
+  hideSplashScreen();
+  return true;
+}
+
 /* ============ SPLASH SCREEN ============ */
 let splashStartTime = Date.now();
 const SPLASH_MIN_DURATION_MS = 3000; // splash shows for exactly 3 seconds after login
@@ -1574,22 +1643,26 @@ function hideSplashScreen(){
   }, wait);
 }
 
-async function loadAllData(){
+async function loadAllData(silent){
   const btn = document.getElementById('refreshBtn');
-  btn.disabled = true;
-  btn.textContent = '⟳ Refreshing…';
-  document.getElementById('exec-status').style.display = 'block';
-  document.getElementById('exec-content').style.display = 'none';
-  document.getElementById('exec-error').innerHTML = '';
-  document.getElementById('primary-status').style.display = 'block';
-  document.getElementById('primary-content').style.display = 'none';
-  document.getElementById('primary-error').innerHTML = '';
-  document.getElementById('secondary-status').style.display = 'block';
-  document.getElementById('secondary-content').style.display = 'none';
-  document.getElementById('secondary-error').innerHTML = '';
-  document.getElementById('beatwise-status').style.display = 'block';
-  document.getElementById('beatwise-content').style.display = 'none';
-  document.getElementById('beatwise-error').innerHTML = '';
+  // In silent mode (background refresh behind already-visible cached or live data), don't touch
+  // the loading spinners / hide the content — the user shouldn't see anything flicker.
+  if(!silent){
+    btn.disabled = true;
+    btn.textContent = '⟳ Refreshing…';
+    document.getElementById('exec-status').style.display = 'block';
+    document.getElementById('exec-content').style.display = 'none';
+    document.getElementById('exec-error').innerHTML = '';
+    document.getElementById('primary-status').style.display = 'block';
+    document.getElementById('primary-content').style.display = 'none';
+    document.getElementById('primary-error').innerHTML = '';
+    document.getElementById('secondary-status').style.display = 'block';
+    document.getElementById('secondary-content').style.display = 'none';
+    document.getElementById('secondary-error').innerHTML = '';
+    document.getElementById('beatwise-status').style.display = 'block';
+    document.getElementById('beatwise-content').style.display = 'none';
+    document.getElementById('beatwise-error').innerHTML = '';
+  }
 
   try{
     const [tva, pw, sec, rep] = await Promise.all([
@@ -1678,23 +1751,29 @@ async function loadAllData(){
     document.getElementById('beatwise-status').style.display = 'none';
     document.getElementById('beatwise-content').style.display = 'block';
 
+    saveDashboardCache();
+
     const now = new Date();
     document.getElementById('last-updated').textContent = 'Updated ' + now.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
     hideSplashScreen();
   }catch(err){
     console.error(err);
     hideSplashScreen();
-    const msg = `<div class="error-box">⚠️ Could not load live data: ${err.message}<br><br>
-      Make sure the Google Sheet is shared as <b>"Anyone with the link – Viewer"</b>, and that the tab names exactly match:<br>
-      • "${TAB_TARGET_VS_ACH}"<br>• "${TAB_PARTY_WISE}"<br>• "${TAB_SECONDARY}"<br>• "${TAB_REPORT}"</div>`;
-    document.getElementById('exec-status').style.display = 'none';
-    document.getElementById('primary-status').style.display = 'none';
-    document.getElementById('secondary-status').style.display = 'none';
-    document.getElementById('beatwise-status').style.display = 'none';
-    document.getElementById('exec-error').innerHTML = msg;
-    document.getElementById('primary-error').innerHTML = msg;
-    document.getElementById('secondary-error').innerHTML = msg;
-    document.getElementById('beatwise-error').innerHTML = msg;
+    // In silent mode we already have cached (or previously live) data on screen — leave it visible
+    // rather than replacing it with an error box on a transient network hiccup.
+    if(!silent){
+      const msg = `<div class="error-box">⚠️ Could not load live data: ${err.message}<br><br>
+        Make sure the Google Sheet is shared as <b>"Anyone with the link – Viewer"</b>, and that the tab names exactly match:<br>
+        • "${TAB_TARGET_VS_ACH}"<br>• "${TAB_PARTY_WISE}"<br>• "${TAB_SECONDARY}"<br>• "${TAB_REPORT}"</div>`;
+      document.getElementById('exec-status').style.display = 'none';
+      document.getElementById('primary-status').style.display = 'none';
+      document.getElementById('secondary-status').style.display = 'none';
+      document.getElementById('beatwise-status').style.display = 'none';
+      document.getElementById('exec-error').innerHTML = msg;
+      document.getElementById('primary-error').innerHTML = msg;
+      document.getElementById('secondary-error').innerHTML = msg;
+      document.getElementById('beatwise-error').innerHTML = msg;
+    }
   }finally{
     btn.disabled = false;
     btn.textContent = '⟳ Refresh Data';
@@ -3160,7 +3239,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 /* ============ REFRESH BUTTON + AUTO REFRESH ============ */
-document.getElementById('refreshBtn').addEventListener('click', loadAllData);
+document.getElementById('refreshBtn').addEventListener('click', () => loadAllData(false));
 // Auto-refresh timer and initial data load both start only after successful login (see unlockDashboard)
 
 /* ============ LOGIN GATE: INIT ============ */
