@@ -10,9 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Sales MIS">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<link rel="preconnect" href="https://docs.google.com">
 <style>
   :root{
     --white:#ffffff;
@@ -1192,12 +1190,15 @@ function unlockDashboard(){
   splashStartTime = Date.now();
 
   // Show cached data instantly (if we have any) while the real fetch runs quietly in the background.
-  const usedCache = loadCacheAndRender();
-  loadAllData(usedCache); // silent=true when we already showed cached data, so there's no loading flicker
+  loadCacheAndRender().then(state => {
+    if(state === 'fresh') return; // data is only minutes old - no need to hit Google Sheets again
+    loadAllData(!!state); // silent when cached data is already on screen
+  });
   setInterval(() => loadAllData(true), REFRESH_INTERVAL_MS);
 }
 
 /* ============ CONFIG ============ */
+const BACKEND_URL = "https://script.google.com/macros/s/AKfycbw_vVQ6TlK-LDsBm4m-6qwbWVBjq2hdI3bMzZ2wKUuIxjiEWqD56k2wE704hfkyFAX6/exec"; // Google Apps Script Web App endpoint (/exec)
 const SHEET_ID = "1UQC0hU7EEDQKRwvyglqDY0yCClx9wKC62bt3q_hCgs0";
 const TAB_TARGET_VS_ACH = "Primary Sale Target vs ach."; // B=State, D=Target, E=Sale(Achievement)
 const TAB_PARTY_WISE   = "Party -Wise Primary";           // A=Party, C=Sale, D=State
@@ -1208,18 +1209,19 @@ const REFRESH_INTERVAL_MS = 2 * 60 * 60 * 1000; // auto-refresh every 2 hours
 
 let _jsonpCounter = 0;
 
-function gvizUrl(tabName, callbackName){
-  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json;responseHandler:${callbackName}&sheet=${encodeURIComponent(tabName)}`;
+function gvizUrl(tabName, callbackName, query){
+  const tq = query ? `&tq=${encodeURIComponent(query)}` : '';
+  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json;responseHandler:${callbackName}&sheet=${encodeURIComponent(tabName)}${tq}`;
 }
 
 /* ============ FETCH HELPER (JSONP - avoids CORS/file:// issues) ============ */
-function fetchSheetTab(tabName){
+function fetchSheetTab(tabName, query, timeoutMs){
   return new Promise((resolve, reject) => {
     const callbackName = "gvizCallback_" + (_jsonpCounter++) + "_" + Date.now();
     const timeout = setTimeout(() => {
       cleanup();
       reject(new Error("Timed out loading tab '" + tabName + "'. Check your internet connection or the sheet sharing setting."));
-    }, 15000);
+    }, timeoutMs || 25000);
 
     function cleanup(){
       clearTimeout(timeout);
@@ -1243,7 +1245,7 @@ function fetchSheetTab(tabName){
     };
 
     const script = document.createElement('script');
-    script.src = gvizUrl(tabName, callbackName);
+    script.src = gvizUrl(tabName, callbackName, query);
     script.onerror = () => {
       cleanup();
       reject(new Error("Could not reach Google Sheets for tab '" + tabName + "'. Confirm the sheet is shared as 'Anyone with the link - Viewer' and you're online."));
@@ -1251,6 +1253,98 @@ function fetchSheetTab(tabName){
     document.body.appendChild(script);
   });
 }
+
+
+/* ---- Retry wrapper: transient Google/gviz hiccups are retried before giving up ---- */
+async function fetchWithRetry(tab, query, timeoutMs, tries){
+  tries = tries || 3;
+  let lastErr;
+  for(let i = 0; i < tries; i++){
+    try{ return await fetchSheetTab(tab, query, timeoutMs); }
+    catch(e){ lastErr = e; if(i < tries - 1) await new Promise(r => setTimeout(r, 700 * (i + 1) + Math.random() * 400)); }
+  }
+  throw lastErr;
+}
+
+/* ---- Report tab (150k+ rows): only needed columns, fetched in parallel chunks, mapped on arrival ---- */
+const REPORT_COLS = ['D','G','I','N','J','R','M','S']; // user, beat, state, sale, shop, shopType, date, month
+const REPORT_CHUNK_ROWS = 25000;
+const REPORT_PARALLEL = 3;
+function mapReportRows(rows){
+  const out = [];
+  for(let i = 0; i < rows.length; i++){
+    const r = rows[i];
+    const beat = (r[1] || '').toString().trim();
+    const state = (r[2] || '').toString().trim();
+    if(!beat || beat.toUpperCase() === 'BEAT' || !state || state.toUpperCase() === 'STATE') continue;
+    out.push({
+      user: (r[0] || '').toString().trim(),
+      beat: beat,
+      state: state,
+      sale: toNumber(r[3]),
+      shop: (r[4] || '').toString().trim(),
+      shopType: (r[5] || '').toString().trim(),
+      date: parseGvizDate(r[6]),
+      month: (r[7] || '').toString().trim()
+    });
+  }
+  return out;
+}
+async function fetchReportData(onProgress){
+  const sel = 'select ' + REPORT_COLS.join(',');
+  let total = null;
+  try{
+    const c = await fetchWithRetry(TAB_REPORT, 'select count(D)', 20000, 2);
+    total = Number(c.rows[0] && c.rows[0][0]);
+    if(!isFinite(total) || total <= 0) total = null;
+  }catch(e){ total = null; }
+
+  // Fallback if the count query is unavailable: one pass sequentially until a short chunk comes back.
+  if(total === null){
+    let all = [], offset = 0;
+    while(true){
+      const part = await fetchWithRetry(TAB_REPORT, `${sel} limit ${REPORT_CHUNK_ROWS} offset ${offset}`, 60000);
+      all = all.concat(mapReportRows(part.rows));
+      if(onProgress) onProgress(all.length, null);
+      if(part.rows.length < REPORT_CHUNK_ROWS) break;
+      offset += REPORT_CHUNK_ROWS;
+    }
+    return all;
+  }
+
+  const nChunks = Math.ceil((total + 5) / REPORT_CHUNK_ROWS);
+  const results = new Array(nChunks);
+  let next = 0, done = 0;
+  async function worker(){
+    while(next < nChunks){
+      const idx = next++;
+      const part = await fetchWithRetry(TAB_REPORT, `${sel} limit ${REPORT_CHUNK_ROWS} offset ${idx * REPORT_CHUNK_ROWS}`, 60000);
+      results[idx] = mapReportRows(part.rows); // raw rows are released right away
+      done++;
+      if(onProgress) onProgress(done, nChunks);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(REPORT_PARALLEL, nChunks) }, worker));
+  return [].concat.apply([], results);
+}
+
+/* ---- Lazy-load heavy export libraries only when someone clicks Export ---- */
+const _libPromises = {};
+function loadScriptOnce(src){
+  if(!_libPromises[src]){
+    _libPromises[src] = new Promise((resolve, reject) => {
+      const el = document.createElement('script');
+      el.src = src; el.onload = resolve;
+      el.onerror = () => { delete _libPromises[src]; reject(new Error('Could not load ' + src)); };
+      document.head.appendChild(el);
+    });
+  }
+  return _libPromises[src];
+}
+const LIB_XLSX = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+const LIB_JSPDF = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+const LIB_AUTOTABLE = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js';
+const nextFrame = () => new Promise(r => setTimeout(r, 0));
 
 function colLetterToIndex(letter){
   return letter.toUpperCase().charCodeAt(0) - 65; // A=0, B=1, ...
@@ -1273,9 +1367,10 @@ function fmtNum(n){
    translate cleanly from the DOM, so we build the export from the underlying data instead). */
 let currentPivotExportData = null;
 
-function exportCurrentPivotToExcel(filenamePrefix){
+async function exportCurrentPivotToExcel(filenamePrefix){
   if(!currentPivotExportData){ return; }
   const stamp = new Date().toISOString().slice(0,10);
+  try{ await loadScriptOnce(LIB_XLSX); }catch(e){ console.warn(e); }
 
   // Preferred path: real .xlsx via SheetJS, with genuine merged cells for the month headers
   if(typeof XLSX !== 'undefined'){
@@ -1384,10 +1479,11 @@ function exportAsCsv(data, filename){
 /* Builds the PDF from the same underlying data used for the Excel export - NOT a screenshot
    of whatever is currently scrolled into view - so every row and every month column is
    included, spanning as many pages as needed. */
-function exportCurrentPivotToPdf(filenamePrefix, titleText){
+async function exportCurrentPivotToPdf(filenamePrefix, titleText){
   if(!currentPivotExportData){ return; }
+  try{ await loadScriptOnce(LIB_JSPDF); await loadScriptOnce(LIB_AUTOTABLE); }catch(e){ console.warn(e); }
   if(typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined'){
-    alert('PDF export library is still loading - please wait a moment and try again.');
+    alert('Could not load the PDF library - check your internet connection and try again.');
     return;
   }
 
@@ -1469,13 +1565,18 @@ function inFilter(value, selectedArr){
   return selectedArr.some(s => normFilterVal(s) === nv);
 }
 
+const _dateMemo = new Map();
 function parseGvizDate(raw){
   if(typeof raw === 'string'){
+    const hit = _dateMemo.get(raw);
+    if(hit !== undefined) return hit;
     const m = raw.match(/^Date\((\d+),(\d+),(\d+)/);
     if(m){
       const y = +m[1], mo = +m[2], d = +m[3];
       const dt = new Date(y, mo, d);
-      return dt.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+      const out = dt.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+      _dateMemo.set(raw, out);
+      return out;
     }
   }
   return (raw || '').toString().trim();
@@ -1562,30 +1663,49 @@ document.querySelectorAll('.nav-item').forEach(item => {
 
 /* ============ LOAD DATA ============ */
 /* ============ LOCAL CACHE (instant load on open, refreshed silently from Sheets) ============ */
-const DASHBOARD_CACHE_KEY = 'salesMisDashboardCache_v1';
+const DASHBOARD_CACHE_KEY = 'salesMisDashboardCache_v2';
+const CACHE_FRESH_MS = 10 * 60 * 1000; // if cache is younger than this, skip the network on open
+try{ localStorage.removeItem('salesMisDashboardCache_v1'); }catch(e){} // free the old (size-limited) cache
 
-function saveDashboardCache(){
+function idbOpen(){
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('salesMisDB', 1);
+    req.onupgradeneeded = () => req.result.createObjectStore('kv');
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function idbSet(key, val){
+  const db = await idbOpen();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('kv', 'readwrite');
+    tx.objectStore('kv').put(val, key);
+    tx.oncomplete = () => { db.close(); resolve(); };
+    tx.onerror = () => { db.close(); reject(tx.error); };
+  });
+}
+async function idbGet(key){
+  const db = await idbOpen();
+  return new Promise((resolve, reject) => {
+    const req = db.transaction('kv').objectStore('kv').get(key);
+    req.onsuccess = () => { db.close(); resolve(req.result); };
+    req.onerror = () => { db.close(); reject(req.error); };
+  });
+}
+
+async function saveDashboardCache(){
   try{
-    localStorage.setItem(DASHBOARD_CACHE_KEY, JSON.stringify({
-      ts: Date.now(),
-      targetVsAchData,
-      partyWiseData,
-      secondaryData,
-      beatWiseData
-    }));
+    await idbSet(DASHBOARD_CACHE_KEY, { ts: Date.now(), targetVsAchData, partyWiseData, secondaryData, beatWiseData });
   }catch(e){
-    // localStorage can fail (quota, private browsing) — caching is a nice-to-have, never block on it
-    console.warn('Could not save dashboard cache:', e);
+    console.warn('Could not save dashboard cache:', e); // caching is a nice-to-have, never block on it
   }
 }
 
-// Reads any cached data and renders it immediately. Returns true if cached data was found and rendered.
-function loadCacheAndRender(){
+// Reads cached data and renders it immediately. Resolves to 'fresh' | 'stale' | false.
+async function loadCacheAndRender(){
   let cached;
   try{
-    const raw = localStorage.getItem(DASHBOARD_CACHE_KEY);
-    if(!raw) return false;
-    cached = JSON.parse(raw);
+    cached = await idbGet(DASHBOARD_CACHE_KEY);
   }catch(e){
     return false;
   }
@@ -1623,13 +1743,14 @@ function loadCacheAndRender(){
   const cachedDate = new Date(cached.ts);
   document.getElementById('last-updated').textContent =
     'Showing cached data from ' + cachedDate.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}) + ' — refreshing…';
+  SPLASH_MIN_DURATION_MS = 300;
   hideSplashScreen();
-  return true;
+  return (Date.now() - cached.ts < CACHE_FRESH_MS) ? 'fresh' : 'stale';
 }
 
 /* ============ SPLASH SCREEN ============ */
 let splashStartTime = Date.now();
-const SPLASH_MIN_DURATION_MS = 3000; // splash shows for exactly 3 seconds after login
+let SPLASH_MIN_DURATION_MS = 1500; // minimum splash time (cut to 300ms when cached data is shown)
 let splashHidden = false;
 
 function hideSplashScreen(){
@@ -1665,15 +1786,24 @@ async function loadAllData(silent){
   }
 
   try{
-    const [tva, pw, sec, rep] = await Promise.all([
-      fetchSheetTab(TAB_TARGET_VS_ACH),
-      fetchSheetTab(TAB_PARTY_WISE),
-      fetchSheetTab(TAB_SECONDARY),
-      fetchSheetTab(TAB_REPORT)
+    const onProg = (d, n) => {
+      const t = n ? `Loading report ${d}/${n}…` : `Loading report (${d} rows)…`;
+      document.getElementById('last-updated').textContent = t;
+      if(!silent) btn.textContent = '⟳ ' + t;
+    };
+    const jobs = await Promise.allSettled([
+      fetchWithRetry(TAB_TARGET_VS_ACH),
+      fetchWithRetry(TAB_PARTY_WISE),
+      fetchWithRetry(TAB_SECONDARY),
+      fetchReportData(onProg)
     ]);
+    if(jobs.every(j => j.status === 'rejected')) throw jobs[0].reason;
+    const val = i => jobs[i].status === 'fulfilled' ? jobs[i].value : null;
+    const tva = val(0), pw = val(1), sec = val(2), repRows = val(3);
+    const failedNames = ['Target vs Ach', 'Party-wise', 'Secondary', 'Report'].filter((n, i) => jobs[i].status === 'rejected');
 
     const aIdx0 = colLetterToIndex('A'), bIdx = colLetterToIndex('B'), dIdx = colLetterToIndex('D'), eIdx = colLetterToIndex('E'), tvaFIdx = colLetterToIndex('F');
-    targetVsAchData = tva.rows
+    if(tva) targetVsAchData = tva.rows
       .map(r => ({
         rsm: (r[aIdx0] || '').toString().trim(),
         state: (r[bIdx] || '').toString().trim(),
@@ -1684,7 +1814,7 @@ async function loadAllData(silent){
       .filter(r => r.state && r.state.toUpperCase() !== 'STATE');
 
     const aIdx = colLetterToIndex('A'), cIdx = colLetterToIndex('C'), pdIdx = colLetterToIndex('D'), pwEIdx = colLetterToIndex('E');
-    partyWiseData = pw.rows
+    if(pw) partyWiseData = pw.rows
       .map(r => ({
         party: (r[aIdx] || '').toString().trim(),
         sale: toNumber(r[cIdx]),
@@ -1694,7 +1824,7 @@ async function loadAllData(silent){
       .filter(r => r.party && r.party.toUpperCase() !== 'PARTY NAME');
 
     const sAIdx = colLetterToIndex('A'), sBIdx = colLetterToIndex('B'), sCIdx = colLetterToIndex('C'), sDIdx = colLetterToIndex('D'), sEIdx = colLetterToIndex('E'), sGIdx = colLetterToIndex('G'), sHIdx = colLetterToIndex('H');
-    secondaryData = sec.rows
+    if(sec) secondaryData = sec.rows
       .map(r => ({
         state: (r[sAIdx] || '').toString().trim(),
         user: (r[sBIdx] || '').toString().trim(),
@@ -1714,18 +1844,7 @@ async function loadAllData(silent){
       });
 
     const rDIdx = colLetterToIndex('D'), rGIdx = colLetterToIndex('G'), rIIdx = colLetterToIndex('I'), rNIdx = colLetterToIndex('N'), rJIdx = colLetterToIndex('J'), rRIdx = colLetterToIndex('R'), rMIdx = colLetterToIndex('M'), rSIdx = colLetterToIndex('S');
-    beatWiseData = rep.rows
-      .map(r => ({
-        user: (r[rDIdx] || '').toString().trim(),
-        beat: (r[rGIdx] || '').toString().trim(),
-        state: (r[rIIdx] || '').toString().trim(),
-        sale: toNumber(r[rNIdx]),
-        shop: (r[rJIdx] || '').toString().trim(),
-        shopType: (r[rRIdx] || '').toString().trim(),
-        date: parseGvizDate(r[rMIdx]),
-        month: (r[rSIdx] || '').toString().trim()
-      }))
-      .filter(r => r.beat && r.beat.toUpperCase() !== 'BEAT' && r.state && r.state.toUpperCase() !== 'STATE');
+    if(repRows) beatWiseData = repRows;
 
     if(loggedInUser && loggedInUser.defaultState && !dashboardDefaultStateApplied){
       const ds = loggedInUser.defaultState;
@@ -1737,8 +1856,11 @@ async function loadAllData(silent){
     }
     populateStateFilters();
     renderExecutive(stateFilters.exec || []);
+    await nextFrame();
     renderPrimaryTable(stateFilters.primary || []);
+    await nextFrame();
     renderSecondaryTable(stateFilters.secondary || []);
+    await nextFrame();
     renderBeatWise();
     loadTrainingData(); // independent — a missing/renamed Training tab shouldn't break the other tabs
 
@@ -1751,10 +1873,18 @@ async function loadAllData(silent){
     document.getElementById('beatwise-status').style.display = 'none';
     document.getElementById('beatwise-content').style.display = 'block';
 
-    saveDashboardCache();
+    if(!failedNames.length) saveDashboardCache();
 
     const now = new Date();
-    document.getElementById('last-updated').textContent = 'Updated ' + now.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
+    document.getElementById('last-updated').textContent = 'Updated ' + now.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}) +
+      (failedNames.length ? ' — could not refresh: ' + failedNames.join(', ') + ' (showing previous data)' : '');
+    if(failedNames.length && !silent){
+      const m = '<div class="error-box">⚠️ Could not refresh: ' + failedNames.join(', ') + '. Showing previous data. Tap Refresh Data to retry.</div>';
+      if(jobs[0].status === 'rejected' || jobs[1].status === 'rejected'){ document.getElementById('primary-error').innerHTML = m; }
+      if(jobs[0].status === 'rejected'){ document.getElementById('exec-error').innerHTML = m; }
+      if(jobs[2].status === 'rejected'){ document.getElementById('secondary-error').innerHTML = m; }
+      if(jobs[3].status === 'rejected'){ document.getElementById('beatwise-error').innerHTML = m; }
+    }
     hideSplashScreen();
   }catch(err){
     console.error(err);
@@ -1913,11 +2043,36 @@ function rebuildSecondaryUserFilter(selectedStates){
   buildMultiSelect('secondaryUser', users, () => renderSecondaryTable(stateFilters.secondary || []), 'Users');
 }
 
-/* Sort "Jul-26" / "July 2026" style month strings chronologically where possible, else alphabetically */
+/* Sort month labels chronologically, including plain labels such as "July", "Aug", "Sep", "Oct",
+   as well as labels such as "Jul-26" and "July 2026". */
 function sortMonthStrings(a, b){
+  const monthNames = [
+    ['jan','january'], ['feb','february'], ['mar','march'], ['apr','april'],
+    ['may'], ['jun','june'], ['jul','july'], ['aug','august'],
+    ['sep','sept','september'], ['oct','october'], ['nov','november'], ['dec','december']
+  ];
+  function monthKey(value){
+    const text = String(value == null ? '' : value).trim().toLowerCase();
+    const token = text.match(/[a-z]+/);
+    if(!token) return null;
+    const monthIndex = monthNames.findIndex(names => names.includes(token[0]));
+    if(monthIndex < 0) return null;
+    const yearMatch = text.match(/\b(?:19|20)\d{2}\b|\b\d{2}\b/);
+    let year = yearMatch ? Number(yearMatch[0]) : null;
+    if(year !== null && year < 100) year += year >= 70 ? 1900 : 2000;
+    return { monthIndex, year };
+  }
+  const ka = monthKey(a), kb = monthKey(b);
+  if(ka && kb){
+    if(ka.year !== null && kb.year !== null && ka.year !== kb.year) return ka.year - kb.year;
+    if(ka.monthIndex !== kb.monthIndex) return ka.monthIndex - kb.monthIndex;
+    if(ka.year !== null && kb.year === null) return -1;
+    if(ka.year === null && kb.year !== null) return 1;
+    return String(a).localeCompare(String(b));
+  }
   const da = new Date(a), db = new Date(b);
   if(!isNaN(da) && !isNaN(db)) return da - db;
-  return a.localeCompare(b);
+  return String(a).localeCompare(String(b));
 }
 
 /* Rebuild the User filter options for Beat Wise tab based on currently selected states + months */
@@ -2525,13 +2680,13 @@ function renderShopDrilldown(){
     }).join('');
     const grandTotalVisits = rows.reduce((s,r) => s + r.gtVisits, 0);
     const grandTotalSale = rows.reduce((s,r) => s + r.gtSale, 0);
-    tbody.innerHTML += `
+    tbody.insertAdjacentHTML('beforeend', `
       <tr class="calls-grand-total">
         <td>Grand Total</td>
         ${footerMonthCells}
         <td style="text-align:center;">${grandTotalVisits}</td>
         <td style="text-align:center;">₹ ${fmtNum(grandTotalSale)}</td>
-      </tr>`;
+      </tr>`);
   }
 
   document.getElementById('drilldown-count').textContent = rows.length;
@@ -3046,13 +3201,13 @@ function renderShopVisitsDrilldown(){
       }).join('');
       const grandTotalVisits = rows.reduce((s,r) => s + r.gtVisits, 0);
       const grandTotalSale = rows.reduce((s,r) => s + r.gtSale, 0);
-      tbody.innerHTML += `
+      tbody.insertAdjacentHTML('beforeend', `
         <tr class="calls-grand-total">
           <td>Grand Total</td>
           ${footerMonthCells}
           <td style="text-align:center;">${grandTotalVisits}</td>
           <td style="text-align:center;">₹ ${fmtNum(grandTotalSale)}</td>
-        </tr>`;
+        </tr>`);
     }
 
     document.getElementById('shopvisits-count').textContent = rows.length;
