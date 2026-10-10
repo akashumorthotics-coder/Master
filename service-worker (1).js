@@ -1,44 +1,36 @@
-const CACHE_NAME = 'sales-mis-shell-v1';
-const SHELL_FILES = [
-  './index.html',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png'
-];
+/* UM Sales MIS - service worker (offline app shell). Must be in the same folder as index.html. */
+const CACHE_NAME = 'sales-mis-shell-v2';
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL_FILES))
-  );
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    )
+    caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))))
   );
   self.clients.claim();
 });
 
-// Network-first for the app shell so live data / new deploys always win when online;
-// falls back to cache when offline. Google Sheets requests are left untouched (network only)
-// since that data must always be live.
 self.addEventListener('fetch', (event) => {
-  const url = event.request.url;
-  if (url.includes('docs.google.com') || url.includes('cdnjs.cloudflare.com')) {
-    return; // let these pass straight through to the network
-  }
-  if (event.request.method !== 'GET') return;
+  const req = event.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+  // Only our own files (GitHub Pages). Google Apps Script / Sheets / CDN requests are never cached here:
+  // dashboard data is cached by the app itself (IndexedDB) with version and freshness rules.
+  if (url.origin !== self.location.origin) return;
 
   event.respondWith(
-    fetch(event.request)
+    fetch(req)
       .then((res) => {
-        const resClone = res.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, resClone));
+        if (res && res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+        }
         return res;
       })
-      .catch(() => caches.match(event.request))
+      .catch(() =>
+        caches.match(req).then((hit) => hit || (req.mode === 'navigate' ? caches.match('./').then((h) => h || caches.match('./index.html')) : undefined))
+      )
   );
 });
