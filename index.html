@@ -441,6 +441,24 @@
   }
   .search-box:focus{ border-color:var(--blue); box-shadow:0 0 0 3px rgba(26,86,219,0.1); }
 
+
+  /* ===== Product Wise Sale ===== */
+  .pw-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px;}
+  .pw-kpi{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);}
+  .pw-kpi small{display:block;color:var(--text-muted);font-size:12px;margin-bottom:4px;}
+  .pw-kpi b{font-size:20px;color:var(--blue-dark);}
+  .pw-top{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);margin-bottom:16px;}
+  .pw-top h4{font-size:14px;margin-bottom:10px;color:var(--text);}
+  .pw-bar-row{display:flex;align-items:center;gap:10px;margin:6px 0;font-size:12.5px;}
+  .pw-bar-row .nm{width:130px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);}
+  .pw-bar-row .bar{flex:1;background:var(--blue-light);border-radius:6px;height:16px;overflow:hidden;}
+  .pw-bar-row .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),#4f8bff);border-radius:6px;}
+  .pw-bar-row .vl{width:92px;text-align:right;font-weight:600;color:var(--text);}
+  #product-tbody tr.pw-prod{cursor:pointer;}
+  #product-tbody tr.pw-prod:hover{background:var(--blue-light);}
+  #product-tbody tr.pw-party td{background:rgba(26,86,219,.04);font-size:12.5px;color:var(--text-muted);}
+  #product-tbody tr.pw-party td:first-child{padding-left:34px;}
+  .pw-share{display:inline-block;min-width:44px;}
   .tab-content{ display:none; }
   .tab-content.active{ animation:tabFadeIn 0.3s ease; }
   @keyframes tabFadeIn{
@@ -770,6 +788,9 @@
     <div class="nav-item" data-tab="primary">
       <span class="emoji">👥</span><span>Primary Sale</span>
     </div>
+    <div class="nav-item" data-tab="product">
+      <span class="emoji">📦</span><span>Product Wise Sale</span>
+    </div>
     <div class="nav-item" data-tab="secondary">
       <span class="emoji">🏪</span><span>Secondary Sale</span>
     </div>
@@ -922,6 +943,52 @@
       </div>
     </div>
     <div id="primary-error"></div>
+  </div>
+
+  <!-- PRODUCT WISE SALE -->
+  <div class="tab-content" id="tab-product">
+    <div class="topbar">
+      <h2>📦 Product Wise Sale Analysis</h2>
+      <div class="controls">
+        <div class="ms-wrap" id="msWrap-product">
+          <button type="button" class="ms-toggle" id="msToggle-product">All States ▾</button>
+          <div class="ms-menu" id="msMenu-product"></div>
+        </div>
+        <div class="ms-wrap" id="msWrap-productMonth">
+          <button type="button" class="ms-toggle" id="msToggle-productMonth">📅 All Months ▾</button>
+          <div class="ms-menu" id="msMenu-productMonth"></div>
+        </div>
+        <div class="ms-wrap" id="msWrap-productParty">
+          <button type="button" class="ms-toggle" id="msToggle-productParty">🏬 All Parties ▾</button>
+          <div class="ms-menu" id="msMenu-productParty"></div>
+        </div>
+      </div>
+    </div>
+    <div id="product-status" class="loading"><div class="spinner"></div>Loading product data from Google Sheets…</div>
+    <div id="product-content" style="display:none;">
+      <div class="pw-kpis">
+        <div class="pw-kpi"><small>💰 Total Sale Amount</small><b id="pw-k-sale">₹ 0</b></div>
+        <div class="pw-kpi"><small>📦 Total Qty</small><b id="pw-k-qty">0</b></div>
+        <div class="pw-kpi"><small>🏷️ Products</small><b id="pw-k-prod">0</b></div>
+        <div class="pw-kpi"><small>🏬 Parties</small><b id="pw-k-party">0</b></div>
+        <div class="pw-kpi"><small>📈 Avg Rate / Qty</small><b id="pw-k-rate">₹ 0</b></div>
+      </div>
+      <div class="pw-top"><h4>🏆 Top 10 Products by Sale Amount</h4><div id="pw-top-bars"></div></div>
+      <input type="text" class="search-box" id="productSearch" placeholder="Search product code…">
+      <div class="subtotal-bar">
+        <span>Showing <b id="product-subtotal-count">0</b> products</span>
+        <span>Total Qty: <b id="product-subtotal-qty">0</b></span>
+        <span>Total Sale: <b id="product-subtotal">₹ 0</b></span>
+        <span style="font-size:12px;color:var(--text-muted);">Tip: tap a product to see party-wise split</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead></thead>
+          <tbody id="product-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div id="product-error"></div>
   </div>
 
   <!-- SECONDARY SALE -->
@@ -1204,6 +1271,7 @@ const TAB_TARGET_VS_ACH = "Primary Sale Target vs ach."; // B=State, D=Target, E
 const TAB_PARTY_WISE   = "Party -Wise Primary";           // A=Party, C=Sale, D=State
 const TAB_SECONDARY    = "Secondary & Tertiary Sale";     // A=State, B=User, D=Target, E=Ach.
 const TAB_REPORT       = "Report";                        // D=User, G=Beat, I=State, N=Sale Amount
+const TAB_PRODUCT      = "Report (1)";                    // D=Product Code, E=Party, I=Qty, K=Sale Amt, M=State, N=Month
 const TAB_TRAINING     = "Training";                       // A=Topic, B=Video Link
 const REFRESH_INTERVAL_MS = 2 * 60 * 60 * 1000; // auto-refresh every 2 hours
 
@@ -1874,6 +1942,7 @@ async function loadAllData(silent){
     document.getElementById('beatwise-content').style.display = 'block';
 
     if(!failedNames.length) saveDashboardCache();
+    if(productLoaded) loadProductData(); // background refresh of Product Wise Sale (only if already opened)
 
     const now = new Date();
     document.getElementById('last-updated').textContent = 'Updated ' + now.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}) +
@@ -1909,6 +1978,220 @@ async function loadAllData(silent){
     btn.textContent = '⟳ Refresh Data';
   }
 }
+
+/* ============ PRODUCT WISE SALE ============ */
+let productData = [];   // {code, party, qty, sale, state, month}
+let productLoaded = false, productLoading = false;
+let currentProductSort = { key: 'sale', dir: -1 };
+const productExpanded = new Set();
+const PRODUCT_COLS = ['D','E','I','K','M','N'];
+
+function mapProductRows(rows){
+  const out = [];
+  const clean = v => (v == null ? '' : v).toString().replace(/\s+/g,' ').trim();
+  for(let i = 0; i < rows.length; i++){
+    const r = rows[i];
+    const code = clean(r[0]);
+    if(!code || /^product\s*code$/i.test(code) || /^(item|product)$/i.test(code)) continue;
+    const state = clean(r[4]);
+    if(/^state$/i.test(state)) continue;
+    out.push({ code, party: clean(r[1]), qty: toNumber(r[2]), sale: toNumber(r[3]), state, month: clean(r[5]) });
+  }
+  return out;
+}
+async function fetchProductData(){
+  const sel = 'select ' + PRODUCT_COLS.join(',');
+  let total = null;
+  try{
+    const c = await fetchWithRetry(TAB_PRODUCT, 'select count(D)', 20000, 2);
+    total = Number(c.rows[0] && c.rows[0][0]);
+    if(!isFinite(total) || total <= 0) total = null;
+  }catch(e){ total = null; }
+  if(total === null){
+    let all = [], offset = 0;
+    while(true){
+      const part = await fetchWithRetry(TAB_PRODUCT, `${sel} limit ${REPORT_CHUNK_ROWS} offset ${offset}`, 60000);
+      all = all.concat(mapProductRows(part.rows));
+      if(part.rows.length < REPORT_CHUNK_ROWS) break;
+      offset += REPORT_CHUNK_ROWS;
+    }
+    return all;
+  }
+  const nChunks = Math.ceil((total + 5) / REPORT_CHUNK_ROWS);
+  const results = new Array(nChunks);
+  let next = 0;
+  async function worker(){
+    while(next < nChunks){
+      const idx = next++;
+      const part = await fetchWithRetry(TAB_PRODUCT, `${sel} limit ${REPORT_CHUNK_ROWS} offset ${idx * REPORT_CHUNK_ROWS}`, 60000);
+      results[idx] = mapProductRows(part.rows);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(REPORT_PARALLEL, nChunks) }, worker));
+  return [].concat.apply([], results);
+}
+
+function populateProductFilters(){
+  const lockedState = loggedInUser && loggedInUser.defaultState;
+  let states = Array.from(new Set(productData.map(r => r.state))).filter(Boolean).sort();
+  if(lockedState){
+    states = states.includes(lockedState) ? [lockedState] : [];
+    stateFilters.product = [lockedState];
+  }
+  buildMultiSelect('product', states, () => { rebuildProductPartyFilter(); renderProductTable(); }, 'States');
+  const months = Array.from(new Set(productData.map(r => r.month))).filter(Boolean).sort(sortMonthStrings);
+  buildMultiSelect('productMonth', months, () => { rebuildProductPartyFilter(); renderProductTable(); }, 'Months');
+  rebuildProductPartyFilter();
+  if(lockedState) lockStateMultiSelect('product');
+}
+function rebuildProductPartyFilter(){
+  const selS = stateFilters.product || [], selM = stateFilters.productMonth || [];
+  const parties = Array.from(new Set(productData
+    .filter(r => inFilter(r.state, selS) && inFilter(r.month, selM)).map(r => r.party))).filter(Boolean).sort();
+  buildMultiSelect('productParty', parties, () => renderProductTable(), 'Parties');
+}
+
+async function loadProductData(){
+  if(productLoading) return;
+  productLoading = true;
+  const st = document.getElementById('product-status'), ct = document.getElementById('product-content'), er = document.getElementById('product-error');
+  if(!productLoaded){ st.style.display = 'block'; ct.style.display = 'none'; }
+  er.innerHTML = '';
+  try{
+    productData = await fetchProductData();
+    productLoaded = true;
+    populateProductFilters();
+    renderProductTable();
+    st.style.display = 'none'; ct.style.display = 'block';
+  }catch(err){
+    console.error(err);
+    st.style.display = 'none';
+    if(!productLoaded) ct.style.display = 'none';
+    er.innerHTML = `<div class="error-box">⚠️ Could not load product data: ${escapeHtml(err.message)}<br><br>
+      Make sure the Google Sheet has a tab named exactly <b>"${TAB_PRODUCT}"</b> with Product Code in D, Party in E, Qty in I, Sale Amount in K, State in M and Month in N.</div>`;
+  }finally{
+    productLoading = false;
+  }
+}
+
+function renderProductTable(){
+  if(!productLoaded) return;
+  const selS = stateFilters.product || [], selM = stateFilters.productMonth || [], selP = stateFilters.productParty || [];
+  let src = productData.filter(r => inFilter(r.state, selS) && inFilter(r.month, selM) && inFilter(r.party, selP));
+  const q = document.getElementById('productSearch').value.trim().toLowerCase();
+  if(q) src = src.filter(r => r.code.toLowerCase().includes(q));
+
+  const months = Array.from(new Set(src.map(r => r.month))).filter(Boolean).sort(sortMonthStrings);
+  const map = new Map();
+  const parties = new Set();
+  src.forEach(r => {
+    parties.add(r.party.toUpperCase());
+    const key = r.code.toUpperCase();
+    let o = map.get(key);
+    if(!o){ o = { code: r.code, qty: 0, sale: 0, m: {}, p: new Map() }; map.set(key, o); }
+    o.qty += r.qty; o.sale += r.sale;
+    o.m[r.month] = (o.m[r.month] || 0) + r.sale;
+    let pp = o.p.get(r.party);
+    if(!pp){ pp = { party: r.party, qty: 0, sale: 0 }; o.p.set(r.party, pp); }
+    pp.qty += r.qty; pp.sale += r.sale;
+  });
+  let rows = Array.from(map.values());
+  const grandSale = rows.reduce((s,r) => s + r.sale, 0);
+  const grandQty = rows.reduce((s,r) => s + r.qty, 0);
+
+  // KPIs
+  document.getElementById('pw-k-sale').textContent = '₹ ' + fmtNum(grandSale);
+  document.getElementById('pw-k-qty').textContent = fmtNum(grandQty);
+  document.getElementById('pw-k-prod').textContent = rows.length;
+  document.getElementById('pw-k-party').textContent = parties.size;
+  document.getElementById('pw-k-rate').textContent = '₹ ' + fmtNum(grandQty ? grandSale / grandQty : 0);
+
+  // Top 10 bars
+  const top = [...rows].sort((a,b) => b.sale - a.sale).slice(0, 10);
+  const mx = top.length ? top[0].sale || 1 : 1;
+  document.getElementById('pw-top-bars').innerHTML = top.length ? top.map(r =>
+    `<div class="pw-bar-row"><span class="nm" title="${escapeHtml(r.code)}">${escapeHtml(r.code)}</span>
+     <span class="bar"><i style="width:${Math.max(2, r.sale / mx * 100).toFixed(1)}%"></i></span>
+     <span class="vl">₹ ${fmtCompact(r.sale)}</span></div>`).join('')
+    : '<div style="color:var(--text-muted);font-size:13px;">No data</div>';
+
+  // Sorting
+  const k = currentProductSort.key, dir = currentProductSort.dir;
+  const val = o => k.startsWith('m:') ? (o.m[k.slice(2)] || 0) : (k === 'rate' ? (o.qty ? o.sale / o.qty : 0) : o[k]);
+  rows.sort((a,b) => {
+    const av = val(a), bv = val(b);
+    if(typeof av === 'number') return (av - bv) * dir;
+    return String(av).localeCompare(String(bv)) * dir;
+  });
+
+  const arrow = key => currentProductSort.key === key ? (currentProductSort.dir === 1 ? ' ▲' : ' ▼') : ' ⬍';
+  const R = 'style="text-align:right;"';
+  document.querySelector('#tab-product thead').innerHTML = '<tr>' +
+    '<th data-key="code">🏷️ Product Code' + arrow('code') + '</th>' +
+    '<th data-key="qty" ' + R + '>📦 Qty' + arrow('qty') + '</th>' +
+    '<th data-key="sale" ' + R + '>💰 Sale Amount' + arrow('sale') + '</th>' +
+    '<th data-key="rate" ' + R + '>Avg Rate' + arrow('rate') + '</th>' +
+    '<th data-key="sale" ' + R + '>% Share</th>' +
+    months.map(m => '<th data-key="m:' + escapeHtml(m) + '" ' + R + '>' + escapeHtml(m) + arrow('m:' + m) + '</th>').join('') + '</tr>';
+
+  const colCount = months.length + 5;
+  const tbody = document.getElementById('product-tbody');
+  if(!rows.length){
+    tbody.innerHTML = '<tr><td colspan="' + colCount + '" style="text-align:center;color:var(--text-muted);padding:24px;">No records found</td></tr>';
+  } else {
+    const colTot = {}; months.forEach(m => colTot[m] = 0);
+    rows.forEach(r => months.forEach(m => colTot[m] += (r.m[m] || 0)));
+    let html = '';
+    rows.forEach(r => {
+      const open = productExpanded.has(r.code.toUpperCase());
+      html += `<tr class="pw-prod" data-code="${escapeHtml(r.code.toUpperCase())}">
+        <td>${open ? '▾' : '▸'} ${escapeHtml(r.code)}</td>
+        <td ${R}>${fmtNum(r.qty)}</td>
+        <td ${R}><b>₹ ${fmtNum(r.sale)}</b></td>
+        <td ${R}>₹ ${fmtNum(r.qty ? r.sale / r.qty : 0)}</td>
+        <td ${R}><span class="pw-share">${grandSale ? (r.sale / grandSale * 100).toFixed(1) : '0.0'}%</span></td>
+        ${months.map(m => `<td ${R}>${r.m[m] ? '₹ ' + fmtNum(r.m[m]) : '–'}</td>`).join('')}
+      </tr>`;
+      if(open){
+        Array.from(r.p.values()).sort((a,b) => b.sale - a.sale).forEach(pp => {
+          html += `<tr class="pw-party"><td>🏬 ${escapeHtml(pp.party || '—')}</td>
+            <td ${R}>${fmtNum(pp.qty)}</td><td ${R}>₹ ${fmtNum(pp.sale)}</td>
+            <td ${R}>₹ ${fmtNum(pp.qty ? pp.sale / pp.qty : 0)}</td>
+            <td ${R}>${r.sale ? (pp.sale / r.sale * 100).toFixed(1) : '0.0'}%</td>
+            <td colspan="${months.length}"></td></tr>`;
+        });
+      }
+    });
+    html += `<tr style="font-weight:700;background:var(--bg-soft, rgba(128,128,128,.12));">
+      <td>Grand Total</td><td ${R}>${fmtNum(grandQty)}</td><td ${R}>₹ ${fmtNum(grandSale)}</td>
+      <td ${R}>₹ ${fmtNum(grandQty ? grandSale / grandQty : 0)}</td><td ${R}>100%</td>
+      ${months.map(m => `<td ${R}>₹ ${fmtNum(colTot[m])}</td>`).join('')}</tr>`;
+    tbody.innerHTML = html;
+  }
+  document.getElementById('product-subtotal-count').textContent = rows.length;
+  document.getElementById('product-subtotal-qty').textContent = fmtNum(grandQty);
+  document.getElementById('product-subtotal').textContent = '₹ ' + fmtNum(grandSale);
+}
+
+document.getElementById('productSearch').addEventListener('input', renderProductTable);
+document.querySelector('#tab-product thead').addEventListener('click', e => {
+  const th = e.target.closest('th');
+  if(!th || !th.dataset.key) return;
+  const key = th.dataset.key;
+  if(currentProductSort.key === key){ currentProductSort.dir *= -1; }
+  else { currentProductSort = { key, dir: key === 'code' ? 1 : -1 }; }
+  renderProductTable();
+});
+document.getElementById('product-tbody').addEventListener('click', e => {
+  const tr = e.target.closest('tr.pw-prod');
+  if(!tr) return;
+  const c = tr.dataset.code;
+  if(productExpanded.has(c)) productExpanded.delete(c); else productExpanded.add(c);
+  renderProductTable();
+});
+document.querySelector('.nav-item[data-tab="product"]').addEventListener('click', () => {
+  if(!productLoaded && !productLoading) loadProductData();
+});
 
 /* ============ PRODUCT TRAINING ============ */
 function escapeHtml(str){
