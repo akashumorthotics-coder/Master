@@ -739,6 +739,43 @@
   .table-wrap::-webkit-scrollbar-thumb:hover, .ms-menu::-webkit-scrollbar-thumb:hover, .modal-table-wrap::-webkit-scrollbar-thumb:hover{
     background:#a8b4c4;
   }
+/* ===== Distributor Connect module (every selector prefixed dc-) ===== */
+.dc-wrap button:disabled{opacity:.55;cursor:not-allowed}
+.dc-kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:16px}
+.dc-kpis .kpi-card{cursor:pointer;padding:14px 16px}
+.dc-kpis .kpi-card .value{font-size:22px}
+.dc-filters{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-bottom:14px}
+.dc-filters label{display:flex;flex-direction:column;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;gap:4px}
+.dc-in{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:#fff;min-width:140px;color:var(--text)}
+.dc-in:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,86,219,.12)}
+textarea.dc-in{width:100%;min-height:84px;resize:vertical;font-family:inherit}
+.dc-btn{padding:9px 14px;border-radius:8px;border:1px solid var(--border);background:#fff;font-weight:600;font-size:13px;cursor:pointer;color:var(--text)}
+.dc-btn.p{background:var(--blue);color:#fff;border-color:var(--blue)}
+.dc-btn.g{background:var(--green);color:#fff;border-color:var(--green)}
+.dc-btn.r{background:var(--red);color:#fff;border-color:var(--red)}
+.dc-grid{display:grid;grid-template-columns:minmax(260px,340px) 1fr;gap:16px;align-items:start;margin-bottom:8px}
+.dc-list{max-height:560px;overflow-y:auto;margin:0 -20px -20px}
+.dc-item{display:flex;justify-content:space-between;gap:8px;padding:10px 20px;border-top:1px solid var(--border);cursor:pointer;font-size:13px}
+.dc-item:hover,.dc-item.on{background:var(--blue-light)}
+.dc-item small{display:block;color:var(--text-muted);font-size:11.5px}
+.dc-badge{background:var(--blue-light);color:var(--blue-dark);border-radius:20px;padding:2px 9px;font-size:11.5px;font-weight:700;align-self:center;white-space:nowrap}
+.dc-sess{background:var(--blue-light);border-radius:12px;padding:16px;margin:14px 0}
+.dc-timer{font-size:40px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--blue-dark);margin:4px 0}
+.dc-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.dc-note{font-size:12px;color:var(--text-muted);margin-top:8px;line-height:1.5}
+.dc-err{background:var(--red-light);color:var(--red);padding:10px 12px;border-radius:8px;font-size:13px;font-weight:600;margin-top:10px}
+.dc-stats{display:flex;gap:22px;flex-wrap:wrap;font-size:13px;margin:10px 0}
+.dc-stats b{display:block;font-size:16px;color:var(--blue-dark)}
+.dc-over{color:var(--red);font-weight:700}
+.dc-gh td{background:var(--bg);font-weight:700;font-size:12px;color:var(--text-muted)}
+.dc-empty{padding:26px;text-align:center;color:var(--text-muted);font-size:13px}
+.dc-login{max-width:380px;margin:30px auto}
+.dc-sec{margin-top:22px}
+.dc-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#111827;color:#fff;padding:12px 18px;border-radius:10px;font-size:13.5px;z-index:4000;box-shadow:0 8px 24px rgba(0,0,0,.3);max-width:90vw}
+.dc-toast.ok{background:var(--green)}
+@media(max-width:1100px){.dc-kpis{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:900px){.dc-grid{grid-template-columns:1fr}.dc-list{max-height:300px}}
+@media(max-width:600px){.dc-kpis{grid-template-columns:repeat(2,1fr)}.dc-timer{font-size:32px}.dc-in{min-width:0;width:100%}.dc-filters label{flex:1 1 140px}}
 </style>
 </head>
 <body class="locked">
@@ -799,6 +836,9 @@
     </div>
     <div class="nav-item" data-tab="training">
       <span class="emoji">🎓</span><span>Product Training</span>
+    </div>
+    <div class="nav-item" data-tab="distconnect">
+      <span class="emoji">📞</span><span>Distributor Connect</span>
     </div>
   </div>
   <div class="sidebar-footer">
@@ -1098,6 +1138,54 @@
       <div class="training-grid" id="training-grid"></div>
     </div>
     <div id="training-error"></div>
+  </div>
+
+  <!-- DISTRIBUTOR CONNECT (independent module; see <script id="dc-module">) -->
+  <div class="tab-content dc-wrap" id="tab-distconnect">
+    <div class="topbar">
+      <h2>📞 Distributor Connect</h2>
+      <div class="controls">
+        <span id="dcUser" style="font-size:13px;color:var(--text-muted);"></span>
+        <button type="button" class="refresh-btn" id="dcRefresh" style="display:none;">⟳ Refresh</button>
+        <button type="button" class="dc-btn" id="dcLogout" style="display:none;">Sign out</button>
+      </div>
+    </div>
+
+    <div class="card-panel dc-login" id="dcLogin">
+      <h3 style="color:var(--blue-dark);margin-bottom:4px;">Sign in to Distributor Connect</h3>
+      <p class="dc-note" style="margin:0 0 12px;">Call records are private. Use your Distributor Connect ID (issued by the admin).</p>
+      <form id="dcLoginForm" autocomplete="off">
+        <input class="dc-in" id="dcId" placeholder="User ID" style="width:100%;margin-bottom:10px;" autocomplete="off">
+        <input class="dc-in" id="dcPw" type="password" placeholder="Password" style="width:100%;" autocomplete="off">
+        <div class="dc-err" id="dcLoginErr" style="display:none;"></div>
+        <button type="submit" class="dc-btn g" id="dcLoginBtn" style="width:100%;margin-top:14px;">Sign in</button>
+      </form>
+    </div>
+
+    <div id="dcLoading" class="loading" style="display:none;"><div class="spinner"></div>Loading from Google Sheets…</div>
+    <div id="dcGlobalErr"></div>
+
+    <div id="dcApp" style="display:none;">
+      <div class="dc-kpis" id="dcKpis"></div>
+      <div class="dc-filters">
+        <label>State<select class="dc-in" id="dcFState"></select></label>
+        <label>Party name<input class="dc-in" id="dcFQ" placeholder="Search party…"></label>
+        <label>From<input class="dc-in" type="date" id="dcFFrom"></label>
+        <label>To<input class="dc-in" type="date" id="dcFTo"></label>
+        <label>Call status<select class="dc-in" id="dcFStatus"></select></label>
+        <button type="button" class="dc-btn" id="dcReset">✕ Clear filters</button>
+        <button type="button" class="dc-btn" id="dcExport">📥 Export CSV</button>
+      </div>
+      <div class="dc-grid">
+        <div class="card-panel" style="margin-top:0;">
+          <h4 style="color:var(--blue-dark);">🏬 Distributors <span id="dcPCount" class="dc-note"></span></h4>
+          <div class="dc-list" id="dcParties"></div>
+        </div>
+        <div class="card-panel" style="margin-top:0;" id="dcDetail"></div>
+      </div>
+      <div class="dc-sec"><div class="section-label">⏰ Follow-Up Tracker</div><div id="dcFU"></div></div>
+      <div class="dc-sec"><div class="section-label">🗓️ Date-Wise Call Summary</div><div id="dcDates"></div></div>
+    </div>
   </div>
 
   <!-- SHOP-WISE DRILLDOWN MODAL -->
@@ -1859,13 +1947,18 @@ async function loadAllData(silent){
       document.getElementById('last-updated').textContent = t;
       if(!silent) btn.textContent = '⟳ ' + t;
     };
-    const jobs = await Promise.allSettled([
+    // PERF: the 150k-row Report download starts immediately but no longer blocks the three small tabs.
+    const reportPromise = fetchReportData(onProg).then(v => ({status:'fulfilled', value:v}), e => ({status:'rejected', reason:e}));
+    const smallJobs = await Promise.allSettled([
       fetchWithRetry(TAB_TARGET_VS_ACH),
       fetchWithRetry(TAB_PARTY_WISE),
-      fetchWithRetry(TAB_SECONDARY),
-      fetchReportData(onProg)
+      fetchWithRetry(TAB_SECONDARY)
     ]);
-    if(jobs.every(j => j.status === 'rejected')) throw jobs[0].reason;
+    const jobs = smallJobs.concat([{status:'pending'}]);
+    if(smallJobs.every(j => j.status === 'rejected')){ // nothing to show early: behave exactly as before
+      jobs[3] = await reportPromise;
+      if(jobs.every(j => j.status === 'rejected')) throw jobs[0].reason;
+    }
     const val = i => jobs[i].status === 'fulfilled' ? jobs[i].value : null;
     const tva = val(0), pw = val(1), sec = val(2), repRows = val(3);
     const failedNames = ['Target vs Ach', 'Party-wise', 'Secondary', 'Report'].filter((n, i) => jobs[i].status === 'rejected');
@@ -1938,8 +2031,21 @@ async function loadAllData(silent){
     document.getElementById('primary-content').style.display = 'block';
     document.getElementById('secondary-status').style.display = 'none';
     document.getElementById('secondary-content').style.display = 'block';
-    document.getElementById('beatwise-status').style.display = 'none';
-    document.getElementById('beatwise-content').style.display = 'block';
+    const showBeat = () => { document.getElementById('beatwise-status').style.display = 'none'; document.getElementById('beatwise-content').style.display = 'block'; };
+    if(jobs[3].status !== 'pending' || beatWiseData.length) showBeat(); // otherwise Beat Wise keeps its loading spinner
+    hideSplashScreen(); // PERF: interface is usable now; Report rows are still arriving
+
+    // PERF phase 2: Report rows arrive -> fill Beat Wise (selections are kept by buildMultiSelect)
+    if(jobs[3].status === 'pending'){
+      jobs[3] = await reportPromise;
+      if(jobs[3].status === 'fulfilled'){
+        beatWiseData = jobs[3].value;
+        if(loggedInUser && loggedInUser.defaultState && !(stateFilters.beatwiseState || []).length) stateFilters.beatwiseState = [loggedInUser.defaultState];
+        populateStateFilters();
+        renderBeatWise();
+      }else{ failedNames.push('Report'); }
+      showBeat();
+    }
 
     if(!failedNames.length) saveDashboardCache();
     if(productLoaded) loadProductData(); // background refresh of Product Wise Sale (only if already opened)
@@ -3769,6 +3875,254 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 });
 </script>
 
+<script id="dc-module">
+(function(){
+'use strict';
+/* ====== CONFIG: paste your Apps Script Web App URL (ends with /exec) ====== */
+const DC_API_URL = (typeof BACKEND_URL !== 'undefined' && BACKEND_URL) ? BACKEND_URL : 'PASTE_YOUR_WEB_APP_URL_HERE'; // reuses the dashboard's existing Apps Script URL
+/* Dial needs a phone number from the sheet. This lets you still time a call made another way. */
+const DC_ALLOW_MANUAL_SESSION = true;
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const STATUSES = ['Completed','Not Connected','Busy','No Answer','Follow-Up Required'];
+const TK = 'dcToken_v1', SK = 'dcSession_v1';
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const today = () => new Intl.DateTimeFormat('en-CA', {timeZone:'Asia/Kolkata'}).format(new Date());
+const fd = s => s ? s.slice(8,10) + '-' + MON[+s.slice(5,7)-1] + '-' + s.slice(0,4) : '';
+const hms = s => { s = Math.max(0, Math.round(s||0)); return [Math.floor(s/3600), Math.floor(s%3600/60), s%60].map(n => String(n).padStart(2,'0')).join(':'); };
+const hum = s => { s = Math.round(s||0); const h = Math.floor(s/3600), m = Math.floor(s%3600/60), x = s%60; return (h ? h+' hr ' : '') + (h||m ? m+' min ' : '') + x + ' sec'; };
+
+let tok = null, user = null, P = [], C = [], R = {}, sel = null, sess = null, tick = null, saving = false, inited = false, saveErr = '', openDate = null;
+const F = {state:'', q:'', party:'', pstate:'', from:'', to:'', status:''};
+
+/* ---------- API (POST only: avoids CORS preflight and the dashboard service worker's GET cache) ---------- */
+async function api(action, data){
+  if(!/^https:\/\/script\.google\.com\//.test(DC_API_URL)) throw new Error('Backend URL is not configured yet. Paste the Apps Script Web App URL into DC_API_URL.');
+  const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 30000);
+  try{
+    const r = await fetch(DC_API_URL, {method:'POST', body:JSON.stringify(Object.assign({action:'dc' + action.charAt(0).toUpperCase() + action.slice(1), token:tok}, data||{})), signal:ctl.signal});
+    const j = await r.json();
+    if(!j.ok){ const e = new Error(j.error || 'Request failed'); e.code = j.code; throw e; }
+    return j;
+  }catch(e){
+    if(e.name === 'AbortError') throw new Error('The request timed out. Check your connection and retry.');
+    if(e instanceof TypeError) throw new Error('Could not reach the server. Check your connection and retry.');
+    throw e;
+  }finally{ clearTimeout(t); }
+}
+function toast(msg, ok){
+  const d = document.createElement('div'); d.className = 'dc-toast' + (ok ? ' ok' : ''); d.textContent = msg;
+  document.body.appendChild(d); setTimeout(() => d.remove(), 5000);
+}
+
+/* ---------- session (timer) persistence ---------- */
+function loadSess(){ try{ const s = JSON.parse(localStorage.getItem(SK)); return s && user && s.u === user.id ? s : null; }catch(e){ return null; } }
+function saveSess(){ try{ sess ? localStorage.setItem(SK, JSON.stringify(sess)) : localStorage.removeItem(SK); }catch(e){} }
+function newId(){ const a = new Uint8Array(6); crypto.getRandomValues(a); return 'DC-' + Date.now().toString(36).toUpperCase() + '-' + Array.from(a, b => b.toString(16).padStart(2,'0')).join('').toUpperCase(); }
+function startTick(){ stopTick(); if(sess && sess.phase === 'running'){ tick = setInterval(updTimer, 500); updTimer(); } }
+function stopTick(){ if(tick){ clearInterval(tick); tick = null; } }
+function updTimer(){ const el = $('dcTimer'); if(el && sess && sess.phase === 'running') el.textContent = hms((Date.now() - sess.startedAt) / 1000); }
+document.addEventListener('visibilitychange', updTimer); // timer is timestamp-based, so it stays correct while the dialer app is in front
+window.addEventListener('beforeunload', e => { if(sess){ e.preventDefault(); e.returnValue = ''; } });
+
+/* ---------- data helpers ---------- */
+const pmatch = c => F.party ? (c[4] === F.pstate && c[5] === F.party) : (!F.q || c[5].toLowerCase().includes(F.q));
+const fc = () => C.filter(c => (!F.state || c[4] === F.state) && (!F.status || c[8] === F.status) && (!F.from || c[1] >= F.from) && (!F.to || c[1] <= F.to) && pmatch(c));
+const pend = () => C.filter(c => c[8] === 'Follow-Up Required' && !R[c[0]] && (!F.state || c[4] === F.state) && pmatch(c));
+const partyCalls = (st, p) => C.filter(c => c[4] === st && c[5] === p);
+const sum = a => a.reduce((t, c) => t + c[6], 0);
+
+/* ---------- render ---------- */
+function render(){ rKpi(); rParties(); rDetail(); rFU(); rDates(); }
+function rKpi(){
+  const f = fc(), td = today();
+  const dist = P.filter(p => (!F.state || p[0] === F.state) && (F.party ? (p[0] === F.pstate && p[1] === F.party) : (!F.q || p[1].toLowerCase().includes(F.q)))).length;
+  const uniq = new Set(f.map(c => c[4] + '|' + c[5])).size;
+  const k = [['🏬 Total Distributors', dist, '', 'p'], ['📞 Total Calls', f.length, '', 'd'], ['📅 Calls Today', f.filter(c => c[1] === td).length, 'green', 't'],
+    ['✅ Distributors Contacted', uniq, 'green', 'd'], ['⏰ Follow-Ups Pending', pend().length, 'red', 'f'], ['⏱️ Total Call Duration', hum(sum(f)), 'amber', 'd']];
+  $('dcKpis').innerHTML = k.map(x => `<div class="kpi-card ${x[2]}" data-k="${x[3]}"><div class="label">${x[0]}</div><div class="value">${esc(x[1])}</div></div>`).join('');
+}
+function rParties(){
+  const cnt = {}; C.forEach(c => { const k = c[4] + '|' + c[5]; cnt[k] = (cnt[k]||0) + 1; });
+  const l = P.filter(p => (!F.state || p[0] === F.state) && (!F.q || p[1].toLowerCase().includes(F.q)));
+  const sh = l.slice(0, 150);
+  $('dcPCount').textContent = `(${sh.length} of ${l.length})`;
+  $('dcParties').innerHTML = sh.length ? sh.map(p => {
+    const n = cnt[p[0] + '|' + p[1]] || 0, on = sel && sel[0] === p[0] && sel[1] === p[1];
+    return `<div class="dc-item ${on ? 'on' : ''}" data-s="${esc(p[0])}" data-p="${esc(p[1])}"><span>${esc(p[1])}<small>${esc(p[0])}</small></span>${n ? `<span class="dc-badge">${n}</span>` : ''}</div>`;
+  }).join('') + (l.length > 150 ? '<div class="dc-empty">Showing first 150 — type in the search box to narrow down.</div>' : '') : '<div class="dc-empty">No distributors match.</div>';
+}
+function sessBox(){
+  const s = sess;
+  if(!s) return '';
+  if(!sel || sel[0] !== s.state || sel[1] !== s.party) return `<div class="dc-sess"><b>Call session in progress/unsaved:</b> ${esc(s.party)} (${esc(s.state)}) <button type="button" class="dc-btn p" data-a="goto">Open session</button></div>`;
+  if(s.phase === 'running') return `<div class="dc-sess"><div class="dc-note" style="margin:0;">Call session · ${esc(s.party)} · ${esc(s.state)} · ${s.mode === 'Dialer' ? 'dialer opened' : 'manual timer'}</div>
+    <div class="dc-timer" id="dcTimer">${hms((Date.now()-s.startedAt)/1000)}</div>
+    <textarea class="dc-in" id="dcRem" placeholder="Call remarks…">${esc(s.remarks)}</textarea>
+    <div class="dc-row"><button type="button" class="dc-btn r" data-a="end">■ End Call</button><button type="button" class="dc-btn" data-a="discard">Discard</button></div>
+    <div class="dc-note">This is a manually controlled session timer, not verified talk time. Opening the dialer does not confirm the call connected — press End Call when finished.</div></div>`;
+  return `<div class="dc-sess"><div class="dc-note" style="margin:0;">Session ended · ${esc(s.party)} · ${esc(s.state)}</div>
+    <div style="font-size:20px;font-weight:800;color:var(--blue-dark);margin:6px 0;">Session duration ${hms(s.dur)} <small style="font-weight:500;color:var(--text-muted);">(${hum(s.dur)})</small></div>
+    <div class="dc-row"><select class="dc-in" id="dcStatus"><option value="">Call status…</option>${STATUSES.map(x => `<option ${s.status === x ? 'selected' : ''}>${x}</option>`).join('')}</select>
+    <input class="dc-in" type="date" id="dcFu" min="${today()}" value="${esc(s.fu||'')}" style="${s.status === 'Follow-Up Required' ? '' : 'display:none;'}" title="Next follow-up date"></div>
+    <textarea class="dc-in" id="dcRem" placeholder="Call remarks…" style="margin-top:10px;">${esc(s.remarks)}</textarea>
+    ${saveErr ? `<div class="dc-err">${esc(saveErr)}</div>` : ''}
+    <div class="dc-row"><button type="button" class="dc-btn g" id="dcSave" data-a="save" ${saving ? 'disabled' : ''}>${saving ? 'Saving…' : (saveErr ? '↻ Retry Save' : '💾 Save Call Record')}</button><button type="button" class="dc-btn" data-a="discard" ${saving ? 'disabled' : ''}>Discard</button></div>
+    <div class="dc-note">Nothing is shown as saved until Google Sheets confirms it. If saving fails, this session stays on your device so you can retry safely (no duplicates).</div></div>`;
+}
+function rDetail(){
+  const el = $('dcDetail');
+  if(!sel){ el.innerHTML = sessBox() + '<div class="dc-empty">👈 Select a distributor to call, or to view calling history.</div>'; return; }
+  const p = P.find(x => x[0] === sel[0] && x[1] === sel[1]);
+  if(!p){ sel = null; rDetail(); return; }
+  const all = partyCalls(p[0], p[1]), shown = all.filter(c => (!F.status || c[8] === F.status) && (!F.from || c[1] >= F.from) && (!F.to || c[1] <= F.to));
+  const hist = shown.slice().sort((a, b) => (b[1] + b[2]).localeCompare(a[1] + a[2]));
+  const last = all.reduce((m, c) => c[1] > m ? c[1] : m, '');
+  let rows = '', byDate = {}; hist.forEach(c => (byDate[c[1]] = byDate[c[1]] || []).push(c));
+  Object.keys(byDate).sort().reverse().forEach(d => {
+    if(byDate[d].length > 1) rows += `<tr class="dc-gh"><td colspan="5">${fd(d)} · ${byDate[d].length} calls</td></tr>`;
+    byDate[d].forEach(c => rows += `<tr><td>${fd(c[1])}<br><small>${esc(c[2])}</small></td><td>${hms(c[6])}</td><td>${esc(c[8])}${c[11] ? `<br><small>Follow-up ${fd(c[11])}${R[c[0]] ? ' ✔ resolved' : ''}</small>` : ''}</td><td>${esc(c[7])}</td><td><small>${esc(c[9])}</small></td></tr>`);
+  });
+  const dial = !sess ? (p[2] ? `<button type="button" class="dc-btn g" data-a="dial">📞 Dial Call</button>` : `<button type="button" class="dc-btn g" disabled title="No phone number in Party Master">📞 Dial Call</button>${DC_ALLOW_MANUAL_SESSION ? '<button type="button" class="dc-btn p" data-a="manual">⏱️ Start timer without dialing</button>' : ''}`) : '';
+  el.innerHTML = `<h3 style="color:var(--blue-dark);">${esc(p[1])}</h3><div class="dc-note" style="margin:2px 0;">📍 ${esc(p[0])} · ${p[2] ? '📱 ' + esc(p[2]) : 'No phone number on file (add it in column C of Party Master)'}</div>
+    <div class="dc-row">${dial}</div>${sessBox()}
+    <div class="dc-stats"><span>Total calls<b>${all.length}</b></span><span>Last called<b>${last ? fd(last) : '—'}</b></span><span>Total duration<b>${hum(sum(all))}</b></span></div>
+    <div class="table-wrap" style="max-height:420px;">${hist.length ? `<table><thead><tr><th>Date / Time</th><th>Duration</th><th>Status</th><th>Remarks</th><th>By</th></tr></thead><tbody>${rows}</tbody></table>` : '<div class="dc-empty">No calls match the current filters for this distributor.</div>'}</div>`;
+  if(sess && sess.phase === 'running') startTick();
+}
+function rFU(){
+  const l = pend().sort((a, b) => a[11].localeCompare(b[11])), td = today();
+  const tbl = (arr, over) => arr.length ? `<div class="table-wrap" style="max-height:300px;"><table><thead><tr><th>Follow-up</th><th>Party</th><th>State</th><th>Last remark</th><th></th></tr></thead><tbody>${arr.map(c => `<tr><td class="${over ? 'dc-over' : ''}">${fd(c[11])}</td><td>${esc(c[5])}</td><td>${esc(c[4])}</td><td>${esc(c[7])}<br><small>Call ${fd(c[1])}</small></td><td><button type="button" class="dc-btn g" data-a="resolve" data-id="${esc(c[0])}">✔ Resolve</button></td></tr>`).join('')}</tbody></table></div>` : '<div class="dc-empty">None 🎉</div>';
+  const o = l.filter(c => c[11] < td), u = l.filter(c => c[11] >= td);
+  $('dcFU').innerHTML = `<div class="card-panel" style="margin-top:0;"><h4 class="dc-over">🔴 Overdue (${o.length})</h4>${tbl(o, true)}</div><div class="card-panel"><h4 style="color:var(--blue-dark);">🟡 Pending (${u.length})</h4>${tbl(u, false)}</div>`;
+}
+function rDates(){
+  const g = {}; fc().forEach(c => (g[c[1]] = g[c[1]] || []).push(c));
+  const ds = Object.keys(g).sort().reverse();
+  if(!ds.length){ $('dcDates').innerHTML = '<div class="dc-empty">No call records for the current filters.</div>'; return; }
+  $('dcDates').innerHTML = `<div class="table-wrap"><table><thead><tr><th>Date</th><th>Total Calls</th><th>Unique Distributors</th><th>Total Duration</th><th>Completed</th><th>Follow-Ups Required</th></tr></thead><tbody>${ds.map(d => {
+    const a = g[d];
+    const head = `<tr data-d="${d}" style="cursor:pointer;"><td><b>${openDate === d ? '▾' : '▸'} ${fd(d)}</b></td><td>${a.length}</td><td>${new Set(a.map(c => c[4] + '|' + c[5])).size}</td><td>${hms(sum(a))}</td><td>${a.filter(c => c[8] === 'Completed').length}</td><td>${a.filter(c => c[8] === 'Follow-Up Required').length}</td></tr>`;
+    const body = openDate === d ? `<tr><td colspan="6" style="background:var(--bg);"><table style="min-width:0;width:100%;">${a.slice().sort((x, y) => y[2].localeCompare(x[2])).map(c => `<tr><td>${esc(c[2])}</td><td>${esc(c[5])}<br><small>${esc(c[4])}</small></td><td>${hms(c[6])}</td><td>${esc(c[8])}</td><td>${esc(c[7])}</td></tr>`).join('')}</table></td></tr>` : '';
+    return head + body;
+  }).join('')}</tbody></table></div>`;
+}
+
+/* ---------- actions ---------- */
+function start(mode){
+  if(sess || !sel) return;
+  const p = P.find(x => x[0] === sel[0] && x[1] === sel[1]);
+  sess = {u:user.id, id:newId(), state:p[0], party:p[1], phone:p[2]||'', startedAt:Date.now(), mode, phase:'running', remarks:'', status:'', fu:''};
+  saveSess(); saveErr = '';
+  if(mode === 'Dialer'){ const a = document.createElement('a'); a.href = 'tel:' + p[2]; document.body.appendChild(a); a.click(); a.remove(); }
+  rDetail();
+}
+function endCall(){
+  stopTick(); sess.endedAt = Date.now(); sess.dur = Math.max(0, Math.round((sess.endedAt - sess.startedAt) / 1000)); sess.phase = 'ended'; saveSess(); rDetail();
+}
+async function saveCall(){
+  if(saving || !sess || sess.phase !== 'ended') return;
+  if(!sess.status){ saveErr = 'Please choose a call status.'; return rDetail(); }
+  if(sess.status === 'Follow-Up Required' && !sess.fu){ saveErr = 'Please choose the next follow-up date.'; return rDetail(); }
+  saving = true; saveErr = ''; rDetail();
+  try{
+    const r = await api('saveCall', {record:{callId:sess.id, state:sess.state, party:sess.party, startedAt:sess.startedAt, endedAt:sess.endedAt, durationSec:sess.dur, remarks:sess.remarks, status:sess.status, followUpDate:sess.status === 'Follow-Up Required' ? sess.fu : '', mode:sess.mode}});
+    const id = sess.id; sess = null; saveSess(); saving = false;
+    toast(r.duplicate ? 'ℹ️ This call was already saved earlier (' + id + ').' : '✅ Saved to Google Sheets · ' + id, true);
+    await loadAll(true);
+  }catch(e){
+    saving = false; if(e.code === 'AUTH'){ saveErr = 'Session expired — sign in again, then retry. Your call is kept on this device.'; logout(true); return; }
+    saveErr = 'Not saved: ' + e.message; rDetail();
+  }
+}
+async function resolveFU(id, btn){
+  const note = window.prompt('Resolution note (optional):', ''); if(note === null) return;
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try{ await api('resolve', {callId:id, note}); toast('✅ Follow-up marked resolved', true); await loadAll(true); }
+  catch(e){ btn.disabled = false; btn.textContent = '✔ Resolve'; toast('Could not resolve: ' + e.message); }
+}
+function csvCell(v){ v = String(v == null ? '' : v); if(/^[=+\-@]/.test(v)) v = "'" + v; return '"' + v.replace(/"/g, '""') + '"'; }
+function exportCsv(){
+  const rows = fc().sort((a, b) => (b[1] + b[2]).localeCompare(a[1] + a[2]));
+  if(!rows.length) return toast('Nothing to export for the current filters.');
+  const h = ['Call ID','Date','Start Time','End Time','State','Party Name','Duration (sec)','Duration (HH:MM:SS)','Remarks','Call Status','Recorded By','Created','Follow-Up Date','Follow-Up Status','Session Mode'];
+  const out = [h].concat(rows.map(c => [c[0], c[1], c[2], c[3], c[4], c[5], c[6], hms(c[6]), c[7], c[8], c[9], c[10], c[11], c[11] ? (R[c[0]] ? 'Resolved' : 'Pending') : '', c[12]]));
+  const blob = new Blob(['\ufeff' + out.map(r => r.map(csvCell).join(',')).join('\r\n')], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'Distributor_Calls_' + today() + '.csv'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+/* ---------- load / auth ---------- */
+async function loadAll(quiet){
+  if(!quiet){ $('dcLoading').style.display = 'block'; $('dcApp').style.display = 'none'; }
+  $('dcGlobalErr').innerHTML = '';
+  try{
+    const j = await api('data'); P = j.parties; C = j.calls; R = j.resolved || {};
+    const st = Array.from(new Set(P.map(p => p[0]))).sort();
+    $('dcFState').innerHTML = '<option value="">All States</option>' + st.map(s => `<option ${F.state === s ? 'selected' : ''}>${esc(s)}</option>`).join('');
+    $('dcFStatus').innerHTML = '<option value="">All statuses</option>' + STATUSES.map(s => `<option ${F.status === s ? 'selected' : ''}>${s}</option>`).join('');
+    $('dcApp').style.display = 'block'; render();
+  }catch(e){
+    if(e.code === 'AUTH'){ logout(true); return; }
+    $('dcGlobalErr').innerHTML = `<div class="dc-err">${esc(e.message)} <button type="button" class="dc-btn" id="dcRetry">↻ Retry</button></div>`;
+  }finally{ $('dcLoading').style.display = 'none'; }
+}
+function showApp(){
+  $('dcLogin').style.display = 'none'; $('dcUser').textContent = '👤 ' + user.name; $('dcRefresh').style.display = ''; $('dcLogout').style.display = '';
+  sess = loadSess(); if(sess){ sel = [sess.state, sess.party]; }
+  loadAll(false).then(startTick);
+}
+function logout(expired){
+  tok = null; user = null; stopTick(); sessionStorage.removeItem(TK); P = []; C = []; R = {}; sel = null; sess = null;
+  $('dcApp').style.display = 'none'; $('dcLogin').style.display = ''; $('dcUser').textContent = ''; $('dcRefresh').style.display = 'none'; $('dcLogout').style.display = 'none';
+  if(expired){ const b = $('dcLoginErr'); b.textContent = 'Session expired. Please sign in again.'; b.style.display = 'block'; }
+}
+function init(){
+  if(inited) return; inited = true;
+  try{ const s = JSON.parse(sessionStorage.getItem(TK)); if(s && s.exp > Date.now()){ tok = s.t; user = s.user; showApp(); } }catch(e){}
+}
+
+/* ---------- events ---------- */
+$('dcLoginForm').addEventListener('submit', async e => {
+  e.preventDefault(); const b = $('dcLoginBtn'), err = $('dcLoginErr'); err.style.display = 'none'; b.disabled = true; b.textContent = 'Signing in…';
+  try{
+    const j = await api('login', {userId:$('dcId').value.trim(), password:$('dcPw').value});
+    tok = j.token; user = {id:j.id, name:j.name}; sessionStorage.setItem(TK, JSON.stringify({t:tok, user, exp:j.exp})); $('dcPw').value = ''; showApp();
+  }catch(x){ err.textContent = x.message; err.style.display = 'block'; }
+  b.disabled = false; b.textContent = 'Sign in';
+});
+$('dcLogout').addEventListener('click', () => logout(false));
+$('dcRefresh').addEventListener('click', () => loadAll(false));
+$('dcExport').addEventListener('click', exportCsv);
+$('dcReset').addEventListener('click', () => { Object.assign(F, {state:'', q:'', party:'', pstate:'', from:'', to:'', status:''}); ['dcFState','dcFQ','dcFFrom','dcFTo','dcFStatus'].forEach(i => $(i).value = ''); sel = sess ? [sess.state, sess.party] : null; render(); });
+[['dcFState','state'], ['dcFFrom','from'], ['dcFTo','to'], ['dcFStatus','status']].forEach(x => $(x[0]).addEventListener('change', e => { F[x[1]] = e.target.value; if(x[1] === 'state'){ F.party = ''; F.pstate = ''; } render(); }));
+let qT; $('dcFQ').addEventListener('input', e => { clearTimeout(qT); qT = setTimeout(() => { F.q = e.target.value.trim().toLowerCase(); F.party = ''; F.pstate = ''; render(); }, 200); });
+$('dcKpis').addEventListener('click', e => {
+  const k = e.target.closest('[data-k]'); if(!k) return;
+  if(k.dataset.k === 't'){ F.from = F.to = today(); $('dcFFrom').value = $('dcFTo').value = F.from; render(); }
+  else (k.dataset.k === 'f' ? $('dcFU') : $('dcDates')).scrollIntoView({behavior:'smooth'});
+});
+$('dcParties').addEventListener('click', e => {
+  const i = e.target.closest('.dc-item'); if(!i) return; sel = [i.dataset.s, i.dataset.p]; F.party = i.dataset.p; F.pstate = i.dataset.s; render();
+});
+$('dcDates').addEventListener('click', e => { const r = e.target.closest('tr[data-d]'); if(!r) return; openDate = openDate === r.dataset.d ? null : r.dataset.d; rDates(); });
+$('dcFU').addEventListener('click', e => { const b = e.target.closest('[data-a="resolve"]'); if(b) resolveFU(b.dataset.id, b); });
+$('dcGlobalErr').addEventListener('click', e => { if(e.target.id === 'dcRetry') loadAll(false); });
+$('dcDetail').addEventListener('click', e => {
+  const b = e.target.closest('[data-a]'); if(!b) return; const a = b.dataset.a;
+  if(a === 'dial') start('Dialer'); else if(a === 'manual') start('Manual'); else if(a === 'end') endCall(); else if(a === 'save') saveCall();
+  else if(a === 'goto'){ sel = [sess.state, sess.party]; F.party = sess.party; F.pstate = sess.state; render(); startTick(); }
+  else if(a === 'discard' && window.confirm('Discard this call session? Nothing will be saved.')){ stopTick(); sess = null; saveSess(); saveErr = ''; rDetail(); }
+});
+$('dcDetail').addEventListener('input', e => { if(e.target.id === 'dcRem' && sess){ sess.remarks = e.target.value.slice(0, 2000); saveSess(); } });
+$('dcDetail').addEventListener('change', e => {
+  if(!sess) return;
+  if(e.target.id === 'dcStatus'){ sess.status = e.target.value; saveSess(); $('dcFu').style.display = sess.status === 'Follow-Up Required' ? '' : 'none'; }
+  if(e.target.id === 'dcFu'){ sess.fu = e.target.value; saveSess(); }
+});
+document.querySelector('.nav-item[data-tab="distconnect"]').addEventListener('click', init);
+})();
+</script>
 <script>
 /* ============ PWA: dynamically-built manifest (self-contained, no external files) ============ */
 (function buildManifest(){
