@@ -823,6 +823,9 @@ textarea.dc-in{width:100%;min-height:84px;resize:vertical;font-family:inherit}
 .tm-chart{background:#fff;border:1px solid #e4eaf3;padding:17px;border-radius:13px;min-width:0}.tm-chart h4{color:#153c70;font-size:12px;margin-bottom:13px;text-transform:uppercase;letter-spacing:.3px}
 .tm-bar-row{display:grid;grid-template-columns:minmax(70px,120px) 1fr 42px;gap:10px;align-items:center;font-size:11px;margin:10px 0}
 .tm-bar-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#64748b}.tm-bar-track{height:9px;background:#eaf0fa;border-radius:8px;overflow:hidden}.tm-bar-fill{background:linear-gradient(90deg,#1a56db,#4d9cf5);height:100%;border-radius:8px}.tm-bar-value{text-align:right;color:#234a79;font-weight:750}
+.tm-remember{display:flex;align-items:flex-start;gap:10px;margin-top:16px;font-size:13px;color:#314563;cursor:pointer;line-height:1.35}
+.tm-remember input{width:17px;height:17px;accent-color:#1a56db;flex-shrink:0;margin-top:1px}
+.tm-remember small{display:block;color:#6b7280;font-size:11px;margin-top:2px}
 .tm-access{max-width:490px;margin:28px auto}.tm-access h3{font-size:18px!important}
 .tm-hidden{display:none!important}
 .tm-detail{border:1px solid #dce5f3;background:#f8fbff;border-radius:13px;padding:15px;margin-top:12px}
@@ -1226,10 +1229,12 @@ textarea.dc-in{width:100%;min-height:84px;resize:vertical;font-family:inherit}
     </div>
     <div class="tm-card tm-access" id="tmAccessCard">
       <h3>🔒 Training Department Access</h3>
-      <p class="tm-desc">Attendance and employee information are restricted. Enter the Training Management access key generated during Apps Script setup. Your main sales dashboard login remains unchanged.</p>
-      <form id="tmLoginForm" autocomplete="off">
-        <div class="tm-field"><label for="tmAccessKey">Training Access Key</label><input class="tm-input" id="tmAccessKey" type="password" placeholder="Paste your private training access key" autocomplete="off" required></div>
-        <div class="tm-action-row"><button type="submit" class="tm-btn primary" id="tmLoginBtn">Unlock Training Module</button></div>
+      <p class="tm-desc">Sign in with your Training Department user ID and password. Your main Sales MIS login remains unchanged.</p>
+      <form id="tmLoginForm" autocomplete="on">
+        <div class="tm-field"><label for="tmUserId">User ID</label><input class="tm-input" id="tmUserId" type="text" value="Muskaan" placeholder="Enter your user ID" autocomplete="username" maxlength="80" required></div>
+        <div class="tm-field" style="margin-top:12px"><label for="tmPassword">Password</label><input class="tm-input" id="tmPassword" type="password" placeholder="Enter your training password" autocomplete="current-password" required></div>
+        <label class="tm-remember"><input type="checkbox" id="tmRemember" checked> <span><strong>Remember this device for 7 days</strong><small>Enable only on a private, trusted browser.</small></span></label>
+        <div class="tm-action-row"><button type="submit" class="tm-btn primary" id="tmLoginBtn">Sign in to Training</button></div>
       </form>
       <div id="tmLoginMessage" role="status"></div>
     </div>
@@ -4315,7 +4320,35 @@ document.querySelector('.nav-item[data-tab="distconnect"]').addEventListener('cl
 'use strict';
 /* Training Management is isolated from the pre-existing Sales MIS and Distributor Connect. */
 const TM_API_URL = (typeof BACKEND_URL !== 'undefined') ? BACKEND_URL : '';
-const TM_TOKEN_KEY = 'umTrainingAdminToken_v1';
+const TM_TOKEN_KEY = 'umTrainingLogin_v3';
+const TM_OLD_TOKEN_KEY = 'umTrainingAdminToken_v1';
+function tmForgetLogin(){
+  for(const storage of [localStorage,sessionStorage]){
+    try{storage.removeItem(TM_TOKEN_KEY);storage.removeItem(TM_OLD_TOKEN_KEY);}catch(e){}
+  }
+}
+function tmSavedLogin(){
+  // Restore only a still-valid signed token. The backend verifies the signature on every request.
+  for(const storage of [localStorage,sessionStorage]){
+    try{
+      const raw=storage.getItem(TM_TOKEN_KEY);
+      if(!raw)continue;
+      const record=JSON.parse(raw);
+      if(record&&typeof record.token==='string'&&Number(record.expiresAt)>Date.now())return record.token;
+      storage.removeItem(TM_TOKEN_KEY);
+    }catch(e){try{storage.removeItem(TM_TOKEN_KEY);}catch(x){}}
+  }
+  return '';
+}
+function tmRememberLogin(result,remember){
+  tmForgetLogin();
+  const value=JSON.stringify({token:result.token,expiresAt:result.expiresAt});
+  try{(remember?localStorage:sessionStorage).setItem(TM_TOKEN_KEY,value);return true;}
+  catch(e){
+    if(remember){try{sessionStorage.setItem(TM_TOKEN_KEY,value);}catch(x){}}
+    return false;
+  }
+}
 const tm$ = id => document.getElementById(id);
 const tmEsc = v => String(v == null ? '' : v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const tmNorm = v => String(v||'').replace(/\s+/g,' ').trim().toLowerCase();
@@ -4324,7 +4357,7 @@ const tmFmtDate = d => d && /^\d{4}-\d{2}-\d{2}$/.test(d) ? d.slice(8,10)+'/'+d.
 const tmPct = (a,b) => b ? Math.round(a*1000/b)/10 : 0;
 const tmStatus = s => '<span class="tm-badge '+(s==='Completed'?'completed':s==='Cancelled'?'cancelled':'')+'">'+tmEsc(s)+'</span>';
 const tmEmptyRow = (n,msg) => '<tr><td colspan="'+n+'" class="tm-empty">'+tmEsc(msg)+'</td></tr>';
-let token = sessionStorage.getItem(TM_TOKEN_KEY)||'', inited=false, busy=false, editId='', newId='', currentSession='', roster=[], marks={};
+let token = tmSavedLogin(), inited=false, busy=false, editId='', newId='', currentSession='', roster=[], marks={};
 let data={users:[],userCounts:{},states:[],products:[],schedules:[],attendance:[]};
 let bootstrapLoaded=false,summaryLoaded=false,summaryPending=null,rosterRequest=0,rosterByState=new Map(),activeSub='today',calendarMonth=tmDateToday().slice(0,7);
 let activeSummary=[],filteredAttendance=[],selectedEmployeeRows=[];
@@ -4359,7 +4392,7 @@ async function tmLoad(){
     if(activeSub==='attendance')tmSessions(currentSession);
     if(activeSub==='summary')tmEnsureSummary();
   }catch(e){
-    if(e.code==='AUTH'){token='';sessionStorage.removeItem(TM_TOKEN_KEY);bootstrapLoaded=false;tmLoginUI(true);tmMsg('tmLoginMessage','Training session expired. Enter your access key to sign in again.','error');}
+    if(e.code==='AUTH'){token='';tmForgetLogin();bootstrapLoaded=false;tmLoginUI(true);tmMsg('tmLoginMessage','Training session expired. Please sign in again.','error');}
     else tmTop(e.message);
   }finally{tm$('tmLoading').classList.add('tm-hidden');}
 }
@@ -4578,11 +4611,20 @@ function tmBind(){
   if(inited)return;inited=true;
   tm$('tmSDate').value=tm$('tmAFindDate').value=tmDateToday();tm$('tmSStart').value='11:00';tm$('tmSEnd').value='12:00';
   tm$('tmLoginForm').addEventListener('submit',async e=>{
-    e.preventDefault();if(busy)return;const btn=tm$('tmLoginBtn');tmBusy(true,btn);tmMsg('tmLoginMessage','Verifying Training Management access…');
-    try{const res=await tmApi('tmLogin',{key:tm$('tmAccessKey').value});token=res.token;sessionStorage.setItem(TM_TOKEN_KEY,token);tm$('tmAccessKey').value='';tmMsg('tmLoginMessage','');await tmLoad();}
-    catch(err){tmMsg('tmLoginMessage',err.message,'error');}finally{tmBusy(false,btn);}
+    e.preventDefault();if(busy)return;
+    const btn=tm$('tmLoginBtn'), userId=tm$('tmUserId').value.trim(), password=tm$('tmPassword').value, remember=tm$('tmRemember').checked;
+    tmBusy(true,btn);tmMsg('tmLoginMessage','Verifying Training Department credentials…');
+    try{
+      const res=await tmApi('tmLogin',{userId,password,remember});
+      token=res.token;
+      const saved=tmRememberLogin(res,remember);
+      tm$('tmPassword').value='';
+      tmMsg('tmLoginMessage',saved?'':'Your browser blocked persistent storage; you may need to sign in again.','info');
+      await tmLoad();
+    }catch(err){tmMsg('tmLoginMessage',err.message,'error');}
+    finally{tmBusy(false,btn);}
   });
-  tm$('tmLogout').addEventListener('click',()=>{token='';bootstrapLoaded=false;summaryLoaded=false;roster=[];rosterRequest++;sessionStorage.removeItem(TM_TOKEN_KEY);data={users:[],userCounts:{},states:[],products:[],attendance:[],schedules:[]};tmLoginUI(true);tmTop('');});
+  tm$('tmLogout').addEventListener('click',()=>{token='';bootstrapLoaded=false;summaryLoaded=false;roster=[];rosterRequest++;tmForgetLogin();data={users:[],userCounts:{},states:[],products:[],attendance:[],schedules:[]};tmLoginUI(true);tmTop('');});
   tm$('tmRefresh').addEventListener('click',tmLoad);
   document.querySelectorAll('[data-tm-tab]').forEach(b=>b.addEventListener('click',()=>tmSub(b.dataset.tmTab)));
   tm$('tmScheduleForm').addEventListener('submit',tmSaveSchedule);tm$('tmSClear').addEventListener('click',tmClearSchedule);
