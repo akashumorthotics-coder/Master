@@ -4089,19 +4089,28 @@ let tok = null, user = null, P = [], C = [], R = {}, sel = null, sess = null, ti
 const F = {state:'', q:'', party:'', pstate:'', from:'', to:'', status:''};
 
 /* ---------- API (POST only: avoids CORS preflight and the dashboard service worker's GET cache) ---------- */
-async function api(action, data){
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function api(action, data, opts){
   if(!/^https:\/\/script\.google\.com\//.test(DC_API_URL)) throw new Error('Backend URL is not configured yet. Paste the Apps Script Web App URL into DC_API_URL.');
-  const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 30000);
-  try{
-    const r = await fetch(DC_API_URL, {method:'POST', body:JSON.stringify(Object.assign({action:'dc' + action.charAt(0).toUpperCase() + action.slice(1), token:tok}, data||{})), signal:ctl.signal});
-    const j = await r.json();
-    if(!j.ok){ const e = new Error(j.error || 'Request failed'); e.code = j.code; throw e; }
-    return j;
-  }catch(e){
-    if(e.name === 'AbortError') throw new Error('The request timed out. Check your connection and retry.');
-    if(e instanceof TypeError) throw new Error('Could not reach the server. Check your connection and retry.');
-    throw e;
-  }finally{ clearTimeout(t); }
+  const body = JSON.stringify(Object.assign({action: action === 'ping' ? 'ping' : 'dc' + action.charAt(0).toUpperCase() + action.slice(1), token:tok}, data||{}));
+  const tries = (opts && opts.tries) || 3; let last;
+  for(let i = 0; i < tries; i++){
+    const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), (opts && opts.timeout) || 25000);
+    try{
+      const r = await fetch(DC_API_URL, {method:'POST', body, signal:ctl.signal});
+      let j; try{ j = await r.json(); }catch(x){ const e = new Error('The server sent an unexpected reply. Please retry in a moment.'); e.code = 'BADRESP'; throw e; }
+      if(!j.ok){ const e = new Error(j.error || j.message || 'Request failed'); e.code = j.code; throw e; }
+      return j;
+    }catch(e){
+      last = e;   // every DC action is idempotent (save uses callId), so transient failures are retried automatically
+      const retry = e.name === 'AbortError' || e instanceof TypeError || e.code === 'BUSY' || e.code === 'BADRESP';
+      if(!retry || i === tries - 1) break;
+      await sleep(600 * (i + 1));
+    }finally{ clearTimeout(t); }
+  }
+  if(last.name === 'AbortError') throw new Error('The server is taking too long to respond. Check your connection and retry.');
+  if(last instanceof TypeError){ console.error('[DC] Network/CORS failure calling', DC_API_URL, last); throw new Error(navigator.onLine === false ? 'You are offline. Check your internet connection and retry.' : 'Could not reach the server. Check your connection and retry.'); }
+  throw last;
 }
 function toast(msg, ok){
   const d = document.createElement('div'); d.className = 'dc-toast' + (ok ? ' ok' : ''); d.textContent = msg;
@@ -4116,7 +4125,7 @@ function startTick(){ stopTick(); if(sess && sess.phase === 'running'){ tick = s
 function stopTick(){ if(tick){ clearInterval(tick); tick = null; } }
 function updTimer(){ const el = $('dcTimer'); if(el && sess && sess.phase === 'running') el.textContent = hms((Date.now() - sess.startedAt) / 1000); }
 document.addEventListener('visibilitychange', updTimer); // timer is timestamp-based, so it stays correct while the dialer app is in front
-window.addEventListener('beforeunload', e => { if(sess){ e.preventDefault(); e.returnValue = ''; } });
+window.addEventListener('beforeunload', e => { if(sess || mine().length){ e.preventDefault(); e.returnValue = ''; } });
 
 /* ---------- data helpers ---------- */
 const pmatch = c => F.party ? (c[4] === F.pstate && c[5] === F.party) : (!F.q || c[5].toLowerCase().includes(F.q));
@@ -4174,7 +4183,7 @@ function rDetail(){
   let rows = '', byDate = {}; hist.forEach(c => (byDate[c[1]] = byDate[c[1]] || []).push(c));
   Object.keys(byDate).sort().reverse().forEach(d => {
     if(byDate[d].length > 1) rows += `<tr class="dc-gh"><td colspan="5">${fd(d)} · ${byDate[d].length} calls</td></tr>`;
-    byDate[d].forEach(c => rows += `<tr><td>${fd(c[1])}<br><small>${esc(c[2])}</small></td><td>${hms(c[6])}</td><td>${esc(c[8])}${c[11] ? `<br><small>Follow-up ${fd(c[11])}${R[c[0]] ? ' ✔ resolved' : ''}</small>` : ''}</td><td>${esc(c[7])}</td><td><small>${esc(c[9])}</small></td></tr>`);
+    byDate[d].forEach(c => rows += `<tr><td>${fd(c[1])}<br><small>${esc(c[2])}</small></td><td>${hms(c[6])}</td><td>${esc(c[8])}${c[11] ? `<br><small>Follow-up ${fd(c[11])}${R[c[0]] ? ' ✔ resolved' : ''}</small>` : ''}</td><td>${esc(c[7])}</td><td><small>${esc(c[9])}${pending.has(c[0]) ? ' ⏳ syncing' : ''}</small></td></tr>`);
   });
   const dial = !sess ? (p[2] ? `<button type="button" class="dc-btn g" data-a="dial">📞 Dial Call</button>` : `<button type="button" class="dc-btn g" disabled title="No phone number in Party Master">📞 Dial Call</button>${DC_ALLOW_MANUAL_SESSION ? '<button type="button" class="dc-btn p" data-a="manual">⏱️ Start timer without dialing</button>' : ''}`) : '';
   el.innerHTML = `<h3 style="color:var(--blue-dark);">${esc(p[1])}</h3><div class="dc-note" style="margin:2px 0;">📍 ${esc(p[0])} · ${p[2] ? '📱 ' + esc(p[2]) : 'No phone number on file (add it in column C of Party Master)'}</div>
@@ -4213,26 +4222,69 @@ function start(mode){
 function endCall(){
   stopTick(); sess.endedAt = Date.now(); sess.dur = Math.max(0, Math.round((sess.endedAt - sess.startedAt) / 1000)); sess.phase = 'ended'; saveSess(); rDetail();
 }
-async function saveCall(){
+/* ---------- fast save: instant UI + background outbox (safe to retry: server de-duplicates by callId) ---------- */
+const OBK = 'dcOutbox_v1';
+let OB = [], syncing = false, obTimer = null, obFails = 0;
+const pending = new Set(), recent = [];
+try{ OB = JSON.parse(localStorage.getItem(OBK)) || []; }catch(e){ OB = []; }
+const saveOB = () => { try{ OB.length ? localStorage.setItem(OBK, JSON.stringify(OB)) : localStorage.removeItem(OBK); }catch(e){} };
+const mine = () => OB.filter(o => user && o.u === user.id);
+const istP = ms => { const p = {}; new Intl.DateTimeFormat('en-GB', {timeZone:'Asia/Kolkata', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit', hourCycle:'h23'}).formatToParts(new Date(ms)).forEach(x => p[x.type] = x.value); return p; };
+const istD = ms => { const p = istP(ms); return p.year + '-' + p.month + '-' + p.day; };
+const istT = ms => { const p = istP(ms); return p.hour + ':' + p.minute + ':' + p.second; };
+function mergePending(){   // keep not-yet-confirmed rows visible after a reload
+  const have = new Set(C.map(c => c[0])); pending.clear();
+  mine().forEach(o => { if(!have.has(o.rec.callId)){ C.push(o.row); pending.add(o.rec.callId); } });
+  recent.forEach(r => { if(!have.has(r[0])) C.push(r); });
+}
+$('dcGlobalErr').insertAdjacentHTML('afterend', '<div id="dcSync"></div>');
+function syncUI(){
+  const el = $('dcSync'), l = mine(), bad = l.filter(o => o.err);
+  el.innerHTML = !l.length ? '' : bad.length
+    ? `<div class="dc-err">⚠️ ${bad.length} call(s) could not be saved: ${esc(bad[0].err)} <button type="button" class="dc-btn" data-ob="discard">Discard</button></div>`
+    : `<div class="dc-note" style="margin:6px 0;">☁️ ${l.length} call(s) syncing to Google Sheets…${obFails ? ' retrying — they are safe on this device.' : ''} <button type="button" class="dc-btn" data-ob="retry">↻ Sync now</button></div>`;
+}
+$('dcSync').addEventListener('click', e => {
+  const b = e.target.closest('[data-ob]'); if(!b) return;
+  if(b.dataset.ob === 'retry'){ obFails = 0; flushOB(); return; }
+  if(window.confirm('Discard the call(s) that failed to save? They will be removed from this device.')){
+    OB.filter(o => user && o.u === user.id && o.err).forEach(o => { C = C.filter(c => c[0] !== o.rec.callId); pending.delete(o.rec.callId); });
+    OB = OB.filter(o => !(user && o.u === user.id && o.err)); saveOB(); syncUI(); render();
+  }
+});
+async function flushOB(){
+  if(syncing || !tok || !user) return; syncing = true; clearTimeout(obTimer); let done = 0;
+  try{
+    for(;;){
+      const o = mine().find(x => !x.err); if(!o) break;
+      try{ await api('saveCall', {record:o.rec}, {tries:2}); }
+      catch(e){ if(e.code === 'INVALID'){ o.err = e.message; saveOB(); syncUI(); continue; } if(e.code !== 'AUTH') obFails++; throw e; }
+      OB = OB.filter(x => x !== o); saveOB(); pending.delete(o.rec.callId); recent.push(o.row); obFails = 0; done++; syncUI(); rParties();
+    }
+    if(done && !mine().length){ toast('☁️ All calls synced to Google Sheets', true); if(!sess) loadAll(true); else rDetail(); }
+  }catch(e){
+    if(e.code === 'AUTH'){ toast('Session expired — sign in again to finish syncing. Your calls are kept on this device.'); logout(true); }
+    else obTimer = setTimeout(flushOB, Math.min(60000, 4000 * Math.pow(2, Math.min(obFails, 4))));
+  }finally{ syncing = false; if(user) syncUI(); }
+}
+window.addEventListener('online', () => { obFails = 0; flushOB(); });
+function saveCall(){
   if(saving || !sess || sess.phase !== 'ended') return;
   if(!sess.status){ saveErr = 'Please choose a call status.'; return rDetail(); }
   if(sess.status === 'Follow-Up Required' && !sess.fu){ saveErr = 'Please choose the next follow-up date.'; return rDetail(); }
-  saving = true; saveErr = ''; rDetail();
-  try{
-    const r = await api('saveCall', {record:{callId:sess.id, state:sess.state, party:sess.party, startedAt:sess.startedAt, endedAt:sess.endedAt, durationSec:sess.dur, remarks:sess.remarks, status:sess.status, followUpDate:sess.status === 'Follow-Up Required' ? sess.fu : '', mode:sess.mode}});
-    const id = sess.id; sess = null; saveSess(); saving = false;
-    toast(r.duplicate ? 'ℹ️ This call was already saved earlier (' + id + ').' : '✅ Saved to Google Sheets · ' + id, true);
-    await loadAll(true);
-  }catch(e){
-    saving = false; if(e.code === 'AUTH'){ saveErr = 'Session expired — sign in again, then retry. Your call is kept on this device.'; logout(true); return; }
-    saveErr = 'Not saved: ' + e.message; rDetail();
-  }
+  const s = sess, now = Date.now(), fu = s.status === 'Follow-Up Required' ? s.fu : '';
+  const rec = {callId:s.id, state:s.state, party:s.party, startedAt:s.startedAt, endedAt:s.endedAt, durationSec:s.dur, remarks:s.remarks, status:s.status, followUpDate:fu, mode:s.mode};
+  const row = [s.id, istD(s.startedAt), istT(s.startedAt), istT(s.endedAt), s.state, s.party, s.dur, s.remarks, s.status, user.name + ' (' + user.id + ')', istD(now) + ' ' + istT(now), fu, s.mode === 'Dialer' ? 'Dialer' : 'Manual'];
+  OB.push({u:user.id, rec, row}); saveOB(); C.push(row); pending.add(s.id);   // stored on this device first, so nothing is lost
+  sess = null; saveSess(); saveErr = ''; stopTick();
+  toast('✅ Saved — syncing to Google Sheets in the background', true);
+  render(); syncUI(); flushOB();
 }
 async function resolveFU(id, btn){
   const note = window.prompt('Resolution note (optional):', ''); if(note === null) return;
-  btn.disabled = true; btn.textContent = 'Saving…';
-  try{ await api('resolve', {callId:id, note}); toast('✅ Follow-up marked resolved', true); await loadAll(true); }
-  catch(e){ btn.disabled = false; btn.textContent = '✔ Resolve'; toast('Could not resolve: ' + e.message); }
+  R[id] = [today(), user.name, note]; render(); toast('✅ Follow-up marked resolved', true);   // instant; reverted only if the server refuses
+  try{ await api('resolve', {callId:id, note}); }
+  catch(e){ delete R[id]; render(); if(e.code === 'AUTH'){ logout(true); return; } toast('Could not resolve: ' + e.message); }
 }
 function csvCell(v){ v = String(v == null ? '' : v); if(/^[=+\-@]/.test(v)) v = "'" + v; return '"' + v.replace(/"/g, '""') + '"'; }
 function exportCsv(){
@@ -4249,28 +4301,30 @@ async function loadAll(quiet){
   if(!quiet){ $('dcLoading').style.display = 'block'; $('dcApp').style.display = 'none'; }
   $('dcGlobalErr').innerHTML = '';
   try{
-    const j = await api('data'); P = j.parties; C = j.calls; R = j.resolved || {};
+    const j = await api('data'); P = j.parties; C = j.calls; R = j.resolved || {}; mergePending();
     const st = Array.from(new Set(P.map(p => p[0]))).sort();
     $('dcFState').innerHTML = '<option value="">All States</option>' + st.map(s => `<option ${F.state === s ? 'selected' : ''}>${esc(s)}</option>`).join('');
     $('dcFStatus').innerHTML = '<option value="">All statuses</option>' + STATUSES.map(s => `<option ${F.status === s ? 'selected' : ''}>${s}</option>`).join('');
     $('dcApp').style.display = 'block'; render();
   }catch(e){
     if(e.code === 'AUTH'){ logout(true); return; }
+    if(quiet && C.length) return;   // silent background refresh: keep what is on screen
     $('dcGlobalErr').innerHTML = `<div class="dc-err">${esc(e.message)} <button type="button" class="dc-btn" id="dcRetry">↻ Retry</button></div>`;
   }finally{ $('dcLoading').style.display = 'none'; }
 }
 function showApp(){
   $('dcLogin').style.display = 'none'; $('dcUser').textContent = '👤 ' + user.name; $('dcRefresh').style.display = ''; $('dcLogout').style.display = '';
   sess = loadSess(); if(sess){ sel = [sess.state, sess.party]; }
-  loadAll(false).then(startTick);
+  loadAll(false).then(startTick); flushOB();
 }
 function logout(expired){
-  tok = null; user = null; stopTick(); sessionStorage.removeItem(TK); P = []; C = []; R = {}; sel = null; sess = null;
+  tok = null; user = null; stopTick(); sessionStorage.removeItem(TK); recent.length = 0; pending.clear(); $('dcSync').innerHTML = ''; P = []; C = []; R = {}; sel = null; sess = null;
   $('dcApp').style.display = 'none'; $('dcLogin').style.display = ''; $('dcUser').textContent = ''; $('dcRefresh').style.display = 'none'; $('dcLogout').style.display = 'none';
   if(expired){ const b = $('dcLoginErr'); b.textContent = 'Session expired. Please sign in again.'; b.style.display = 'block'; }
 }
 function init(){
   if(inited) return; inited = true;
+  api('ping', {}, {tries:1, timeout:15000}).catch(() => {});   // wakes the Apps Script instance while the user is typing the login
   try{ const s = JSON.parse(sessionStorage.getItem(TK)); if(s && s.exp > Date.now()){ tok = s.t; user = s.user; showApp(); } }catch(e){}
 }
 
