@@ -462,6 +462,7 @@ textarea.dc-in{width:100%;min-height:84px;resize:vertical;font-family:inherit}
 .tm-navtabs button{border:1px solid #d9e3f1;background:white;color:#45607e;padding:11px 15px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:750;box-shadow:0 1px 5px rgba(0,0,0,.02)}
 .tm-navtabs button.active{background:#1a56db;border-color:#1a56db;color:white;box-shadow:0 4px 13px rgba(26,86,219,.15)}
 .tm-page{display:none}.tm-page.active{display:block;animation:tabFadeIn .2s ease}
+.tm-awaiting-bootstrap > .tm-page{display:none}
 .tm-form-grid{display:grid;grid-template-columns:repeat(5,minmax(130px,1fr));gap:12px;align-items:end}
 .tm-field{display:flex;flex-direction:column;gap:6px;min-width:0}
 .tm-field label{font-size:11px;font-weight:800;color:#53708c;letter-spacing:.3px;text-transform:uppercase}
@@ -1226,6 +1227,24 @@ SOFTWARE.
         <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-file"></use></svg><span class="nav-label">Punch Sale Order</span>
       </button>
     </div>
+    <div class="nav-group" hidden>
+      <p class="nav-caption">Lead Management</p>
+      <button type="button" class="nav-item" data-tab="lead-dashboard" aria-label="Lead Dashboard" title="Lead Dashboard" style="display:none">
+        <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-overview"></use></svg><span class="nav-label">Lead Dashboard</span>
+      </button>
+      <button type="button" class="nav-item" data-tab="lead-list" aria-label="All Leads" title="All Leads" style="display:none">
+        <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-users"></use></svg><span class="nav-label">All Leads</span>
+      </button>
+      <button type="button" class="nav-item" data-tab="lead-schedule" aria-label="Follow-up Schedule" title="Follow-up Schedule" style="display:none">
+        <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-calendar"></use></svg><span class="nav-label">Follow-up Schedule</span>
+      </button>
+      <button type="button" class="nav-item" data-tab="lead-calls" aria-label="Today&#x27;s Calls" title="Today&#x27;s Calls" style="display:none">
+        <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-phone"></use></svg><span class="nav-label">Today&#x27;s Calls</span>
+      </button>
+      <button type="button" class="nav-item" data-tab="lead-reports" aria-label="Performance &amp; Reports" title="Performance &amp; Reports" style="display:none">
+        <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-chart"></use></svg><span class="nav-label">Performance &amp; Reports</span>
+      </button>
+    </div>
     <div class="nav-group">
       <p class="nav-caption">Workflows</p>
       <button type="button" class="nav-item" data-tab="training" aria-label="Product Training" title="Product Training">
@@ -1681,13 +1700,6 @@ SOFTWARE.
       <p class="tm-desc">Your account does not have access to Training Management. Ask an administrator if you need it.</p>
       <div id="tmLoginMessage" role="status"></div>
     </div>
-    <div id="tmLoading" class="loading tm-hidden">
-      <div class="loading-caption" role="status"><span class="spinner" aria-hidden="true"></span><span>Preparing your workspace…</span></div>
-      <div class="skeleton-layout" aria-hidden="true">
-        <div class="skeleton-metrics"><span class="skeleton-card"></span><span class="skeleton-card"></span><span class="skeleton-card"></span><span class="skeleton-card"></span></div>
-        <div class="skeleton-table"></div>
-      </div>
-    </div>
     <div id="tmTopError" role="status"></div>
     <div id="tmWorkspace" class="content-reveal tm-hidden">
       <div class="tm-navtabs" role="group" aria-label="Training Management sections">
@@ -1695,6 +1707,14 @@ SOFTWARE.
           <button type="button" data-tm-tab="schedule" aria-pressed="false"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-calendar"></use></svg><span class="button-label">Schedule Training</span></button>
         <button type="button" data-tm-tab="attendance" aria-pressed="false"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-check"></use></svg><span class="button-label">Training Attendance</span></button>
         <button type="button" data-tm-tab="summary" aria-pressed="false"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-chart"></use></svg><span class="button-label">Training Summary &amp; Analytics</span></button>
+      </div>
+
+      <div id="tmLoading" class="loading tm-hidden">
+        <div class="loading-caption" role="status"><span class="spinner" aria-hidden="true"></span><span>Preparing your workspace…</span></div>
+        <div class="skeleton-layout" aria-hidden="true">
+          <div class="skeleton-metrics"><span class="skeleton-card"></span><span class="skeleton-card"></span><span class="skeleton-card"></span><span class="skeleton-card"></span></div>
+          <div class="skeleton-table"></div>
+        </div>
       </div>
 
       <section class="tm-page active" id="tmTodayPage">
@@ -1779,14 +1799,101 @@ SOFTWARE.
           </div>
         </div>
         <div id="tmSummaryError" role="status"></div>
+        <div id="tmSummaryResults" class="tm-hidden">
         <div class="tm-kpi-grid" id="tmKpis"></div>
         <div class="tm-chart-grid"><div class="tm-chart"><h4>Monthly training trend</h4><div id="tmChartMonths"></div></div><div class="tm-chart"><h4>State-wise sessions</h4><div id="tmChartStates"></div></div><div class="tm-chart"><h4>Product-wise coverage</h4><div id="tmChartProducts"></div></div><div class="tm-chart"><h4>Present vs Absent</h4><div id="tmChartAttendance"></div></div><div class="tm-chart"><h4>State-wise Attendance %</h4><div id="tmChartStateRates"></div></div><div class="tm-chart"><h4>Most Active Employees (Present)</h4><div id="tmChartEmployeeVolume"></div></div></div>
         <div class="tm-card"><h3>Session-wise training summary</h3><p class="tm-desc">Click any training row to inspect attendee records.</p><div class="tm-table-area"><table><thead><tr><th>Date</th><th>State</th><th>Product</th><th>Time</th><th>Total Users</th><th>Present</th><th>Absent</th><th>Attendance %</th><th>Status</th></tr></thead><tbody id="tmQSessions"></tbody></table></div><div id="tmSessionDetail" class="tm-detail tm-hidden"></div></div>
         <div class="tm-card"><h3>State-wise training coverage</h3><div class="tm-table-area"><table><thead><tr><th>State</th><th>Conducted</th><th>Current Employees</th><th>Present</th><th>Absent</th><th>Attendance %</th><th>Products Covered</th></tr></thead><tbody id="tmQStates"></tbody></table></div></div>
                 <div class="tm-card"><h3>Employee-wise training history</h3><p class="tm-desc">Unique employee participation across filtered training sessions. Select a name for product and date-wise history.</p><input id="tmQEmployeeSearch" class="tm-input" style="max-width:360px;margin-bottom:12px" placeholder="Search employee or designation..."><div class="tm-table-area"><table><thead><tr><th>Employee</th><th>State</th><th>Designation</th><th>Attended</th><th>Absent</th><th>Attendance %</th></tr></thead><tbody id="tmQEmployees"></tbody></table></div><div id="tmEmployeeDetail" class="tm-detail tm-hidden"></div></div>
+        </div>
       </section>
     </div>
   </div>
+
+  <section class="tab-content lead-workspace" id="tab-lead-dashboard">
+    <div class="topbar">
+      <div class="page-heading">
+        <span class="page-mark"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-overview"></use></svg></span>
+        <div>
+          <p class="page-context">Lead Management</p>
+          <h2 tabindex="-1">Lead Dashboard</h2>
+          <p class="page-description">Track your pipeline, follow-up workload, and conversions.</p>
+        </div>
+      </div>
+      <div class="controls lm-header-actions"><button type="button" class="refresh-btn lm-secondary" data-lm-action="goto-calls"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-phone"></use></svg><span class="button-label">Today's calls</span></button><button type="button" class="refresh-btn" data-lm-action="add"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-user"></use></svg><span class="button-label">New lead</span></button></div>
+    </div>
+    <div data-lm-filters></div>
+    <div data-lm-tabs></div>
+    <div data-lm-data aria-busy="false"><p class="ui-empty" role="status">Preparing Lead Management…</p></div>
+  </section>
+
+  <section class="tab-content lead-workspace" id="tab-lead-list">
+    <div class="topbar">
+      <div class="page-heading">
+        <span class="page-mark"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-users"></use></svg></span>
+        <div>
+          <p class="page-context">Lead Management</p>
+          <h2 tabindex="-1">All Leads</h2>
+          <p class="page-description">Find, create, import, and manage customer leads.</p>
+        </div>
+      </div>
+      <div class="controls lm-header-actions"><button type="button" class="refresh-btn lm-secondary" data-lm-action="export"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-download"></use></svg><span class="button-label">Export Excel</span></button><button type="button" class="refresh-btn lm-secondary" data-lm-action="import"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-spreadsheet"></use></svg><span class="button-label">Import leads</span></button><button type="button" class="refresh-btn" data-lm-action="add"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-user"></use></svg><span class="button-label">New lead</span></button></div>
+    </div>
+    <div data-lm-filters></div>
+    <div data-lm-tabs></div>
+    <div data-lm-data aria-busy="false"><p class="ui-empty" role="status">Preparing Lead Management…</p></div>
+  </section>
+
+  <section class="tab-content lead-workspace" id="tab-lead-schedule">
+    <div class="topbar">
+      <div class="page-heading">
+        <span class="page-mark"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-calendar"></use></svg></span>
+        <div>
+          <p class="page-context">Lead Management</p>
+          <h2 tabindex="-1">Follow-up Schedule</h2>
+          <p class="page-description">Plan the next contact and keep pending work in view.</p>
+        </div>
+      </div>
+      <div class="controls lm-header-actions"><button type="button" class="refresh-btn lm-secondary" data-lm-action="refresh"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-refresh"></use></svg><span class="button-label">Refresh</span></button></div>
+    </div>
+    <div data-lm-filters></div>
+    <div data-lm-tabs></div>
+    <div data-lm-data aria-busy="false"><p class="ui-empty" role="status">Preparing Lead Management…</p></div>
+  </section>
+
+  <section class="tab-content lead-workspace" id="tab-lead-calls">
+    <div class="topbar">
+      <div class="page-heading">
+        <span class="page-mark"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-phone"></use></svg></span>
+        <div>
+          <p class="page-context">Lead Management</p>
+          <h2 tabindex="-1">Today&#x27;s Calls</h2>
+          <p class="page-description">Work through overdue and due-today follow-ups.</p>
+        </div>
+      </div>
+      <div class="controls lm-header-actions"><button type="button" class="refresh-btn lm-secondary" data-lm-action="refresh"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-refresh"></use></svg><span class="button-label">Refresh</span></button></div>
+    </div>
+    <div data-lm-filters></div>
+    <div data-lm-tabs></div>
+    <div data-lm-data aria-busy="false"><p class="ui-empty" role="status">Preparing Lead Management…</p></div>
+  </section>
+
+  <section class="tab-content lead-workspace" id="tab-lead-reports">
+    <div class="topbar">
+      <div class="page-heading">
+        <span class="page-mark"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-chart"></use></svg></span>
+        <div>
+          <p class="page-context">Lead Management</p>
+          <h2 tabindex="-1">Performance &amp; Reports</h2>
+          <p class="page-description">Review salesperson activity and conversion performance.</p>
+        </div>
+      </div>
+      <div class="controls lm-header-actions"><button type="button" class="refresh-btn lm-secondary" data-lm-action="refresh"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-refresh"></use></svg><span class="button-label">Refresh</span></button></div>
+    </div>
+    <div data-lm-filters></div>
+    <div data-lm-tabs></div>
+    <div data-lm-data aria-busy="false"><p class="ui-empty" role="status">Preparing Lead Management…</p></div>
+  </section>
 
   <!-- DISTRIBUTOR CONNECT (independent module; see <script id="dc-module">) -->
     <!-- ADMINISTRATION (Super Admin only; every action is re-checked on the server) -->
@@ -2251,6 +2358,8 @@ const SALES_PERMISSIONS = ['sales.target','sales.party','sales.secondary','sales
 const NAV_PERM = {
   exec:['sales.target'], primary:['sales.target','sales.party'], product:['sales.product'], secondary:['sales.secondary'],
   beatwise:['sales.report'], 'kra-kpi':SALES_PERMISSIONS, 'punch-sale-order':SALES_PERMISSIONS,
+  'lead-dashboard':['lead.own','lead.manage'], 'lead-list':['lead.own','lead.manage'],
+  'lead-schedule':['lead.own','lead.manage'], 'lead-calls':['lead.own','lead.manage'], 'lead-reports':['lead.own','lead.manage'],
   training:['content.training'], trainingmodule:['tm'], distconnect:['dc'], admin:['admin']
 };
 let dashboardUnlocked = false;
@@ -2394,6 +2503,27 @@ function loadScriptOnce(src){
     });
   }
   return _libPromises[src];
+}
+let leadStyles;
+function openLeadWorkspace(page){
+  if(!(NAV_PERM[page] || []).some(permission => UMAuth.can(permission))) return;
+  if(!leadStyles){
+    leadStyles = new Promise((resolve, reject) => {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = './lead-management.css';
+      link.onload = resolve;
+      link.onerror = () => { link.remove(); leadStyles = null; reject(new Error('Lead Management styles could not load.')); };
+      document.head.appendChild(link);
+    });
+  }
+  Promise.all([leadStyles, loadScriptOnce('./lead-management.js')]).then(() => {
+    if(document.getElementById('tab-' + page).classList.contains('active')) window.UMLeadWorkspace.open(page);
+  }).catch(() => {
+    const panel = document.querySelector('#tab-' + page + ' [data-lm-data]');
+    panel.innerHTML = '<p role="alert">Lead Management could not load.</p><button type="button" class="refresh-btn">Retry</button>';
+    panel.querySelector('button').onclick = () => openLeadWorkspace(page);
+  });
 }
 const LIB_XLSX = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
 const LIB_JSPDF = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
@@ -2726,6 +2856,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
       workspaceMain.scrollTop = 0;
     }
     if(drawerOpen) setDrawerOpen(false, content.querySelector('h2'));
+    if(item.dataset.tab.startsWith('lead-')) openLeadWorkspace(item.dataset.tab);
   });
 });
 
@@ -5173,7 +5304,14 @@ function tmRememberLogin(result,remember){
 const tm$ = id => document.getElementById(id);
 const tmEsc = v => String(v == null ? '' : v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const tmNorm = v => String(v||'').replace(/\s+/g,' ').trim().toLowerCase();
-const tmDateToday = () => {const p={};new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).forEach(x=>p[x.type]=x.value);return p.year+'-'+p.month+'-'+p.day;};
+const tmProfile = new URLSearchParams(location.search).get('tmPerf')==='1';
+let tmDayFormat, tmMonthFormat, tmClockFormat;
+const tmDateToday = () => {
+  tmDayFormat ||= new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'});
+  const p={};
+  tmDayFormat.formatToParts(new Date()).forEach(x=>p[x.type]=x.value);
+  return p.year+'-'+p.month+'-'+p.day;
+};
 const tmFmtDate = d => d && /^\d{4}-\d{2}-\d{2}$/.test(d) ? d.slice(8,10)+'/'+d.slice(5,7)+'/'+d.slice(0,4) : (d||'—');
 const tmPct = (a,b) => b ? Math.round(a*1000/b)/10 : 0;
 const tmStatus = s => '<span class="tm-badge '+(s==='Completed'?'completed':s==='Cancelled'?'cancelled':'')+'">'+tmEsc(s)+'</span>';
@@ -5182,12 +5320,19 @@ tmForgetLogin();
 const tmTok = () => UMAuth.can('tm') ? UMAuth.token() : '';
 let token = '', inited=false, busy=false, editId='', newId='', currentSession='', roster=[], marks={};
 let data={users:[],userCounts:{},states:[],products:[],schedules:[],attendance:[]};
-let bootstrapLoaded=false,summaryLoaded=false,summaryPending=null,rosterRequest=0,rosterByState=new Map(),activeSub='today',calendarMonth=tmDateToday().slice(0,7);
+let bootstrapLoaded=false,bootstrapForce=false,summaryLoaded=false,summaryPending=null,summaryVersion=0,summaryFailed=false;
+let rosterRequest=0,activeSub='today',calendarMonth='';
+const renderedOptions=new Set();
+let todayRendered='',calendarRendered='',scheduleFilterKey='',sortedSchedules=null;
 let activeSummary=[],filteredAttendance=[],selectedEmployeeRows=[];
 function tmMsg(id,msg,kind){tm$(id).innerHTML=msg?'<div class="tm-message '+(kind||'')+'">'+tmEsc(msg)+'</div>':'';}
 function tmTop(msg){tmMsg('tmTopError',msg,msg?'error':'');}
 function tmLoginUI(show){tm$('tmAccessCard').classList.toggle('tm-hidden',!show);tm$('tmWorkspace').classList.toggle('tm-hidden',show);tm$('tmLogout').classList.toggle('tm-hidden',show);tm$('tmRefresh').classList.toggle('tm-hidden',show);}
-function tmBusy(v,button){busy=v;if(button)setButtonBusy(button,v);}
+function tmBusy(v,button){
+  busy=v;
+  tm$('tmRefresh').disabled=v;
+  if(button)setButtonBusy(button,v);
+}
 function tmNewId(){return 'TM-'+((typeof crypto !== 'undefined' && typeof crypto.randomUUID==='function')?crypto.randomUUID():Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,12));}
 async function tmApi(action,payload){
   if(!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec/.test(TM_API_URL))throw new Error('Apps Script /exec URL not configured in the dashboard.');
@@ -5205,101 +5350,203 @@ async function tmApi(action,payload){
   }finally{clearTimeout(timer);}
 }
 let bootstrapSnapshot = null, bootstrapRequest = null;
-function fetchTrainingBootstrap(){
-  if(!bootstrapRequest){
-    bootstrapRequest = tmApi('tmBootstrap', {token:UMAuth.token()}).then(response => {
-      bootstrapSnapshot = {response, loadedAt:Date.now()};
-      return bootstrapSnapshot;
-    }).finally(() => { bootstrapRequest = null; });
+function fetchTrainingBootstrap(forceFresh=false){
+  if(bootstrapRequest){
+    if(!forceFresh || bootstrapRequest.forceFresh)return bootstrapRequest.promise;
+    return bootstrapRequest.promise.catch(()=>{}).then(()=>fetchTrainingBootstrap(true));
   }
-  return bootstrapRequest;
+  const started=tmProfile ? performance.now() : 0;
+  const payload={token:UMAuth.token()};
+  if(forceFresh)payload.force=true;
+  if(tmProfile)payload.tmPerf=true;
+  const promise=tmApi('tmBootstrap',payload).then(response=>{
+    bootstrapSnapshot={response,loadedAt:Date.now(),requestMs:tmProfile ? performance.now()-started : 0};
+    return bootstrapSnapshot;
+  }).finally(()=>{bootstrapRequest=null;});
+  bootstrapRequest={promise,forceFresh};
+  return promise;
 }
-async function tmLoad(reuseSnapshot){
+function tmHasFreshBootstrap(){
+  return !bootstrapRequest && bootstrapSnapshot && Date.now()-bootstrapSnapshot.loadedAt<90000;
+}
+async function tmLoad(reuseSnapshot, openedAt){
   if(!token){tmLoginUI(true);return;}
-  const refresh=tm$('tmRefresh');
+  const refresh=tm$('tmRefresh'),workspace=tm$('tmWorkspace');
   if(refresh.disabled)return;
+  const started=tmProfile ? (openedAt ?? performance.now()) : 0;
+  bootstrapForce=reuseSnapshot!==true;
+  bootstrapLoaded=false;
+  rosterRequest++;
+  tmInvalidateSummary();
   setButtonBusy(refresh,true);
-  tmTop('');tm$('tmLoading').classList.remove('tm-hidden');tm$('tmWorkspace').classList.add('tm-hidden');
+  tmTop('');
+  workspace.classList.add('tm-awaiting-bootstrap');
+  tm$('tmLoading').classList.remove('tm-hidden');
+  tmLoginUI(false);
+  const shellAt=tmProfile ? performance.now() : 0;
   try{
-    const snapshot = reuseSnapshot === true && !bootstrapRequest && bootstrapSnapshot
-      ? bootstrapSnapshot : await fetchTrainingBootstrap();
+    const memoryHit=!bootstrapForce && tmHasFreshBootstrap();
+    const pending=memoryHit ? bootstrapSnapshot : fetchTrainingBootstrap(bootstrapForce);
+    if(activeSub==='summary')tmEnsureSummary(bootstrapForce);
+    const snapshot=await pending;
+    if(!token)return;
     const res = snapshot.response;
-    data={users:[],userCounts:res.userCounts||{},states:res.states||[],schedules:res.schedules||[],attendance:[],products:res.products||[]};
-    bootstrapLoaded=true;summaryLoaded=false;summaryPending=null;rosterByState.clear();
-    tmLoginUI(false);tmOptions();tmScheduleTable();tmToday();tmCalendar();
-    if(activeSub==='attendance')tmSessions(currentSession);
-    if(activeSub==='summary')tmEnsureSummary();
+    const renderAt=tmProfile ? performance.now() : 0;
+    data={users:[],userCounts:res.userCounts||{},states:res.states||[],schedules:res.schedules||[],
+      attendance:summaryLoaded ? data.attendance : [],products:res.products||[]};
+    renderedOptions.clear();
+    tmInvalidateScheduleViews();
+    bootstrapLoaded=true;
+    tmRenderActive(false,true);
+    workspace.classList.remove('tm-awaiting-bootstrap');
+    if(tmProfile){
+      const ready=performance.now();
+      console.info('[Training Management]',{
+        shellMs:Math.round(shellAt-started),waitMs:Math.round(renderAt-shellAt),
+        requestMs:memoryHit ? 0 : Math.round(snapshot.requestMs),appsScriptMs:memoryHit ? null : res.ms ?? null,
+        sheetsReadMs:memoryHit ? null : res.tmTiming?.sheetsReadMs ?? null,
+        cache:memoryHit ? 'memory' : res.tmTiming?.cacheHit===true ? 'server hit' : res.tmTiming ? 'server miss' : 'unreported',
+        renderMs:Math.round(ready-renderAt),readyMs:Math.round(ready-started)
+      });
+    }
   }catch(e){
+    bootstrapLoaded=false;
+    bootstrapSnapshot=null;
+    tmInvalidateSummary();
     if(e.code==='AUTH'){token='';tmForgetLogin();bootstrapLoaded=false;tmLoginUI(true);tmMsg('tmLoginMessage','Training session expired. Please sign in again.','error');}
     else tmTop(e.message);
   }finally{tm$('tmLoading').classList.add('tm-hidden');setButtonBusy(refresh,false);}
 }
 function tmCurrentUserCount(state){return data.userCounts[tmNorm(state)]||0;}
+function tmInvalidateScheduleViews(){
+  todayRendered=calendarRendered=scheduleFilterKey='';
+  sortedSchedules=null;
+}
 function tmPatchSchedule(s,product){
   if(!s)return;
   const at=data.schedules.findIndex(x=>x.id===s.id);
   if(at>=0)data.schedules[at]=s;else data.schedules.push(s);
-  if(product&&!data.products.some(p=>tmNorm(p)===tmNorm(product)))data.products.push(product);
-  summaryLoaded=false;summaryPending=null;
-  tmOptions();tmScheduleTable();tmToday();tmCalendar();
+  if(product&&!data.products.some(p=>tmNorm(p)===tmNorm(product))){
+    data.products.push(product);
+    renderedOptions.delete('products');
+  }
+  renderedOptions.delete('summary');
+  tmInvalidateScheduleViews();
+  tmInvalidateSummary();
+  if(bootstrapLoaded)tmRenderActive(true);
 }
-async function tmEnsureSummary(){
-  if(summaryLoaded){tmSummary();return;}
+function tmInvalidateSummary(){
+  summaryVersion++;
+  summaryLoaded=summaryFailed=false;
+  summaryPending=null;
+  tm$('tmSummaryLoading').classList.add('tm-hidden');
+  tm$('tmSummaryResults').classList.add('tm-hidden');
+  tm$('tmCsv').disabled=tm$('tmPdf').disabled=true;
+}
+function tmEnsureSummary(forceFresh=false, retry=false){
+  if(summaryLoaded){if(bootstrapLoaded&&activeSub==='summary')tmSummary();return;}
   if(summaryPending)return summaryPending;
+  if(summaryFailed&&!retry)return;
+  summaryFailed=false;
+  const version=summaryVersion;
+  tmMsg('tmSummaryError','');
   tm$('tmSummaryLoading').classList.remove('tm-hidden');
   summaryPending=(async()=>{
-    try{const res=await tmApi('tmSummaryData');data.attendance=res.attendance||[];summaryLoaded=true;tmSummary();}
-    catch(e){tmMsg('tmSummaryError',e.message,'error');if(e.code==='AUTH')tmTop('Training session expired. Sign out and sign in again.');}
-    finally{tm$('tmSummaryLoading').classList.add('tm-hidden');summaryPending=null;}
+    try{
+      const res=await tmApi('tmSummaryData',forceFresh ? {force:true} : undefined);
+      if(version!==summaryVersion)return;
+      data.attendance=res.attendance||[];
+      summaryLoaded=true;
+      if(bootstrapLoaded&&activeSub==='summary')tmSummary();
+    }catch(e){
+      if(version!==summaryVersion)return;
+      summaryLoaded=false;
+      summaryFailed=true;
+      tmMsg('tmSummaryError',e.message,'error');
+      if(e.code==='AUTH')tmTop('Training session expired. Sign out and sign in again.');
+    }finally{
+      if(version===summaryVersion){
+        tm$('tmSummaryLoading').classList.add('tm-hidden');
+        summaryPending=null;
+      }
+    }
   })();return summaryPending;
 }
-function tmToday(){
-  const today=tmDateToday();
+function tmToday(today=tmDateToday()){
+  if(todayRendered===today)return;
   const todays=data.schedules.filter(s=>s.date===today&&s.status!=='Cancelled').sort((a,b)=>a.start.localeCompare(b.start));
-  const next=data.schedules.filter(s=>s.date>today&&s.status==='Scheduled').sort((a,b)=>(a.date+a.start).localeCompare(b.date+b.start)).slice(0,5);
+  const upcoming=data.schedules.filter(s=>s.date>today&&s.status==='Scheduled');
+  const next=upcoming.sort((a,b)=>(a.date+a.start).localeCompare(b.date+b.start)).slice(0,5);
   const total=data.schedules.length,done=data.schedules.filter(s=>s.status==='Completed').length;
-  tm$('tmTodayKpis').innerHTML=[['Today',todays.length],['Upcoming',data.schedules.filter(s=>s.date>today&&s.status==='Scheduled').length],['Completed',done],['All Sessions',total]]
+  tm$('tmTodayKpis').innerHTML=[['Today',todays.length],['Upcoming',upcoming.length],['Completed',done],['All Sessions',total]]
     .map(([label,n])=>'<div class="tm-mini-stat"><strong>'+n+'</strong><span>'+label+'</span></div>').join('');
   const card=s=>'<article class="tm-quick-session"><div><strong>'+tmEsc(s.product)+'</strong><span>'+tmEsc(s.state)+' · '+tmFmtDate(s.date)+' · '+tmEsc(s.start)+'–'+tmEsc(s.end)+' IST</span></div><div class="tm-quick-actions">'+tmStatus(s.status)+'<button type="button" class="tm-btn green" data-tm-quick-att="'+tmEsc(s.id)+'">'+(s.status==='Completed'?'Review Attendance':'Mark Attendance')+'</button></div></article>';
   tm$('tmTodaySessions').innerHTML=todays.length?todays.map(card).join(''):'<div class="tm-empty">No training scheduled today. Use Schedule Training to add one.</div>';
   tm$('tmUpcomingSessions').innerHTML=next.length?next.map(card).join(''):'<div class="tm-empty">No upcoming sessions.</div>';
   tm$('tmTodayLabel').textContent=tmFmtDate(today);
+  todayRendered=today;
 }
-function tmCalendar(){
+function tmCalendar(today=tmDateToday()){
+  const key=calendarMonth+'|'+today;
+  if(calendarRendered===key)return;
   const [y,m]=calendarMonth.split('-').map(Number),first=new Date(Date.UTC(y,m-1,1)),count=new Date(Date.UTC(y,m,0)).getUTCDate();
   const monday=(first.getUTCDay()+6)%7;
-  const sessionMap=Object.create(null);data.schedules.forEach(s=>{if(s.date.startsWith(calendarMonth)&&s.status!=='Cancelled')(sessionMap[s.date]||(sessionMap[s.date]=[])).push(s);});
-  tm$('tmCalLabel').textContent=new Intl.DateTimeFormat('en-GB',{month:'long',year:'numeric',timeZone:'UTC'}).format(first);
+  const sessionMap=Object.create(null);data.schedules.forEach(s=>{if(s.date.startsWith(calendarMonth)&&s.status!=='Cancelled')sessionMap[s.date]=(sessionMap[s.date]||0)+1;});
+  tmMonthFormat ||= new Intl.DateTimeFormat('en-GB',{month:'long',year:'numeric',timeZone:'UTC'});
+  tm$('tmCalLabel').textContent=tmMonthFormat.format(first);
   const week=['M','T','W','T','F','S','S'].map(d=>'<span class="tm-cal-week">'+d+'</span>').join('');
   let days='';for(let i=0;i<monday;i++)days+='<span class="tm-cal-space"></span>';
-  for(let d=1;d<=count;d++){const date=calendarMonth+'-'+String(d).padStart(2,'0'),n=(sessionMap[date]||[]).length;
-    days+='<button type="button" data-tm-cal-day="'+date+'" class="tm-cal-day '+(date===tmDateToday()?'today ':'')+(n?'has-training':'')+'" aria-label="'+date+' · '+n+' trainings">'+d+(n?'<small>'+n+'</small>':'')+'</button>';
+  for(let d=1;d<=count;d++){const date=calendarMonth+'-'+String(d).padStart(2,'0'),n=sessionMap[date]||0;
+    days+='<button type="button" data-tm-cal-day="'+date+'" class="tm-cal-day '+(date===today?'today ':'')+(n?'has-training':'')+'" aria-label="'+date+' · '+n+' trainings">'+d+(n?'<small>'+n+'</small>':'')+'</button>';
   }
   tm$('tmCalendarGrid').innerHTML=week+days;
+  calendarRendered=key;
 }
-function tmOptions(){
-  const selects=['tmSState','tmSFState','tmAState','tmQState'];
-  selects.forEach(id=>{
-    const el=tm$(id),old=el.value,blank=id==='tmSState'||id==='tmAState'?'Choose state':'All states';
-    el.innerHTML='<option value="">'+blank+'</option>'+data.states.map(s=>'<option value="'+tmEsc(s)+'">'+tmEsc(s)+'</option>').join('');
-    if(data.states.includes(old))el.value=old;
-  });
-  tm$('tmProducts').innerHTML=data.products.map(p=>'<option value="'+tmEsc(p)+'"></option>').join('');
-  const q=tm$('tmQProduct'),old=q.value;
-  q.innerHTML='<option value="">All products</option>'+Array.from(new Set(data.schedules.map(s=>s.product).filter(Boolean).concat(data.products))).sort().map(p=>'<option value="'+tmEsc(p)+'">'+tmEsc(p)+'</option>').join('');
-  if(Array.from(q.options).some(opt=>opt.value===old))q.value=old;
+function tmOptions(tab=activeSub){
+  if(tab==='today')return;
+  if(!renderedOptions.has(tab)){
+    const selects=tab==='schedule'?['tmSState','tmSFState']:tab==='attendance'?['tmAState']:['tmQState'];
+    const options=data.states.map(s=>'<option value="'+tmEsc(s)+'">'+tmEsc(s)+'</option>').join('');
+    selects.forEach(id=>{
+      const el=tm$(id),old=el.value,blank=id==='tmSState'||id==='tmAState'?'Choose state':'All states';
+      el.innerHTML='<option value="">'+blank+'</option>'+options;
+      if(data.states.includes(old))el.value=old;
+    });
+    if(tab==='summary'){
+      const q=tm$('tmQProduct'),old=q.value;
+      const products=Array.from(new Set(data.schedules.map(s=>s.product).filter(Boolean).concat(data.products))).sort();
+      q.innerHTML='<option value="">All products</option>'+products.map(p=>'<option value="'+tmEsc(p)+'">'+tmEsc(p)+'</option>').join('');
+      if(products.includes(old))q.value=old;
+    }
+    renderedOptions.add(tab);
+  }
+  if((tab==='schedule'||tab==='attendance')&&!renderedOptions.has('products')){
+    tm$('tmProducts').innerHTML=data.products.map(p=>'<option value="'+tmEsc(p)+'"></option>').join('');
+    renderedOptions.add('products');
+  }
+}
+function tmRenderActive(skipSessions, refreshAttendance, retrySummary){
+  tmOptions(activeSub);
+  if(activeSub==='today'){
+    const today=tmDateToday();
+    tmToday(today);
+    tmCalendar(today);
+  }else if(activeSub==='schedule')tmScheduleTable();
+  else if(activeSub==='attendance'&&!skipSessions)tmSessions(refreshAttendance ? currentSession : undefined);
+  else if(activeSub==='summary')tmEnsureSummary(bootstrapForce,retrySummary);
 }
 function tmSub(tab,skipSessions){
-  activeSub=tab;
-  ['today','schedule','attendance','summary'].forEach(s=>{tm$('tm'+s.charAt(0).toUpperCase()+s.slice(1)+'Page').classList.toggle('active',s===tab);});
-  document.querySelectorAll('[data-tm-tab]').forEach(b=>{
-    const selected=b.dataset.tmTab===tab;
-    b.classList.toggle('active',selected);
-    b.setAttribute('aria-pressed',String(selected));
-  });
-  if(tab==='summary')tmEnsureSummary();
-  if(tab==='attendance'&&!skipSessions)tmSessions();
-  if(tab==='today'){tmToday();tmCalendar();}
+  if(activeSub!==tab){
+    activeSub=tab;
+    ['today','schedule','attendance','summary'].forEach(s=>{tm$('tm'+s.charAt(0).toUpperCase()+s.slice(1)+'Page').classList.toggle('active',s===tab);});
+    document.querySelectorAll('[data-tm-tab]').forEach(b=>{
+      const selected=b.dataset.tmTab===tab;
+      b.classList.toggle('active',selected);
+      b.setAttribute('aria-pressed',String(selected));
+    });
+  }
+  if(bootstrapLoaded)tmRenderActive(skipSessions,false,true);
+  else if(tab==='summary'&&tm$('tmRefresh').disabled)tmEnsureSummary(bootstrapForce,true);
 }
 function tmClearSchedule(){
   editId='';newId='';tm$('tmScheduleForm').reset();tm$('tmSDate').value=tmDateToday();tm$('tmSStart').value='11:00';tm$('tmSEnd').value='12:00';
@@ -5307,10 +5554,13 @@ function tmClearSchedule(){
 }
 function tmScheduleTable(){
   const date=tm$('tmSFDate').value,state=tmNorm(tm$('tmSFState').value),status=tm$('tmSFStatus').value,q=tmNorm(tm$('tmSFSearch').value);
-  const list=data.schedules.filter(s=>(!date||s.date===date)&&(!state||tmNorm(s.state)===state)&&(!status||s.status===status)&&(!q||tmNorm(s.product+' '+s.id+' '+s.state).includes(q)))
-    .sort((a,b)=>(b.date+' '+b.start).localeCompare(a.date+' '+a.start));
+  const key=JSON.stringify([date,state,status,q]);
+  if(scheduleFilterKey===key)return;
+  sortedSchedules ||= data.schedules.slice().sort((a,b)=>(b.date+' '+b.start).localeCompare(a.date+' '+a.start));
+  const list=sortedSchedules.filter(s=>(!date||s.date===date)&&(!state||tmNorm(s.state)===state)&&(!status||s.status===status)&&(!q||tmNorm(s.product+' '+s.id+' '+s.state).includes(q)));
   tm$('tmScheduleTbody').innerHTML=list.length?list.map(s=>'<tr><td><strong>'+tmFmtDate(s.date)+'</strong></td><td>'+tmEsc(s.state)+'</td><td>'+tmEsc(s.product)+'</td><td>'+tmEsc(s.start)+' – '+tmEsc(s.end)+'</td><td>'+tmStatus(s.status)+'</td><td><button type="button" class="tm-tlink" data-tm-edit="'+tmEsc(s.id)+'">Edit</button> · <button type="button" class="tm-tlink" data-tm-att="'+tmEsc(s.id)+'">Attendance</button>'+(s.status==='Scheduled'?' · <button type="button" class="tm-tlink" data-tm-cancel="'+tmEsc(s.id)+'">Cancel</button>':'')+'</td></tr>').join(''):tmEmptyRow(6,'No matching training sessions.');
   tm$('tmScheduleCount').textContent=list.length+' matching training session(s)';
+  scheduleFilterKey=key;
 }
 function tmEditSchedule(id){
   const s=data.schedules.find(x=>x.id===id);if(!s)return;
@@ -5399,7 +5649,9 @@ function tmSummary(){
   const sessions=tmFiltered().sort((a,b)=>b.date.localeCompare(a.date)||b.start.localeCompare(a.start));
   const set=new Set(sessions.map(s=>s.id)), att=data.attendance.filter(a=>set.has(a.trainingId));
   activeSummary=sessions;filteredAttendance=att;
-  const present=att.filter(a=>a.status==='Present'),absent=att.filter(a=>a.status==='Absent'),done=sessions.filter(s=>s.status==='Completed'),upcoming=sessions.filter(s=>s.status==='Scheduled'&&(s.date+'T'+s.start)>=(tmDateToday()+'T'+new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date())));
+  tmClockFormat ||= new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit',hour12:false});
+  const now=tmDateToday()+'T'+tmClockFormat.format(new Date());
+  const present=att.filter(a=>a.status==='Present'),absent=att.filter(a=>a.status==='Absent'),done=sessions.filter(s=>s.status==='Completed'),upcoming=sessions.filter(s=>s.status==='Scheduled'&&(s.date+'T'+s.start)>=now);
   const trained=new Set(present.map(a=>a.key)).size;
   const cards=[['Sessions Scheduled / Total',sessions.length,'Within selected filters'],['Sessions Conducted',done.length,'Attendance submitted'],['Unique Employees Trained',trained,'Present at least once'],['Present Attendance',present.length,'Total participations'],['Absent Attendance',absent.length,'Total absences'],['Attendance Rate',tmPct(present.length,att.length)+'%','Across recorded attendance'],['Upcoming Sessions',upcoming.length,'Scheduled in the future']];
   tm$('tmKpis').innerHTML=cards.map(([label,v,sub])=>'<div class="tm-kpi"><small>'+tmEsc(label)+'</small><strong>'+tmEsc(v)+'</strong><span>'+tmEsc(sub)+'</span></div>').join('');
@@ -5417,6 +5669,8 @@ function tmSummary(){
     return '<tr><td><button type="button" class="tm-tlink" data-tm-detail="'+tmEsc(s.id)+'">'+tmFmtDate(s.date)+'</button></td><td>'+tmEsc(s.state)+'</td><td>'+tmEsc(s.product)+'</td><td>'+tmEsc(s.start)+'–'+tmEsc(s.end)+'</td><td>'+total+'</td><td>'+p+'</td><td>'+abs+'</td><td>'+((p+abs)?tmPct(p,p+abs)+'%':'—')+'</td><td>'+tmStatus(s.status)+'</td></tr>';}).join(''):tmEmptyRow(9,'No sessions match selected filters.');
   tmEmployeeTable();tmStateTable();
   tm$('tmSessionDetail').classList.add('tm-hidden');tm$('tmEmployeeDetail').classList.add('tm-hidden');
+  tm$('tmSummaryResults').classList.remove('tm-hidden');
+  tm$('tmCsv').disabled=tm$('tmPdf').disabled=false;
 }
 function tmBars(id,entries,maxItems,percentage){
   const root=tm$(id);if(!root)return;
@@ -5454,8 +5708,10 @@ function tmExportCsv(){
 }
 function tmBind(){
   if(inited)return;inited=true;
-  tm$('tmSDate').value=tm$('tmAFindDate').value=tmDateToday();tm$('tmSStart').value='11:00';tm$('tmSEnd').value='12:00';
-  tm$('tmLogout').addEventListener('click',()=>{UMAuth.logout();token='';bootstrapLoaded=false;summaryLoaded=false;roster=[];rosterRequest++;tmForgetLogin();data={users:[],userCounts:{},states:[],products:[],attendance:[],schedules:[]};tmLoginUI(true);tmTop('');});
+  const today=tmDateToday();
+  calendarMonth=today.slice(0,7);
+  tm$('tmSDate').value=tm$('tmAFindDate').value=today;tm$('tmSStart').value='11:00';tm$('tmSEnd').value='12:00';
+  tm$('tmLogout').addEventListener('click',()=>{UMAuth.logout();token='';bootstrapLoaded=false;bootstrapSnapshot=null;tmInvalidateSummary();roster=[];rosterRequest++;tmForgetLogin();data={users:[],userCounts:{},states:[],products:[],attendance:[],schedules:[]};tmLoginUI(true);tmTop('');});
   tm$('tmRefresh').addEventListener('click',tmLoad);
   document.querySelectorAll('[data-tm-tab]').forEach(b=>b.addEventListener('click',()=>tmSub(b.dataset.tmTab)));
   tm$('tmScheduleForm').addEventListener('submit',tmSaveSchedule);tm$('tmSClear').addEventListener('click',tmClearSchedule);
@@ -5486,11 +5742,16 @@ function tmBind(){
   });
 }
 const nav=document.querySelector('.nav-item[data-tab="trainingmodule"]');
-if(nav)nav.addEventListener('click',()=>{token=tmTok();tmBind();if(token&&!bootstrapLoaded)tmLoad(true);else if(!token)tmLoginUI(true);});
+if(nav)nav.addEventListener('click',()=>{
+  const openedAt=tmProfile ? performance.now() : 0;
+  token=tmTok();tmBind();
+  if(token&&!bootstrapLoaded)tmLoad(true,openedAt);
+  else if(!token)tmLoginUI(true);
+});
 
 return async function(){
   if(!UMAuth.can('tm')) throw new Error('Training access required.');
-  const snapshot = !bootstrapRequest && bootstrapSnapshot ? bootstrapSnapshot : await fetchTrainingBootstrap();
+  const snapshot = (bootstrapLoaded && bootstrapSnapshot) || (tmHasFreshBootstrap() && bootstrapSnapshot) || await fetchTrainingBootstrap();
   return {schedules:bootstrapLoaded ? data.schedules : (snapshot.response.schedules || []), loadedAt:snapshot.loadedAt};
 };
 })();
@@ -5647,7 +5908,7 @@ self.addEventListener('fetch', (event) => {
   'use strict';
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const PERMS = [['sales.target','Targets / Executive'],['sales.party','Party-wise'],['sales.secondary','Secondary'],['sales.report','Beat-wise report'],['sales.product','Product-wise'],['content.training','Training videos'],['dc','Distributor Connect'],['tm','Training Mgmt']];
+  const PERMS = [['sales.target','Targets / Executive'],['sales.party','Party-wise'],['sales.secondary','Secondary'],['sales.report','Beat-wise report'],['sales.product','Product-wise'],['content.training','Training videos'],['dc','Distributor Connect'],['tm','Training Mgmt'],['lead.own','Own Leads'],['lead.manage','Manage Leads']];
   let users = [], editing = null, loaded = false, pendingLoads = 0;
   $('admPerms').innerHTML = '<span class="adm-lbl">Explicit access (required for Read-Only, optional extras for others):</span> ' +
     PERMS.map(p => '<label class="adm-chk"><input type="checkbox" class="admPerm" value="' + p[0] + '"> ' + esc(p[1]) + '</label>').join('');
@@ -5745,6 +6006,11 @@ const tabs = {
   beatwise:['Beat Wise Secondary','Choose a state, month, or user, then select a beat row. Use Export to Excel or Export to PDF in the shop-wise detail.'],
   'kra-kpi':['KRA/KPI','This page is reserved for KRA and KPI tracking.'],
   'punch-sale-order':['Punch Sale Order','This page is reserved for sale order entry.'],
+  'lead-dashboard':['Lead Dashboard','Use the date and salesperson filters to review your lead pipeline and follow-up workload.'],
+  'lead-list':['All Leads','Use New lead or Import leads to add records. Select a lead name to view its details and activity.'],
+  'lead-schedule':['Follow-up Schedule','Choose Today, Upcoming, Overdue, or Completed. Open a task to reschedule it or mark it complete.'],
+  'lead-calls':["Today's Calls",'Choose Log call on a due task to record the outcome and schedule the next contact.'],
+  'lead-reports':['Performance & Reports','Filter by date and salesperson to review activity, workload, and conversions.'],
   training:['Product Training','Search for a topic or product and select Watch Video on a training card.'],
   trainingmodule:['Training Management','Use Schedule Training to plan a session. In Training Attendance, select the date and session, mark each employee, and submit attendance.'],
   distconnect:['Distributor Connect','Select a distributor to view its call history. Use Follow-Up Tracker to find due calls and open the previous call remarks.'],
