@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://script.google.com https://script.googleusercontent.com; worker-src 'self' blob:; manifest-src 'self' blob: data:; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<script>try{if(window.top!==window.self){document.documentElement.style.display='none';window.top.location=window.self.location;}}catch(e){document.documentElement.style.display='none';}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sales Performance Dashboard</title>
 <meta name="theme-color" content="#1a56db">
@@ -10,7 +13,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Sales MIS">
-<link rel="preconnect" href="https://docs.google.com">
+<link rel="preconnect" href="https://script.google.com">
 <style>
   :root{
     --white:#ffffff;
@@ -854,23 +857,45 @@ textarea.dc-in{width:100%;min-height:84px;resize:vertical;font-family:inherit}
 .tm-summary-note{padding:17px;background:#f7f9fc;border:1px dashed #d7e2ef;border-radius:9px;color:#64748b;text-align:center}
 @media(max-width:900px){.tm-today-layout{grid-template-columns:1fr}.tm-mini-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.tm-mini-stats{gap:8px}.tm-mini-stat{padding:12px}.tm-quick-session{flex-direction:column;align-items:flex-start}.tm-quick-actions{justify-content:flex-start}.tm-cal-day{min-height:34px}}
+  .login-check{ display:flex; gap:8px; align-items:flex-start; text-align:left; font-size:12.5px; color:var(--text-muted); margin-top:14px; }
+  .login-check small{ display:block; font-size:11px; opacity:.85; }
+  .adm-box{ background:#fff; border-radius:12px; padding:16px; margin-bottom:16px; box-shadow:var(--shadow); }
+  .adm-box h3{ margin-bottom:10px; color:var(--blue-dark); }
+  .adm-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:10px; }
+  .adm-in{ padding:9px 10px; border:1px solid #cfd8e3; border-radius:8px; font:inherit; width:100%; }
+  .adm-perms{ margin:12px 0 6px; font-size:13px; } .adm-lbl{ display:block; color:var(--text-muted); margin-bottom:4px; }
+  .adm-chk{ display:inline-flex; gap:5px; align-items:center; margin-right:14px; font-size:13px; }
+  .adm-actions{ margin-top:10px; }
 </style>
 </head>
 <body class="locked">
 
-<!-- LOGIN OVERLAY -->
+<!-- LOGIN OVERLAY (accounts are verified on the server; nothing secret is stored in this page) -->
 <div class="login-overlay" id="loginOverlay">
   <div class="login-box">
     <div class="login-logo">📈</div>
     <h2>Sales MIS — Master</h2>
-    <p class="login-sub">Enter your credentials to continue</p>
-    <form id="loginForm" autocomplete="off">
-      <label class="login-label">User ID</label>
-      <input type="text" id="loginId" class="login-input" autocomplete="off" placeholder="Enter ID">
-      <label class="login-label">Password</label>
-      <input type="password" id="loginPass" class="login-input" autocomplete="off" placeholder="Enter Password">
-      <div class="login-error" id="loginError" style="display:none;">❌ Incorrect ID or Password</div>
-      <button type="submit" class="login-btn">🔓 Login</button>
+    <p class="login-sub">Sign in with your personal account</p>
+    <form id="loginForm" autocomplete="on">
+      <label class="login-label" for="loginId">User ID</label>
+      <input type="text" id="loginId" class="login-input" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Enter ID" maxlength="80">
+      <label class="login-label" for="loginPass">Password</label>
+      <input type="password" id="loginPass" class="login-input" autocomplete="current-password" placeholder="Enter Password" maxlength="200">
+      <label class="login-check"><input type="checkbox" id="loginRemember"><span>Keep me signed in (7 days)<small>Only on a private, trusted device.</small></span></label>
+      <div class="login-error" id="loginError" style="display:none;" role="alert"></div>
+      <button type="submit" class="login-btn" id="loginBtn">🔓 Login</button>
+    </form>
+    <form id="pwForm" style="display:none;" autocomplete="off">
+      <p class="login-sub" id="pwSub"></p>
+      <label class="login-label" for="pwOld">Current password</label>
+      <input type="password" id="pwOld" class="login-input" autocomplete="current-password" maxlength="200">
+      <label class="login-label" for="pwNew">New password (10+ characters, letters and digits)</label>
+      <input type="password" id="pwNew" class="login-input" autocomplete="new-password" maxlength="128">
+      <label class="login-label" for="pwNew2">Repeat new password</label>
+      <input type="password" id="pwNew2" class="login-input" autocomplete="new-password" maxlength="128">
+      <div class="login-error" id="pwError" style="display:none;" role="alert"></div>
+      <button type="submit" class="login-btn" id="pwBtn">Save new password</button>
+      <button type="button" class="login-btn" id="pwCancel" style="background:#8a94a6;margin-top:10px;">Cancel</button>
     </form>
   </div>
 </div>
@@ -921,9 +946,18 @@ textarea.dc-in{width:100%;min-height:84px;resize:vertical;font-family:inherit}
     <div class="nav-item" data-tab="distconnect">
       <span class="emoji">📞</span><span>Distributor Connect</span>
     </div>
+    <div class="nav-item" data-tab="admin">
+      <span class="emoji">🛡️</span><span>Administration</span>
+    </div>
+    <div class="nav-item" data-action="password">
+      <span class="emoji">🔑</span><span>Change Password</span>
+    </div>
+    <div class="nav-item" data-action="logout">
+      <span class="emoji">🚪</span><span id="logoutLabel">Sign Out</span>
+    </div>
   </div>
   <div class="sidebar-footer">
-    Live data from Google Sheets
+    Live data (secure server)
     <span id="last-updated">Not loaded yet</span>
     <button type="button" class="install-app-btn" id="installAppBtn" style="display:none;">⬇️ Install App</button>
 
@@ -1228,15 +1262,10 @@ textarea.dc-in{width:100%;min-height:84px;resize:vertical;font-family:inherit}
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="tm-pill">UM ORTHOTICS · TRAINING DESK</span><button class="tm-btn tm-hidden" id="tmRefresh" type="button">⟳ Refresh</button><button class="tm-btn tm-hidden" id="tmLogout" type="button">Sign out</button></div>
     </div>
     <div class="tm-card tm-access" id="tmAccessCard">
-      <h3>🔒 Training Department Access</h3>
-      <p class="tm-desc">Sign in with your Training Department user ID and password. Your main Sales MIS login remains unchanged.</p>
-      <form id="tmLoginForm" autocomplete="on">
-        <div class="tm-field"><label for="tmUserId">User ID</label><input class="tm-input" id="tmUserId" type="text" value="Muskaan" placeholder="Enter your user ID" autocomplete="username" maxlength="80" required></div>
-        <div class="tm-field" style="margin-top:12px"><label for="tmPassword">Password</label><input class="tm-input" id="tmPassword" type="password" placeholder="Enter your training password" autocomplete="current-password" required></div>
-        <label class="tm-remember"><input type="checkbox" id="tmRemember" checked> <span><strong>Remember this device for 7 days</strong><small>Enable only on a private, trusted browser.</small></span></label>
-        <div class="tm-action-row"><button type="submit" class="tm-btn primary" id="tmLoginBtn">Sign in to Training</button></div>
-      </form>
+      <h3>🔒 Training Management</h3>
+      <p class="tm-desc">Your account does not have access to Training Management. Ask an administrator if you need it.</p>
       <div id="tmLoginMessage" role="status"></div>
+    </div><div id="tmLoginMessage" role="status"></div>
     </div>
     <div id="tmLoading" class="loading tm-hidden"><div class="spinner"></div>Connecting to training records…</div>
     <div id="tmTopError" role="status"></div>
@@ -1333,6 +1362,33 @@ textarea.dc-in{width:100%;min-height:84px;resize:vertical;font-family:inherit}
   </div>
 
   <!-- DISTRIBUTOR CONNECT (independent module; see <script id="dc-module">) -->
+    <!-- ADMINISTRATION (Super Admin only; every action is re-checked on the server) -->
+  <div class="tab-content" id="tab-admin">
+    <div class="topbar">
+      <h2>🛡️ Administration</h2>
+      <div class="controls"><button type="button" class="refresh-btn" id="admRefresh">⟳ Refresh</button></div>
+    </div>
+    <div class="adm-box" id="admNew" style="display:none;" role="status"></div>
+    <div class="adm-box">
+      <h3 id="admFormTitle">Add user</h3>
+      <div class="adm-grid">
+        <input class="adm-in" id="admId" placeholder="User ID (3-60 chars)" maxlength="60" autocomplete="off">
+        <input class="adm-in" id="admName" placeholder="Full name" maxlength="80" autocomplete="off">
+        <select class="adm-in" id="admRole">
+          <option value="SALES_MGMT">Sales Management</option><option value="DISTRIBUTOR_CONNECT">Distributor Connect</option>
+          <option value="TRAINING">Training Department</option><option value="READ_ONLY">Read-Only (choose reports below)</option><option value="SUPER_ADMIN">Super Admin</option>
+        </select>
+        <input class="adm-in" id="admState" placeholder="State lock (blank = all states)" maxlength="60" autocomplete="off">
+      </div>
+      <div class="adm-perms" id="admPerms"></div>
+      <label class="adm-chk"><input type="checkbox" id="admActive" checked> Active</label>
+      <div class="adm-actions"><button type="button" class="refresh-btn" id="admSave">Create user</button> <button type="button" class="dc-btn" id="admCancel" style="display:none;">Cancel edit</button></div>
+      <div class="login-error" id="admErr" style="display:none;"></div>
+    </div>
+    <div class="adm-box"><h3>Users</h3><div class="table-wrap"><table><thead><tr><th>User ID</th><th>Name</th><th>Role</th><th>State</th><th>Extra access</th><th>Status</th><th>Last login</th><th></th></tr></thead><tbody id="admUsers"></tbody></table></div></div>
+    <div class="adm-box"><h3>Security log (latest 200)</h3><div class="table-wrap"><table><thead><tr><th>Time</th><th>Event</th><th>User</th><th>Role</th><th>Result</th><th>Detail</th></tr></thead><tbody id="admLog"></tbody></table></div></div>
+  </div>
+
   <div class="tab-content dc-wrap" id="tab-distconnect">
     <div class="topbar">
       <h2>📞 Distributor Connect</h2>
@@ -1344,14 +1400,8 @@ textarea.dc-in{width:100%;min-height:84px;resize:vertical;font-family:inherit}
     </div>
 
     <div class="card-panel dc-login" id="dcLogin">
-      <h3 style="color:var(--blue-dark);margin-bottom:4px;">Sign in to Distributor Connect</h3>
-      <p class="dc-note" style="margin:0 0 12px;">Call records are private. Use your Distributor Connect ID (issued by the admin).</p>
-      <form id="dcLoginForm" autocomplete="off">
-        <input class="dc-in" id="dcId" placeholder="User ID" style="width:100%;margin-bottom:10px;" autocomplete="off">
-        <input class="dc-in" id="dcPw" type="password" placeholder="Password" style="width:100%;" autocomplete="off">
-        <div class="dc-err" id="dcLoginErr" style="display:none;"></div>
-        <button type="submit" class="dc-btn g" id="dcLoginBtn" style="width:100%;margin-top:14px;">Sign in</button>
-      </form>
+      <h3 style="color:var(--blue-dark);margin-bottom:4px;">Distributor Connect</h3>
+      <p class="dc-note" style="margin:0;">Loading your access…</p>
     </div>
 
     <div id="dcLoading" class="loading" style="display:none;"><div class="spinner"></div>Loading from Google Sheets…</div>
@@ -1513,32 +1563,154 @@ textarea.dc-in{width:100%;min-height:84px;resize:vertical;font-family:inherit}
 </div>
 
 <script>
-/* ============ LOGIN GATE ============ */
-// Credentials now come from the "Credential" sheet tab (A = ID, B = Password, C = State).
-// If State is blank / "All" / "ALL", the user can see every state.
-const TAB_CREDENTIAL = "Credential";
-const USERS = [
-  { id: "Ashish",  password: "1234", defaultState: null },
-  { id: "Sudipta", password: "1234", defaultState: "West Bengal" }
-];
-const LOGIN_SESSION_KEY = "salesMisMasterAuthed";
-const LOGIN_USER_KEY = "salesMisMasterUser";
-const LOGIN_USER_STATE_KEY = "salesMisMasterUserState";
+/* ============ SECURE LOGIN (server-side) ============
+   No user names, passwords or access lists exist in this file. The browser only holds a
+   revocable session token issued by the server after a successful login. Every data request
+   is re-checked on the server (role + state lock), so hiding menu items here is only cosmetic. */
+const UMAuth = (function(){
+  const KEY = 'umAuth_v4';
+  const st = { token:null, expiresAt:0, remember:false, user:null };
+  let leaving = false, lastActive = Date.now();
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  function purgeLegacy(){
+    ['dcToken_v1','umTrainingLogin_v3','umTrainingAdminToken_v1','salesMisMasterAuthed','salesMisMasterUser','salesMisMasterUserState'].forEach(k => {
+      try{ localStorage.removeItem(k); }catch(e){} try{ sessionStorage.removeItem(k); }catch(e){}
+    });
+  }
+  function save(){
+    const rec = JSON.stringify({ t:st.token, e:st.expiresAt, r:st.remember });
+    try{ localStorage.removeItem(KEY); }catch(e){} try{ sessionStorage.removeItem(KEY); }catch(e){}
+    try{ (st.remember ? localStorage : sessionStorage).setItem(KEY, rec); }catch(e){}
+  }
+  function load(){
+    for(const s of [sessionStorage, localStorage]){
+      try{
+        const r = JSON.parse(s.getItem(KEY));
+        if(r && r.t && r.e > Date.now()){ st.token = r.t; st.expiresAt = r.e; st.remember = !!r.r; return true; }
+        if(r) s.removeItem(KEY);
+      }catch(e){}
+    }
+    return false;
+  }
+  function wipeLocal(){
+    try{ localStorage.removeItem(KEY); }catch(e){} try{ sessionStorage.removeItem(KEY); }catch(e){}
+    st.token = null; st.user = null; st.expiresAt = 0;
+    try{ indexedDB.deleteDatabase('salesMisDB'); }catch(e){}          // never leave business data behind after sign-out
+  }
+  function forceLogout(msg){
+    if(leaving) return; leaving = true;
+    wipeLocal();
+    try{ if(msg) sessionStorage.setItem('umNotice', msg); }catch(e){}
+    location.reload();
+  }
+  async function api(action, payload, opts){
+    opts = opts || {};
+    const body = JSON.stringify(Object.assign({ action:action, token: opts.noToken ? undefined : st.token }, payload || {}));
+    const tries = opts.tries || 3; let last;
+    for(let i = 0; i < tries; i++){
+      const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), opts.timeout || 60000);
+      try{
+        const r = await fetch(BACKEND_URL, { method:'POST', body:body, signal:ctl.signal });
+        let j; try{ j = await r.json(); }catch(x){ const e = new Error('The server sent an unexpected reply. Please retry.'); e.code = 'BADRESP'; throw e; }
+        if(!j.ok){
+          const e = new Error(j.message || j.error || 'Request failed'); e.code = j.code;
+          if(j.code === 'AUTH' && !opts.noLogout) forceLogout('Your session has ended. Please sign in again.');
+          throw e;
+        }
+        return j;
+      }catch(e){
+        last = e;
+        const retry = e.name === 'AbortError' || e instanceof TypeError || e.code === 'BADRESP' || e.code === 'BUSY' || e.code === 'SNAPSHOT_EVICTED';
+        if(!retry || i === tries - 1) break;
+        await wait(700 * (i + 1));
+      }finally{ clearTimeout(timer); }
+    }
+    if(last && last.name === 'AbortError') throw new Error('The server is taking too long to respond. Check your connection and retry.');
+    if(last instanceof TypeError) throw new Error(navigator.onLine === false ? 'You are offline. Check your internet connection and retry.' : 'Could not reach the server. Check your connection and retry.');
+    throw last;
+  }
+  async function login(id, pass, remember){
+    const j = await api('login', { id:id, pass:pass, remember:!!remember }, { tries:1, timeout:45000, noLogout:true, noToken:true });
+    st.token = j.token; st.expiresAt = j.expiresAt; st.remember = !!j.remember; st.user = j.user;
+    if(!j.mustChange) save();                                         // a forced-change token stays in memory only
+    return j;
+  }
+  async function changePassword(oldPass, newPass){
+    const j = await api('changePassword', { oldPass:oldPass, newPass:newPass }, { tries:1, timeout:45000, noLogout:true });
+    st.token = j.token; st.expiresAt = j.expiresAt; st.user = j.user; st.remember = false; save();
+    return j;
+  }
+  async function logout(){
+    if(leaving) return;
+    try{ await api('logout', {}, { tries:1, timeout:8000, noLogout:true }); }catch(e){}
+    leaving = true; wipeLocal(); location.reload();
+  }
+  async function init(){
+    purgeLegacy();
+    if(!load()) return false;
+    try{
+      const j = await api('me', {}, { tries:2, timeout:45000, noLogout:true });
+      st.user = j.user; st.expiresAt = j.expiresAt; return true;
+    }catch(e){
+      if(e.code === 'AUTH'){ wipeLocal(); return false; }
+      throw e;
+    }
+  }
+  function watch(){
+    ['mousemove','keydown','click','touchstart','scroll'].forEach(ev => window.addEventListener(ev, () => { lastActive = Date.now(); }, { passive:true }));
+    setInterval(() => {
+      if(!st.token) return;
+      if(Date.now() > st.expiresAt) return forceLogout('Your session expired. Please sign in again.');
+      if(!st.remember && Date.now() - lastActive > 30 * 60 * 1000) forceLogout('Signed out after 30 minutes of inactivity.');
+    }, 30000);
+  }
+  return {
+    api, login, changePassword, logout, forceLogout, init, watch,
+    can: p => !!(st.user && st.user.perms && st.user.perms.indexOf(p) >= 0),
+    token: () => st.token,
+    get user(){ return st.user; },
+    get remember(){ return st.remember; }
+  };
+})();
 
+const NAV_PERM = {
+  exec:['sales.target'], primary:['sales.target','sales.party'], product:['sales.product'], secondary:['sales.secondary'],
+  beatwise:['sales.report'], training:['content.training'], trainingmodule:['tm'], distconnect:['dc'], admin:['admin']
+};
 let dashboardUnlocked = false;
 let loggedInUser = null;
 let dashboardDefaultStateApplied = false;
+
+function applyAccess(){
+  let first = null;
+  document.querySelectorAll('.nav-item[data-tab]').forEach(n => {
+    const allowed = (NAV_PERM[n.dataset.tab] || []).some(p => UMAuth.can(p));
+    n.style.display = allowed ? '' : 'none';
+    if(allowed && !first) first = n;
+  });
+  const active = document.querySelector('.nav-item[data-tab].active');
+  if((!active || active.style.display === 'none') && first) first.click();
+  const lbl = document.getElementById('logoutLabel');
+  if(lbl && UMAuth.user) lbl.textContent = 'Sign Out (' + (UMAuth.user.name || UMAuth.user.id) + ')';
+}
+function anySalesAccess(){ return ['sales.target','sales.party','sales.secondary','sales.report','sales.product'].some(p => UMAuth.can(p)); }
+
 function unlockDashboard(){
   if(dashboardUnlocked) return;
   dashboardUnlocked = true;
   document.body.classList.remove('locked');
   document.getElementById('loginOverlay').style.display = 'none';
+  applyAccess();
+  if(!anySalesAccess()){                                              // Distributor / Training-only roles: no sales download at all
+    if(UMAuth.can('content.training')) loadTrainingData();
+    return;
+  }
   document.getElementById('splashOverlay').classList.remove('hide');
   splashStartTime = Date.now();
 
-  // Show cached data instantly (if we have any) while the real fetch runs quietly in the background.
+  // Show cached data instantly (only for "keep me signed in" devices) while the real fetch runs quietly in the background.
   loadCacheAndRender().then(state => {
-    if(state === 'fresh') return; // data is only minutes old - no need to hit Google Sheets again
+    if(state === 'fresh') return; // data is only minutes old - no need to hit the server again
     loadAllData(!!state); // silent when cached data is already on screen
   });
   setInterval(() => loadAllData(true), REFRESH_INTERVAL_MS);
@@ -1546,7 +1718,6 @@ function unlockDashboard(){
 
 /* ============ CONFIG ============ */
 const BACKEND_URL = "https://script.google.com/macros/s/AKfycbw_vVQ6TlK-LDsBm4m-6qwbWVBjq2hdI3bMzZ2wKUuIxjiEWqD56k2wE704hfkyFAX6/exec"; // Google Apps Script Web App endpoint (/exec)
-const SHEET_ID = "1UQC0hU7EEDQKRwvyglqDY0yCClx9wKC62bt3q_hCgs0";
 const TAB_TARGET_VS_ACH = "Primary Sale Target vs ach."; // B=State, D=Target, E=Sale(Achievement)
 const TAB_PARTY_WISE   = "Party -Wise Primary";           // A=Party, C=Sale, D=State
 const TAB_SECONDARY    = "Secondary & Tertiary Sale";     // A=State, B=User, D=Target, E=Ach.
@@ -1555,55 +1726,16 @@ const TAB_PRODUCT      = "Report (1)";                    // D=Product Code, E=P
 const TAB_TRAINING     = "Training";                       // A=Topic, B=Video Link
 const REFRESH_INTERVAL_MS = 2 * 60 * 60 * 1000; // auto-refresh every 2 hours
 
-let _jsonpCounter = 0;
-
-function gvizUrl(tabName, callbackName, query){
-  const tq = query ? `&tq=${encodeURIComponent(query)}` : '';
-  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json;responseHandler:${callbackName}&sheet=${encodeURIComponent(tabName)}${tq}`;
-}
-
-/* ============ FETCH HELPER (JSONP - avoids CORS/file:// issues) ============ */
+/* ============ DATA ACCESS (authenticated backend; the spreadsheet itself is never contacted by the browser) ============ */
 function fetchSheetTab(tabName, query, timeoutMs){
-  return new Promise((resolve, reject) => {
-    const callbackName = "gvizCallback_" + (_jsonpCounter++) + "_" + Date.now();
-    const timeout = setTimeout(() => {
-      cleanup();
-      reject(new Error("Timed out loading tab '" + tabName + "'. Check your internet connection or the sheet sharing setting."));
-    }, timeoutMs || 25000);
-
-    function cleanup(){
-      clearTimeout(timeout);
-      delete window[callbackName];
-      if(script.parentNode) script.parentNode.removeChild(script);
-    }
-
-    window[callbackName] = function(json){
-      cleanup();
-      try{
-        if(json.status === "error"){
-          reject(new Error("Sheet error (check tab name '" + tabName + "' exists): " + (json.errors?.[0]?.detailed_message || "unknown")));
-          return;
-        }
-        const cols = json.table.cols.map(c => c.label || c.id);
-        const rows = json.table.rows.map(r => r.c.map(cell => cell ? (cell.v !== undefined ? cell.v : cell.f) : null));
-        resolve({ cols, rows });
-      }catch(e){
-        reject(e);
-      }
-    };
-
-    const script = document.createElement('script');
-    script.src = gvizUrl(tabName, callbackName, query);
-    script.onerror = () => {
-      cleanup();
-      reject(new Error("Could not reach Google Sheets for tab '" + tabName + "'. Confirm the sheet is shared as 'Anyone with the link - Viewer' and you're online."));
-    };
-    document.body.appendChild(script);
-  });
+  const map = {}; map[TAB_TARGET_VS_ACH] = 'target'; map[TAB_PARTY_WISE] = 'party'; map[TAB_SECONDARY] = 'secondary'; map[TAB_TRAINING] = 'training';
+  const key = map[tabName];
+  if(!key) return Promise.reject(new Error('Unknown data source.'));
+  return UMAuth.api('tab', { tab:key }, { tries:1, timeout: timeoutMs || 60000 }).then(j => ({ cols: [], rows: j.rows }));
 }
 
 
-/* ---- Retry wrapper: transient Google/gviz hiccups are retried before giving up ---- */
+/* ---- Retry wrapper: transient network hiccups are retried before giving up ---- */
 async function fetchWithRetry(tab, query, timeoutMs, tries){
   tries = tries || 3;
   let lastErr;
@@ -1614,66 +1746,46 @@ async function fetchWithRetry(tab, query, timeoutMs, tries){
   throw lastErr;
 }
 
-/* ---- Report tab (150k+ rows): only needed columns, fetched in parallel chunks, mapped on arrival ---- */
-const REPORT_COLS = ['D','G','I','N','J','R','M','S']; // user, beat, state, sale, shop, shopType, date, month
-const REPORT_CHUNK_ROWS = 25000;
+/* ---- Report / Product tabs: server-side versioned snapshot, downloaded in pages, already filtered to the user's state ---- */
 const REPORT_PARALLEL = 3;
-function mapReportRows(rows){
-  const out = [];
-  for(let i = 0; i < rows.length; i++){
-    const r = rows[i];
-    const beat = (r[1] || '').toString().trim();
-    const state = (r[2] || '').toString().trim();
-    if(!beat || beat.toUpperCase() === 'BEAT' || !state || state.toUpperCase() === 'STATE') continue;
-    out.push({
-      user: (r[0] || '').toString().trim(),
-      beat: beat,
-      state: state,
-      sale: toNumber(r[3]),
-      shop: (r[4] || '').toString().trim(),
-      shopType: (r[5] || '').toString().trim(),
-      date: parseGvizDate(r[6]),
-      month: (r[7] || '').toString().trim()
-    });
+function decodeReport(c, dict){
+  const n = c.sale.length, out = new Array(n);
+  for(let i = 0; i < n; i++){
+    out[i] = { user: dict.user[c.user[i]], beat: dict.beat[c.beat[i]], state: dict.state[c.state[i]], sale: c.sale[i],
+      shop: dict.shop[c.shop[i]], shopType: dict.shopType[c.shopType[i]], date: parseGvizDate(dict.date[c.date[i]] || null), month: dict.month[c.month[i]] };
   }
   return out;
 }
+function decodeProduct(c, dict){
+  const n = c.sale.length, out = new Array(n);
+  for(let i = 0; i < n; i++){
+    out[i] = { code: dict.code[c.code[i]], party: dict.party[c.party[i]], qty: c.qty[i], sale: c.sale[i], state: dict.state[c.state[i]], month: dict.month[c.month[i]] };
+  }
+  return out;
+}
+async function fetchPaged(metaAction, pageAction, decode, onProgress){
+  for(let attempt = 0; attempt < 3; attempt++){
+    const meta = await UMAuth.api(metaAction, { force: attempt > 0 }, { timeout: 120000 });
+    const pages = meta.pages, results = new Array(pages);
+    let next = 0, done = 0, changed = false;
+    async function worker(){
+      while(next < pages && !changed){
+        const idx = next++;
+        try{
+          const p = await UMAuth.api(pageAction, { version: meta.version, page: idx }, { timeout: 120000 });
+          results[idx] = decode(p.cols, meta.dict); done++;
+          if(onProgress) onProgress(done, pages);
+        }catch(e){ if(e.code === 'VERSION_CHANGED'){ changed = true; return; } throw e; }
+      }
+    }
+    await Promise.all(Array.from({ length: Math.min(REPORT_PARALLEL, pages) }, worker));
+    if(!changed) return [].concat.apply([], results);
+  }
+  throw new Error('The data kept changing while it was downloading. Please tap Refresh again.');
+}
 async function fetchReportData(onProgress){
-  const sel = 'select ' + REPORT_COLS.join(',');
-  let total = null;
-  try{
-    const c = await fetchWithRetry(TAB_REPORT, 'select count(D)', 20000, 2);
-    total = Number(c.rows[0] && c.rows[0][0]);
-    if(!isFinite(total) || total <= 0) total = null;
-  }catch(e){ total = null; }
-
-  // Fallback if the count query is unavailable: one pass sequentially until a short chunk comes back.
-  if(total === null){
-    let all = [], offset = 0;
-    while(true){
-      const part = await fetchWithRetry(TAB_REPORT, `${sel} limit ${REPORT_CHUNK_ROWS} offset ${offset}`, 60000);
-      all = all.concat(mapReportRows(part.rows));
-      if(onProgress) onProgress(all.length, null);
-      if(part.rows.length < REPORT_CHUNK_ROWS) break;
-      offset += REPORT_CHUNK_ROWS;
-    }
-    return all;
-  }
-
-  const nChunks = Math.ceil((total + 5) / REPORT_CHUNK_ROWS);
-  const results = new Array(nChunks);
-  let next = 0, done = 0;
-  async function worker(){
-    while(next < nChunks){
-      const idx = next++;
-      const part = await fetchWithRetry(TAB_REPORT, `${sel} limit ${REPORT_CHUNK_ROWS} offset ${idx * REPORT_CHUNK_ROWS}`, 60000);
-      results[idx] = mapReportRows(part.rows); // raw rows are released right away
-      done++;
-      if(onProgress) onProgress(done, nChunks);
-    }
-  }
-  await Promise.all(Array.from({ length: Math.min(REPORT_PARALLEL, nChunks) }, worker));
-  return [].concat.apply([], results);
+  if(!UMAuth.can('sales.report')) return [];
+  return fetchPaged('reportMeta', 'reportPage', decodeReport, onProgress);
 }
 
 /* ---- Lazy-load heavy export libraries only when someone clicks Export ---- */
@@ -1972,7 +2084,7 @@ function renderComparisonBar(containerId, items){
     return `
       <rect x="${x}" y="${y}" width="${barWidth}" height="${h}" rx="6" fill="${item.color}"/>
       <text x="${x + barWidth/2}" y="${y - 8}" text-anchor="middle" font-size="11.5" font-weight="700" fill="#1f2937" font-family="Segoe UI, sans-serif">₹${fmtCompact(item.value)}</text>
-      <text x="${x + barWidth/2}" y="${chartHeight - 10}" text-anchor="middle" font-size="10.5" fill="#6b7280" font-family="Segoe UI, sans-serif">${item.label}</text>
+      <text x="${x + barWidth/2}" y="${chartHeight - 10}" text-anchor="middle" font-size="10.5" fill="#6b7280" font-family="Segoe UI, sans-serif">${escapeHtml(item.label)}</text>
     `;
   }).join('');
   el.innerHTML = `<svg viewBox="0 0 ${chartWidth} ${chartHeight}" width="100%" height="200" preserveAspectRatio="xMidYMid meet">${bars}</svg>`;
@@ -2002,6 +2114,7 @@ let stateFilters = {}; // key ('exec' | 'primary' | 'secondary' | 'beatwiseState
 /* ============ TAB NAVIGATION ============ */
 document.querySelectorAll('.nav-item').forEach(item => {
   item.addEventListener('click', () => {
+    if(!item.dataset.tab) return;
     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     item.classList.add('active');
@@ -2043,7 +2156,8 @@ async function idbGet(key){
 
 async function saveDashboardCache(){
   try{
-    await idbSet(DASHBOARD_CACHE_KEY, { ts: Date.now(), targetVsAchData, partyWiseData, secondaryData, beatWiseData });
+    if(!UMAuth.remember || !UMAuth.user) return;   // never persist business data on a shared/temporary session
+    await idbSet(DASHBOARD_CACHE_KEY, { ts: Date.now(), uid: UMAuth.user.id, targetVsAchData, partyWiseData, secondaryData, beatWiseData });
   }catch(e){
     console.warn('Could not save dashboard cache:', e); // caching is a nice-to-have, never block on it
   }
@@ -2052,12 +2166,13 @@ async function saveDashboardCache(){
 // Reads cached data and renders it immediately. Resolves to 'fresh' | 'stale' | false.
 async function loadCacheAndRender(){
   let cached;
+  if(!UMAuth.remember || !UMAuth.user) return false;
   try{
     cached = await idbGet(DASHBOARD_CACHE_KEY);
   }catch(e){
     return false;
   }
-  if(!cached || !Array.isArray(cached.beatWiseData)) return false;
+  if(!cached || cached.uid !== UMAuth.user.id || !Array.isArray(cached.beatWiseData)) return false;
 
   targetVsAchData = cached.targetVsAchData || [];
   partyWiseData = cached.partyWiseData || [];
@@ -2142,9 +2257,9 @@ async function loadAllData(silent){
     // PERF: the 150k-row Report download starts immediately but no longer blocks the three small tabs.
     const reportPromise = fetchReportData(onProg).then(v => ({status:'fulfilled', value:v}), e => ({status:'rejected', reason:e}));
     const smallJobs = await Promise.allSettled([
-      fetchWithRetry(TAB_TARGET_VS_ACH),
-      fetchWithRetry(TAB_PARTY_WISE),
-      fetchWithRetry(TAB_SECONDARY)
+      UMAuth.can('sales.target') ? fetchWithRetry(TAB_TARGET_VS_ACH) : Promise.resolve(null),
+      UMAuth.can('sales.party') ? fetchWithRetry(TAB_PARTY_WISE) : Promise.resolve(null),
+      UMAuth.can('sales.secondary') ? fetchWithRetry(TAB_SECONDARY) : Promise.resolve(null)
     ]);
     const jobs = smallJobs.concat([{status:'pending'}]);
     if(smallJobs.every(j => j.status === 'rejected')){ // nothing to show early: behave exactly as before
@@ -2259,9 +2374,8 @@ async function loadAllData(silent){
     // In silent mode we already have cached (or previously live) data on screen — leave it visible
     // rather than replacing it with an error box on a transient network hiccup.
     if(!silent){
-      const msg = `<div class="error-box">⚠️ Could not load live data: ${err.message}<br><br>
-        Make sure the Google Sheet is shared as <b>"Anyone with the link – Viewer"</b>, and that the tab names exactly match:<br>
-        • "${TAB_TARGET_VS_ACH}"<br>• "${TAB_PARTY_WISE}"<br>• "${TAB_SECONDARY}"<br>• "${TAB_REPORT}"</div>`;
+      const msg = `<div class="error-box">⚠️ Could not load live data: ${escapeHtml(err.message)}<br><br>
+        Please check your internet connection and tap Refresh. If it continues, contact the administrator.</div>`;
       document.getElementById('exec-status').style.display = 'none';
       document.getElementById('primary-status').style.display = 'none';
       document.getElementById('secondary-status').style.display = 'none';
@@ -2298,35 +2412,8 @@ function mapProductRows(rows){
   return out;
 }
 async function fetchProductData(){
-  const sel = 'select ' + PRODUCT_COLS.join(',');
-  let total = null;
-  try{
-    const c = await fetchWithRetry(TAB_PRODUCT, 'select count(D)', 20000, 2);
-    total = Number(c.rows[0] && c.rows[0][0]);
-    if(!isFinite(total) || total <= 0) total = null;
-  }catch(e){ total = null; }
-  if(total === null){
-    let all = [], offset = 0;
-    while(true){
-      const part = await fetchWithRetry(TAB_PRODUCT, `${sel} limit ${REPORT_CHUNK_ROWS} offset ${offset}`, 60000);
-      all = all.concat(mapProductRows(part.rows));
-      if(part.rows.length < REPORT_CHUNK_ROWS) break;
-      offset += REPORT_CHUNK_ROWS;
-    }
-    return all;
-  }
-  const nChunks = Math.ceil((total + 5) / REPORT_CHUNK_ROWS);
-  const results = new Array(nChunks);
-  let next = 0;
-  async function worker(){
-    while(next < nChunks){
-      const idx = next++;
-      const part = await fetchWithRetry(TAB_PRODUCT, `${sel} limit ${REPORT_CHUNK_ROWS} offset ${idx * REPORT_CHUNK_ROWS}`, 60000);
-      results[idx] = mapProductRows(part.rows);
-    }
-  }
-  await Promise.all(Array.from({ length: Math.min(REPORT_PARALLEL, nChunks) }, worker));
-  return [].concat.apply([], results);
+  if(!UMAuth.can('sales.product')) return [];
+  return fetchPaged('productMeta', 'productPage', decodeProduct);
 }
 
 function populateProductFilters(){
@@ -2506,6 +2593,7 @@ function normalizeVideoUrl(raw){
 }
 
 async function loadTrainingData(){
+  if(!UMAuth.can('content.training')) return;
   const statusEl = document.getElementById('training-status');
   const contentEl = document.getElementById('training-content');
   const errorEl = document.getElementById('training-error');
@@ -2528,8 +2616,7 @@ async function loadTrainingData(){
   }catch(err){
     console.error(err);
     statusEl.style.display = 'none';
-    errorEl.innerHTML = `<div class="error-box">⚠️ Could not load training videos: ${err.message}<br><br>
-      Make sure the Google Sheet has a tab named exactly <b>"${TAB_TRAINING}"</b> with Topic in column A and the video link in column B.</div>`;
+    errorEl.innerHTML = `<div class="error-box">⚠️ Could not load training videos: ${escapeHtml(err.message)}</div>`;
   }
 }
 
@@ -2681,7 +2768,7 @@ function buildMultiSelect(key, options, onChange, labelWord){
   menu.innerHTML =
     `<label class="ms-item"><input type="checkbox" class="ms-all" ${prev.length === 0 ? 'checked' : ''}><b>All ${labelWord}</b></label>
      <div class="ms-sep"></div>` +
-    options.map(s => `<label class="ms-item"><input type="checkbox" value="${s}" ${prev.includes(s) ? 'checked' : ''}>${s}</label>`).join('');
+    options.map(s => `<label class="ms-item"><input type="checkbox" value="${escapeHtml(s)}" ${prev.includes(s) ? 'checked' : ''}>${escapeHtml(s)}</label>`).join('');
 
   updateMsToggleLabel(key);
 
@@ -2839,10 +2926,10 @@ function renderExecRsmTable(filteredRows){
       const medal = r.pct >= 100 ? '🏆 ' : '';
       return `
       <tr class="${rowTint}">
-        <td>${r.rsm}</td>
-        <td class="state-link" data-state="${r.state.replace(/"/g,'&quot;')}">${r.state}</td>
+        <td>${escapeHtml(r.rsm)}</td>
+        <td class="state-link" data-state="${escapeHtml(r.state)}">${escapeHtml(r.state)}</td>
         <td>₹ ${fmtNum(r.target)}</td>
-        <td class="state-link" data-state="${r.state.replace(/"/g,'&quot;')}">₹ ${fmtNum(r.sale)}</td>
+        <td class="state-link" data-state="${escapeHtml(r.state)}">₹ ${fmtNum(r.sale)}</td>
         <td><span class="mini-bar-bg"><span class="mini-bar-fill ${cls === 'green' ? '' : cls}" style="width:${Math.min(r.pct,100)}%"></span></span><span class="pct-pill ${cls}">${medal}${r.pct.toFixed(1)}%</span></td>
         <td>₹ ${fmtNum(r.gap)}</td>
       </tr>`;
@@ -2931,8 +3018,8 @@ function renderPrimaryTable(selectedStates){
     const grand = rows.reduce((s,r) => s + r.total, 0);
     tbody.innerHTML = rows.map(r => `
       <tr>
-        <td>${r.state}</td>
-        <td>${medalMap.get(r) || ''}${r.party}</td>
+        <td>${escapeHtml(r.state)}</td>
+        <td>${medalMap.get(r) || ''}${escapeHtml(r.party)}</td>
         ${months.map(m => `<td style="text-align:right;">${r.m[m] ? '₹ ' + fmtNum(r.m[m]) : '–'}</td>`).join('')}
         <td style="text-align:right;"><b>₹ ${fmtNum(r.total)}</b></td>
       </tr>`).join('') +
@@ -2998,8 +3085,8 @@ function renderSecondaryTable(selectedStates){
       const medal = r.pct >= 100 ? '🏆 ' : '';
       return `
       <tr class="${rowTint}">
-        <td>${r.state}</td>
-        <td class="state-link" data-user="${r.user.replace(/"/g,'&quot;')}" data-state2="${r.state.replace(/"/g,'&quot;')}">${r.user}</td>
+        <td>${escapeHtml(r.state)}</td>
+        <td class="state-link" data-user="${escapeHtml(r.user)}" data-state2="${escapeHtml(r.state)}">${escapeHtml(r.user)}</td>
         <td>₹ ${fmtNum(r.target)}</td>
         <td>₹ ${fmtNum(r.ach)}</td>
         <td><span class="mini-bar-bg"><span class="mini-bar-fill ${cls === 'green' ? '' : cls}" style="width:${Math.min(r.pct,100)}%"></span></span><span class="pct-pill ${cls}">${medal}${r.pct.toFixed(1)}%</span></td>
@@ -3160,8 +3247,8 @@ function renderBeatWise(){
     if(ranked[1]) medalMap.set(ranked[1], '🥈 ');
     if(ranked[2]) medalMap.set(ranked[2], '🥉 ');
     tbody.innerHTML = agg.map(r => `
-      <tr class="beat-row" data-beat="${r.beat.replace(/"/g,'&quot;')}">
-        <td class="beat-link">${medalMap.get(r) || ''}${r.beat}</td>
+      <tr class="beat-row" data-beat="${escapeHtml(r.beat)}">
+        <td class="beat-link">${medalMap.get(r) || ''}${escapeHtml(r.beat)}</td>
         <td>₹ ${fmtNum(r.sale)}</td>
       </tr>
     `).join('');
@@ -3280,7 +3367,7 @@ function renderShopDrilldown(){
       }).join('');
       return `
       <tr>
-        <td>${r.shop}</td>
+        <td>${escapeHtml(r.shop)}</td>
         ${monthCells}
         <td class="calls-total-cell" style="text-align:center;">${r.gtVisits}</td>
         <td class="calls-total-cell" style="text-align:center;">₹ ${fmtNum(r.gtSale)}</td>
@@ -3369,7 +3456,7 @@ function renderPartyDrilldown(){
   } else {
     tbody.innerHTML = rows.map(r => `
       <tr>
-        <td>${r.party}</td>
+        <td>${escapeHtml(r.party)}</td>
         <td>₹ ${fmtNum(r.sale)}</td>
       </tr>
     `).join('');
@@ -3802,7 +3889,7 @@ function renderShopVisitsDrilldown(){
         }).join('');
         return `
         <tr>
-          <td>${r.shop}</td>
+          <td>${escapeHtml(r.shop)}</td>
           ${monthCells}
           <td class="calls-total-cell" style="text-align:center;">${r.gtVisits}</td>
           <td class="calls-total-cell" style="text-align:center;">₹ ${fmtNum(r.gtSale)}</td>
@@ -3865,8 +3952,8 @@ function renderShopVisitsDrilldown(){
   } else {
     tbody.innerHTML = rows.map(r => `
       <tr>
-        <td>${r.shop}</td>
-        <td class="calls-count-cell" data-shop="${(r.shop || '').replace(/"/g,'&quot;')}">${r.visits}</td>
+        <td>${escapeHtml(r.shop)}</td>
+        <td class="calls-count-cell" data-shop="${escapeHtml(r.shop || '')}">${r.visits}</td>
         <td>₹ ${fmtNum(r.sale)}</td>
         ${hasFirstSale ? `<td>${r.firstSale}</td>` : ''}
       </tr>
@@ -4013,58 +4100,71 @@ document.getElementById('refreshBtn').addEventListener('click', () => loadAllDat
 // Auto-refresh timer and initial data load both start only after successful login (see unlockDashboard)
 
 /* ============ LOGIN GATE: INIT ============ */
-// Already logged in earlier this browser session? Skip the login screen.
-if(sessionStorage.getItem(LOGIN_SESSION_KEY) === 'yes'){
-  const savedUserId = sessionStorage.getItem(LOGIN_USER_KEY);
-  const savedState = sessionStorage.getItem(LOGIN_USER_STATE_KEY);
-  loggedInUser = USERS.find(u => u.id === savedUserId)
-    || (savedUserId ? { id: savedUserId, password: null, defaultState: savedState || null } : null);
-  unlockDashboard();
-}
-
-document.getElementById('loginForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const id = document.getElementById('loginId').value.trim();
-  const pass = document.getElementById('loginPass').value;
-  const errorBox = document.getElementById('loginError');
-  const submitBtn = e.target.querySelector('button[type="submit"]');
-
-  // 1) Check the hardcoded USERS list first (kept for backward compatibility).
-  let matchedUser = USERS.find(u => u.id === id && u.password === pass);
-
-  // 2) If not found, check the "Credential" sheet tab (A=ID, B=Password, C=State).
-  if(!matchedUser){
-    if(submitBtn) submitBtn.disabled = true;
-    try{
-      const { rows } = await fetchSheetTab(TAB_CREDENTIAL);
-      const match = rows.find(r => {
-        const rowId = r[0] != null ? String(r[0]).trim() : '';
-        const rowPass = r[1] != null ? String(r[1]).trim() : '';
-        return rowId === id && rowPass === pass;
-      });
-      if(match){
-        const stateRaw = match[2] != null ? String(match[2]).trim() : '';
-        const state = (!stateRaw || stateRaw.toLowerCase() === 'all') ? null : stateRaw;
-        matchedUser = { id, password: pass, defaultState: state };
-      }
-    }catch(err){
-      console.error('Credential sheet lookup failed:', err);
-    }
-    if(submitBtn) submitBtn.disabled = false;
+(function(){
+  const $i = id => document.getElementById(id);
+  const loginForm = $i('loginForm'), pwForm = $i('pwForm');
+  function showMsg(el, text, ok){
+    el.textContent = text; el.style.display = text ? 'block' : 'none';
+    el.style.background = ok ? '#e6f4ea' : ''; el.style.color = ok ? '#1e6b34' : '';
   }
-
-  if(matchedUser){
-    loggedInUser = matchedUser;
-    sessionStorage.setItem(LOGIN_SESSION_KEY, 'yes');
-    sessionStorage.setItem(LOGIN_USER_KEY, matchedUser.id);
-    sessionStorage.setItem(LOGIN_USER_STATE_KEY, matchedUser.defaultState || '');
-    errorBox.style.display = 'none';
+  function showPwForm(forced){
+    loginForm.style.display = 'none'; pwForm.style.display = 'block';
+    $i('loginOverlay').style.display = 'flex';
+    $i('pwSub').textContent = forced ? 'You must choose your own password before continuing.' : 'Choose a new password.';
+    $i('pwCancel').style.display = forced ? 'none' : '';
+    pwForm.dataset.forced = forced ? '1' : '';
+    ['pwOld','pwNew','pwNew2'].forEach(i => { $i(i).value = ''; });
+    showMsg($i('pwError'), '');
+    $i('pwOld').focus();
+  }
+  function startSession(){
+    const u = UMAuth.user;
+    loggedInUser = { id:u.id, name:u.name, role:u.role, password:null, defaultState:u.state || null };
+    loginForm.style.display = ''; pwForm.style.display = 'none';
     unlockDashboard();
-  } else {
-    errorBox.style.display = 'block';
-    document.getElementById('loginPass').value = '';
+    UMAuth.watch();
   }
-});
+  loginForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    const id = $i('loginId').value.trim(), pass = $i('loginPass').value, btn = $i('loginBtn'), err = $i('loginError');
+    if(!id || !pass) return;
+    btn.disabled = true; btn.textContent = 'Signing in…'; showMsg(err, '');
+    try{
+      const r = await UMAuth.login(id, pass, $i('loginRemember').checked);
+      $i('loginPass').value = '';
+      if(r.mustChange) showPwForm(true); else startSession();
+    }catch(ex){
+      $i('loginPass').value = '';
+      const known = ['LOGIN_FAILED','LOCKED','BUSY'].indexOf(ex.code) >= 0;
+      showMsg(err, known ? ex.message : (ex.message || 'Sign-in failed. Please retry.'));
+    }
+    btn.disabled = false; btn.textContent = '🔓 Login';
+  });
+  pwForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    const o = $i('pwOld').value, n = $i('pwNew').value, n2 = $i('pwNew2').value, err = $i('pwError'), btn = $i('pwBtn');
+    if(n !== n2) return showMsg(err, 'The two new passwords do not match.');
+    if(n.length < 10) return showMsg(err, 'Use at least 10 characters, with letters and digits.');
+    btn.disabled = true; showMsg(err, '');
+    try{
+      await UMAuth.changePassword(o, n);
+      const forced = pwForm.dataset.forced === '1';
+      ['pwOld','pwNew','pwNew2'].forEach(i => { $i(i).value = ''; });
+      if(forced) startSession(); else { $i('loginOverlay').style.display = 'none'; pwForm.style.display = 'none'; alert('Password changed. Other devices have been signed out.'); }
+    }catch(ex){ showMsg(err, ex.message || 'Could not change the password.'); }
+    btn.disabled = false;
+  });
+  $i('pwCancel').addEventListener('click', () => { $i('loginOverlay').style.display = 'none'; pwForm.style.display = 'none'; });
+  document.querySelector('.nav-item[data-action="logout"]').addEventListener('click', () => { if(confirm('Sign out of Sales MIS?')) UMAuth.logout(); });
+  document.querySelector('.nav-item[data-action="password"]').addEventListener('click', () => showPwForm(false));
+
+  (async function boot(){
+    try{ const m = sessionStorage.getItem('umNotice'); if(m){ sessionStorage.removeItem('umNotice'); showMsg($i('loginError'), m, true); } }catch(e){}
+    UMAuth.api('ping', {}, { tries:1, timeout:15000, noToken:true, noLogout:true }).catch(() => {});   // wakes the server while the user types
+    try{ if(await UMAuth.init()) startSession(); }
+    catch(e){ showMsg($i('loginError'), 'Could not verify your session: ' + e.message); }
+  })();
+})();
 </script>
 
 <script id="dc-module">
@@ -4318,25 +4418,16 @@ function showApp(){
   loadAll(false).then(startTick); flushOB();
 }
 function logout(expired){
-  tok = null; user = null; stopTick(); sessionStorage.removeItem(TK); recent.length = 0; pending.clear(); $('dcSync').innerHTML = ''; P = []; C = []; R = {}; sel = null; sess = null;
-  $('dcApp').style.display = 'none'; $('dcLogin').style.display = ''; $('dcUser').textContent = ''; $('dcRefresh').style.display = 'none'; $('dcLogout').style.display = 'none';
-  if(expired){ const b = $('dcLoginErr'); b.textContent = 'Session expired. Please sign in again.'; b.style.display = 'block'; }
+  if(expired) UMAuth.forceLogout('Your session has ended. Please sign in again.'); else UMAuth.logout();
 }
 function init(){
   if(inited) return; inited = true;
-  api('ping', {}, {tries:1, timeout:15000}).catch(() => {});   // wakes the Apps Script instance while the user is typing the login
-  try{ const s = JSON.parse(sessionStorage.getItem(TK)); if(s && s.exp > Date.now()){ tok = s.t; user = s.user; showApp(); } }catch(e){}
+  if(!UMAuth.can('dc')){ $('dcLogin').innerHTML = '<h3 style="color:var(--blue-dark);margin-bottom:4px;">Access restricted</h3><p class="dc-note" style="margin:0;">Your account does not have access to Distributor Connect.</p>'; return; }
+  api('ping', {}, {tries:1, timeout:15000}).catch(() => {});
+  tok = UMAuth.token(); user = {id:UMAuth.user.id, name:UMAuth.user.name || UMAuth.user.id}; showApp();
 }
 
 /* ---------- events ---------- */
-$('dcLoginForm').addEventListener('submit', async e => {
-  e.preventDefault(); const b = $('dcLoginBtn'), err = $('dcLoginErr'); err.style.display = 'none'; b.disabled = true; b.textContent = 'Signing in…';
-  try{
-    const j = await api('login', {userId:$('dcId').value.trim(), password:$('dcPw').value});
-    tok = j.token; user = {id:j.id, name:j.name}; sessionStorage.setItem(TK, JSON.stringify({t:tok, user, exp:j.exp})); $('dcPw').value = ''; showApp();
-  }catch(x){ err.textContent = x.message; err.style.display = 'block'; }
-  b.disabled = false; b.textContent = 'Sign in';
-});
 $('dcLogout').addEventListener('click', () => logout(false));
 $('dcRefresh').addEventListener('click', () => loadAll(false));
 $('dcExport').addEventListener('click', exportCsv);
@@ -4411,7 +4502,9 @@ const tmFmtDate = d => d && /^\d{4}-\d{2}-\d{2}$/.test(d) ? d.slice(8,10)+'/'+d.
 const tmPct = (a,b) => b ? Math.round(a*1000/b)/10 : 0;
 const tmStatus = s => '<span class="tm-badge '+(s==='Completed'?'completed':s==='Cancelled'?'cancelled':'')+'">'+tmEsc(s)+'</span>';
 const tmEmptyRow = (n,msg) => '<tr><td colspan="'+n+'" class="tm-empty">'+tmEsc(msg)+'</td></tr>';
-let token = tmSavedLogin(), inited=false, busy=false, editId='', newId='', currentSession='', roster=[], marks={};
+tmForgetLogin();
+const tmTok = () => UMAuth.can('tm') ? UMAuth.token() : '';
+let token = '', inited=false, busy=false, editId='', newId='', currentSession='', roster=[], marks={};
 let data={users:[],userCounts:{},states:[],products:[],schedules:[],attendance:[]};
 let bootstrapLoaded=false,summaryLoaded=false,summaryPending=null,rosterRequest=0,rosterByState=new Map(),activeSub='today',calendarMonth=tmDateToday().slice(0,7);
 let activeSummary=[],filteredAttendance=[],selectedEmployeeRows=[];
@@ -4427,7 +4520,7 @@ async function tmApi(action,payload){
     const resp=await fetch(TM_API_URL,{method:'POST',body:JSON.stringify(Object.assign({action:action,token:token},payload||{})),signal:ctl.signal});
     if(!resp.ok)throw new Error('Backend HTTP '+resp.status+'. Check web app deployment.');
     let obj;try{obj=await resp.json();}catch(e){throw new Error('The backend did not return JSON. Check deployment URL and access permissions.');}
-    if(!obj.ok){const err=new Error(obj.error||obj.message||'Backend request failed.');err.code=obj.code;throw err;}
+    if(!obj.ok){const err=new Error(obj.error||obj.message||'Backend request failed.');err.code=obj.code;if(obj.code==='AUTH')UMAuth.forceLogout('Your session has ended. Please sign in again.');throw err;}
     return obj;
   }catch(e){
     if(e.name==='AbortError')throw new Error('Backend request timed out. Check internet and retry.');
@@ -4664,21 +4757,7 @@ function tmExportCsv(){
 function tmBind(){
   if(inited)return;inited=true;
   tm$('tmSDate').value=tm$('tmAFindDate').value=tmDateToday();tm$('tmSStart').value='11:00';tm$('tmSEnd').value='12:00';
-  tm$('tmLoginForm').addEventListener('submit',async e=>{
-    e.preventDefault();if(busy)return;
-    const btn=tm$('tmLoginBtn'), userId=tm$('tmUserId').value.trim(), password=tm$('tmPassword').value, remember=tm$('tmRemember').checked;
-    tmBusy(true,btn);tmMsg('tmLoginMessage','Verifying Training Department credentials…');
-    try{
-      const res=await tmApi('tmLogin',{userId,password,remember});
-      token=res.token;
-      const saved=tmRememberLogin(res,remember);
-      tm$('tmPassword').value='';
-      tmMsg('tmLoginMessage',saved?'':'Your browser blocked persistent storage; you may need to sign in again.','info');
-      await tmLoad();
-    }catch(err){tmMsg('tmLoginMessage',err.message,'error');}
-    finally{tmBusy(false,btn);}
-  });
-  tm$('tmLogout').addEventListener('click',()=>{token='';bootstrapLoaded=false;summaryLoaded=false;roster=[];rosterRequest++;tmForgetLogin();data={users:[],userCounts:{},states:[],products:[],attendance:[],schedules:[]};tmLoginUI(true);tmTop('');});
+  tm$('tmLogout').addEventListener('click',()=>{UMAuth.logout();token='';bootstrapLoaded=false;summaryLoaded=false;roster=[];rosterRequest++;tmForgetLogin();data={users:[],userCounts:{},states:[],products:[],attendance:[],schedules:[]};tmLoginUI(true);tmTop('');});
   tm$('tmRefresh').addEventListener('click',tmLoad);
   document.querySelectorAll('[data-tm-tab]').forEach(b=>b.addEventListener('click',()=>tmSub(b.dataset.tmTab)));
   tm$('tmScheduleForm').addEventListener('submit',tmSaveSchedule);tm$('tmSClear').addEventListener('click',tmClearSchedule);
@@ -4709,7 +4788,7 @@ function tmBind(){
   });
 }
 const nav=document.querySelector('.nav-item[data-tab="trainingmodule"]');
-if(nav)nav.addEventListener('click',()=>{tmBind();if(token&&!bootstrapLoaded)tmLoad();else if(!token)tmLoginUI(true);});
+if(nav)nav.addEventListener('click',()=>{token=tmTok();tmBind();if(token&&!bootstrapLoaded)tmLoad();else if(!token)tmLoginUI(true);});
 })();
 </script>
 <script>
@@ -4837,7 +4916,7 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const url = event.request.url;
-  if (url.includes('docs.google.com') || url.includes('cdnjs.cloudflare.com')) return;
+  if (url.includes('script.google.com') || url.includes('script.googleusercontent.com') || url.includes('cdnjs.cloudflare.com')) return;
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
@@ -4859,5 +4938,65 @@ self.addEventListener('fetch', (event) => {
   });
 }
 </script>
+<script id="admin-module">
+(function(){
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const PERMS = [['sales.target','Targets / Executive'],['sales.party','Party-wise'],['sales.secondary','Secondary'],['sales.report','Beat-wise report'],['sales.product','Product-wise'],['content.training','Training videos'],['dc','Distributor Connect'],['tm','Training Mgmt']];
+  let users = [], editing = null, loaded = false;
+  $('admPerms').innerHTML = '<span class="adm-lbl">Explicit access (required for Read-Only, optional extras for others):</span> ' +
+    PERMS.map(p => '<label class="adm-chk"><input type="checkbox" class="admPerm" value="' + p[0] + '"> ' + esc(p[1]) + '</label>').join('');
+  const api = (a, p) => UMAuth.api(a, p || {}, { tries:1, timeout:60000 });
+  function msg(t){ const e = $('admErr'); e.textContent = t || ''; e.style.display = t ? 'block' : 'none'; }
+  function showTemp(id, pw, what){
+    const b = $('admNew'); b.style.display = 'block';
+    b.innerHTML = '<b>' + esc(what) + ' for ' + esc(id) + '</b><br>Temporary password (shown <u>once</u> - give it to the user privately; they must change it at first sign-in):<br><code style="font-size:18px;user-select:all">' + esc(pw) + '</code>';
+  }
+  function perms(){ return Array.from(document.querySelectorAll('.admPerm:checked')).map(x => x.value).join(','); }
+  function resetForm(){
+    editing = null; $('admFormTitle').textContent = 'Add user'; $('admSave').textContent = 'Create user'; $('admCancel').style.display = 'none';
+    ['admId','admName','admState'].forEach(i => { $(i).value = ''; }); $('admId').disabled = false; $('admRole').value = 'SALES_MGMT'; $('admActive').checked = true;
+    document.querySelectorAll('.admPerm').forEach(x => { x.checked = false; }); msg('');
+  }
+  async function load(){
+    try{
+      const [u, l] = await Promise.all([api('adminListUsers'), api('adminAuditLog', { limit:200 })]);
+      users = u.users;
+      $('admUsers').innerHTML = users.map((x, i) => '<tr><td>' + esc(x.id) + '</td><td>' + esc(x.name) + '</td><td>' + esc(x.role) + '</td><td>' + esc(x.state || 'All') + '</td><td>' + esc(x.extra) +
+        '</td><td>' + (x.active ? 'Active' : '<b>Disabled</b>') + (x.must ? ' (must change password)' : '') + '</td><td>' + esc(x.last) +
+        '</td><td style="white-space:nowrap"><button class="dc-btn" data-a="edit" data-i="' + i + '">Edit</button> <button class="dc-btn" data-a="reset" data-i="' + i + '">Reset password</button> <button class="dc-btn" data-a="revoke" data-i="' + i + '">Sign out everywhere</button></td></tr>').join('');
+      $('admLog').innerHTML = l.rows.map(r => '<tr>' + r.map(c => '<td>' + esc(c) + '</td>').join('') + '</tr>').join('');
+      loaded = true;
+    }catch(e){ msg(e.message); }
+  }
+  $('admUsers').addEventListener('click', async ev => {
+    const b = ev.target.closest('button'); if(!b) return; const u = users[+b.dataset.i]; if(!u) return;
+    if(b.dataset.a === 'edit'){
+      editing = u.id; $('admFormTitle').textContent = 'Edit user: ' + u.id; $('admSave').textContent = 'Save changes'; $('admCancel').style.display = '';
+      $('admId').value = u.id; $('admId').disabled = true; $('admName').value = u.name; $('admRole').value = u.role; $('admState').value = u.state; $('admActive').checked = u.active;
+      const set = (u.extra || '').split(','); document.querySelectorAll('.admPerm').forEach(x => { x.checked = set.indexOf(x.value) >= 0; }); window.scrollTo(0, 0);
+    }else if(b.dataset.a === 'reset'){
+      if(!confirm('Reset the password for ' + u.id + '? They will be signed out everywhere.')) return;
+      try{ const r = await api('adminResetPassword', { id:u.id }); showTemp(u.id, r.tempPassword, 'Password reset'); load(); }catch(e){ msg(e.message); }
+    }else if(b.dataset.a === 'revoke'){
+      if(!confirm('Sign ' + u.id + ' out of all devices?')) return;
+      try{ await api('adminRevokeUser', { id:u.id }); load(); }catch(e){ msg(e.message); }
+    }
+  });
+  $('admSave').addEventListener('click', async () => {
+    msg(''); const f = { id:$('admId').value.trim(), name:$('admName').value.trim(), role:$('admRole').value, state:$('admState').value.trim(), extra:perms(), active:$('admActive').checked };
+    try{
+      if(editing){ await api('adminUpdateUser', f); resetForm(); }
+      else { const r = await api('adminCreateUser', f); showTemp(r.id, r.tempPassword, 'User created'); resetForm(); }
+      load();
+    }catch(e){ msg(e.message); }
+  });
+  $('admCancel').addEventListener('click', resetForm);
+  $('admRefresh').addEventListener('click', load);
+  document.querySelector('.nav-item[data-tab="admin"]').addEventListener('click', () => { if(!loaded) load(); });
+})();
+</script>
+
 </body>
 </html>
