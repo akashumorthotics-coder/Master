@@ -504,6 +504,9 @@ textarea.dc-in{width:100%;min-height:84px;resize:vertical;font-family:inherit}
 .tm-hidden{display:none!important}
 .tm-detail{border:1px solid #dce5f3;background:#f8fbff;border-radius:13px;padding:15px;margin-top:12px}
 .tm-detail h4{color:#183e77;margin:0 0 10px;font-size:14px}
+#tmSessionDetail .tm-attendance-badge{display:inline-flex;align-items:center;vertical-align:middle;border-radius:20px;padding:5px 12px;font-size:13px;font-weight:600;line-height:1;white-space:nowrap}
+#tmSessionDetail .tm-attendance-badge.present{background:#DCFCE7;color:#15803D}
+#tmSessionDetail .tm-attendance-badge.absent{background:#FEE2E2;color:#B91C1C}
 .tm-tiny{font-size:11.5px;color:#64748b;margin-top:9px;line-height:1.55}
 @media(max-width:1250px){.tm-form-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:760px){.tm-form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.tm-chart-grid{grid-template-columns:1fr}.tm-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.tm-wrap .tm-card{padding:14px}}
@@ -5691,7 +5694,7 @@ function tmStateTable(){
 function tmDetailSession(id){
   const s=data.schedules.find(x=>x.id===id);if(!s)return;
   const rows=data.attendance.filter(x=>x.trainingId===id),root=tm$('tmSessionDetail');
-  root.innerHTML='<h4>Session detail · '+tmEsc(tmFmtDate(s.date)+' | '+s.state+' | '+s.product)+'</h4>'+(rows.length?'<div class="tm-table-area"><table><thead><tr><th>Employee</th><th>Designation</th><th>Attendance</th></tr></thead><tbody>'+rows.map(a=>'<tr><td>'+tmEsc(a.name)+'</td><td>'+tmEsc(a.designation)+'</td><td>'+tmEsc(a.status)+'</td></tr>').join('')+'</tbody></table></div>':'<p class="tm-desc">Attendance not yet submitted.</p>')+'<div class="tm-action-row"><button class="tm-btn" type="button" data-tm-detail-close="1">Close</button><button class="tm-btn primary" type="button" data-tm-att="'+tmEsc(id)+'">Open attendance</button></div>';
+  root.innerHTML='<h4>Session detail · '+tmEsc(tmFmtDate(s.date)+' | '+s.state+' | '+s.product)+'</h4>'+(rows.length?'<div class="tm-table-area"><table><thead><tr><th>Employee</th><th>Designation</th><th>Attendance</th></tr></thead><tbody>'+rows.map(a=>'<tr><td>'+tmEsc(a.name)+'</td><td>'+tmEsc(a.designation)+'</td><td><span class="tm-attendance-badge '+(a.status==='Present'?'present':a.status==='Absent'?'absent':'')+'">'+tmEsc(a.status)+'</span></td></tr>').join('')+'</tbody></table></div>':'<p class="tm-desc">Attendance not yet submitted.</p>')+'<div class="tm-action-row"><button class="tm-btn" type="button" data-tm-detail-close="1">Close</button><button class="tm-btn primary" type="button" data-tm-att="'+tmEsc(id)+'">Open attendance</button></div>';
   root.classList.remove('tm-hidden');root.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 function tmDetailEmployee(key){
