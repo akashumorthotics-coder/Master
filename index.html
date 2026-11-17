@@ -2514,13 +2514,13 @@ function openLeadWorkspace(page){
     leadStyles = new Promise((resolve, reject) => {
       const link = document.createElement('link');
       link.rel = 'stylesheet';
-      link.href = './lead-management.css';
+      link.href = './lead-management.css?v=20261117-call-reports-1';
       link.onload = resolve;
       link.onerror = () => { link.remove(); leadStyles = null; reject(new Error('Lead Management styles could not load.')); };
       document.head.appendChild(link);
     });
   }
-  Promise.all([leadStyles, loadScriptOnce('./lead-management.js')]).then(() => {
+  Promise.all([leadStyles, loadScriptOnce('./lead-management.js?v=20261117-call-reports-1')]).then(() => {
     if(document.getElementById('tab-' + page).classList.contains('active')) window.UMLeadWorkspace.open(page);
   }).catch(() => {
     const panel = document.querySelector('#tab-' + page + ' [data-lm-data]');
