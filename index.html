@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://script.google.com https://script.googleusercontent.com; worker-src 'self' blob:; manifest-src 'self' blob: data:; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
+<script src="./state-access.js?v=20261121-states-1"></script>
 <script>try{if(window.top!==window.self){document.documentElement.style.display='none';window.top.location=window.self.location;}}catch(e){document.documentElement.style.display='none';}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sales Performance Dashboard</title>
@@ -829,6 +830,19 @@ textarea.dc-in{width:100%;min-height:84px;resize:vertical;font-family:inherit}
   .adm-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,185px),1fr))}
   .adm-field{display:grid;gap:5px;min-width:0;color:var(--text-muted);font-weight:600;font-size:12px}
   .adm-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .adm-state-access{grid-column:1/-1;min-width:0;border:1px solid var(--border);border-radius:12px;padding:16px;display:grid;gap:12px}
+  .adm-state-access legend{padding:0 6px;font-size:16px;font-weight:700;color:var(--text)}
+  .adm-state-access p,.adm-state-access .adm-field,.adm-state-option{font-size:14px;line-height:1.5}
+  .adm-state-access p{color:var(--text-muted)}
+  .adm-state-access .adm-chk{font-size:14px}
+  .adm-state-options{max-height:230px;overflow:auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:8px;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--white)}
+  .adm-state-option{display:flex;align-items:flex-start;gap:9px;min-height:34px;color:var(--text);cursor:pointer}
+  .adm-state-option input{margin-top:4px;flex:none;width:16px;height:16px}
+  .adm-state-option:has(input:disabled){opacity:.55;cursor:default}
+  .adm-state-custom{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap}
+  .adm-state-custom label{flex:1;min-width:min(100%,220px)}
+  #admStateSummary{padding:10px 12px;background:var(--blue-light);color:var(--blue-dark);border-radius:8px}
+
   #admNew{background:var(--blue-light);overflow-wrap:anywhere;font-size:13px;line-height:1.6}
 
   @media (max-width:1080px){
@@ -1643,11 +1657,11 @@ SOFTWARE.
         <div>
           <p class="page-context">Sales operations</p>
           <h2 tabindex="-1">Punch Sale Order</h2>
-          <p class="page-description">Sale order entry workspace.</p>
+          <p class="page-description">Create primary orders for your distributors and track submitted orders.</p>
         </div>
       </div>
     </div>
-    <div class="empty-panel"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-clock"></use></svg><strong>Coming soon</strong></div>
+    <div id="soRoot" aria-busy="false"><p class="ui-empty" role="status">Preparing primary orders…</p></div>
   </div>
 
   <!-- PRODUCT TRAINING -->
@@ -1928,9 +1942,15 @@ SOFTWARE.
           <option value="TRAINING">Training Department</option><option value="READ_ONLY">Read-Only (choose reports below)</option><option value="SUPER_ADMIN">Super Admin</option>
         </select>
         </label>
-        <label class="adm-field" for="admState">State lock
-          <input class="adm-in" id="admState" placeholder="State lock (blank = all states)" maxlength="60" autocomplete="off">
-        </label>
+        <fieldset class="adm-state-access" aria-describedby="admStateHelp admStateSummary">
+          <legend>State access</legend>
+          <p id="admStateHelp">Allow all states, or select the states this person can access in their permitted modules.</p>
+          <label class="adm-chk"><input type="checkbox" id="admAllStates" checked> All states</label>
+          <label class="adm-field" for="admStateSearch">Find a state<input class="adm-in" id="admStateSearch" type="search" placeholder="Search states" autocomplete="off"></label>
+          <div class="adm-state-options" id="admStateOptions" role="group" aria-label="Selected states"></div>
+          <div class="adm-state-custom"><label class="adm-field" for="admCustomState">Add a state name used in your data<input class="adm-in" id="admCustomState" maxlength="4000" placeholder="Exact name from your data" autocomplete="off"></label><button class="dc-btn" id="admAddState" type="button">Add state</button></div>
+          <p id="admStateSummary" role="status" aria-live="polite"></p>
+        </fieldset>
       </div>
       <div class="adm-perms" id="admPerms"></div>
       <label class="adm-chk"><input type="checkbox" id="admActive" checked> Active</label>
@@ -2360,7 +2380,7 @@ const UMAuth = (function(){
 const SALES_PERMISSIONS = ['sales.target','sales.party','sales.secondary','sales.report','sales.product'];
 const NAV_PERM = {
   exec:['sales.target'], primary:['sales.target','sales.party'], product:['sales.product'], secondary:['sales.secondary'],
-  beatwise:['sales.report'], 'kra-kpi':SALES_PERMISSIONS, 'punch-sale-order':SALES_PERMISSIONS,
+  beatwise:['sales.report'], 'kra-kpi':SALES_PERMISSIONS, 'punch-sale-order':['orders.create','orders.manage'],
   'lead-dashboard':['lead.own','lead.manage'], 'lead-list':['lead.own','lead.manage'],
   'lead-schedule':['lead.own','lead.manage'], 'lead-calls':['lead.own','lead.manage'], 'lead-reports':['lead.own','lead.manage'],
   training:['content.training'], trainingmodule:['tm'], distconnect:['dc'], admin:['admin']
@@ -2520,12 +2540,26 @@ function openLeadWorkspace(page){
       document.head.appendChild(link);
     });
   }
-  Promise.all([leadStyles, loadScriptOnce('./lead-management.js?v=20261117-call-reports-1')]).then(() => {
+  Promise.all([leadStyles, loadScriptOnce('./lead-management.js?v=20261121-states-1')]).then(() => {
     if(document.getElementById('tab-' + page).classList.contains('active')) window.UMLeadWorkspace.open(page);
   }).catch(() => {
     const panel = document.querySelector('#tab-' + page + ' [data-lm-data]');
     panel.innerHTML = '<p role="alert">Lead Management could not load.</p><button type="button" class="refresh-btn">Retry</button>';
     panel.querySelector('button').onclick = () => openLeadWorkspace(page);
+  });
+}
+let primaryOrderAssets;
+function openOrderWorkspace(){
+  if(!UMAuth.can('orders.create') && !UMAuth.can('orders.manage')) return;
+  if(!primaryOrderAssets){
+    const styles = new Promise((resolve,reject) => {
+      const link=document.createElement('link');link.rel='stylesheet';link.href='./primary-orders.css?v=20261120-orders-1';
+      link.onload=resolve;link.onerror=()=>{link.remove();reject(new Error('Order styles could not load.'));};document.head.appendChild(link);
+    });
+    primaryOrderAssets=Promise.all([styles,loadScriptOnce('./primary-orders.js?v=20261120-orders-1')]).catch(error=>{primaryOrderAssets=null;throw error;});
+  }
+  primaryOrderAssets.then(()=>{if(document.getElementById('tab-punch-sale-order').classList.contains('active'))window.UMPrimaryOrders.open();}).catch(()=>{
+    const root=document.getElementById('soRoot');root.innerHTML='<p class="error-box" role="alert">Primary orders could not load. Check that the new order files were uploaded.</p><button class="refresh-btn" type="button">Retry</button>';root.querySelector('button').onclick=openOrderWorkspace;
   });
 }
 const LIB_XLSX = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
@@ -2860,6 +2894,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
     }
     if(drawerOpen) setDrawerOpen(false, content.querySelector('h2'));
     if(item.dataset.tab.startsWith('lead-')) openLeadWorkspace(item.dataset.tab);
+    if(item.dataset.tab==='punch-sale-order') openOrderWorkspace();
   });
 });
 
@@ -2880,7 +2915,7 @@ document.addEventListener('keydown', event => {
 /* ============ LOCAL CACHE (instant load on open, refreshed silently from Sheets) ============ */
 const genieSalesLoadedAt = { primary:0, secondary:0 };
 let genieSalesLoading = true;
-const DASHBOARD_CACHE_KEY = 'salesMisDashboardCache_v2';
+const DASHBOARD_CACHE_KEY = 'salesMisDashboardCache_states_v3';
 const CACHE_FRESH_MS = 10 * 60 * 1000; // if cache is younger than this, skip the network on open
 try{ localStorage.removeItem('salesMisDashboardCache_v1'); }catch(e){} // free the old (size-limited) cache
 
@@ -2913,7 +2948,7 @@ async function idbGet(key){
 async function saveDashboardCache(){
   try{
     if(!UMAuth.remember || !UMAuth.user) return;   // never persist business data on a shared/temporary session
-    await idbSet(DASHBOARD_CACHE_KEY, { ts: Date.now(), uid: UMAuth.user.id, targetVsAchData, partyWiseData, secondaryData, beatWiseData });
+    await idbSet(DASHBOARD_CACHE_KEY, { ts: Date.now(), uid: UMAuth.user.id, scope:UMStateAccess.fingerprint(UMAuth.user), targetVsAchData, partyWiseData, secondaryData, beatWiseData });
   }catch(e){
     console.warn('Could not save dashboard cache:', e); // caching is a nice-to-have, never block on it
   }
@@ -2928,7 +2963,7 @@ async function loadCacheAndRender(){
   }catch(e){
     return false;
   }
-  if(!cached || cached.uid !== UMAuth.user.id || !Array.isArray(cached.beatWiseData)) return false;
+  if(!cached || cached.uid !== UMAuth.user.id || cached.scope!==UMStateAccess.fingerprint(UMAuth.user) || !Array.isArray(cached.beatWiseData)) return false;
 
   targetVsAchData = cached.targetVsAchData || [];
   partyWiseData = cached.partyWiseData || [];
@@ -2938,12 +2973,12 @@ async function loadCacheAndRender(){
   genieSalesLoadedAt.secondary = Array.isArray(cached.secondaryData) ? cached.ts : 0;
   genieSalesLoading = false;
 
-  if(loggedInUser && loggedInUser.defaultState && !dashboardDefaultStateApplied){
-    const ds = loggedInUser.defaultState;
-    stateFilters.exec = [ds];
-    stateFilters.primary = [ds];
-    stateFilters.secondary = [ds];
-    stateFilters.beatwiseState = [ds];
+  if(loggedInUser && !dashboardDefaultStateApplied){
+    const ds = UMStateAccess.forUser(UMAuth.user).states;
+    stateFilters.exec = ds.slice();
+    stateFilters.primary = ds.slice();
+    stateFilters.secondary = ds.slice();
+    stateFilters.beatwiseState = ds.slice();
     dashboardDefaultStateApplied = true;
   }
   populateStateFilters();
@@ -3064,12 +3099,12 @@ async function loadAllData(silent, forceFresh){
     if(sec) genieSalesLoadedAt.secondary = Date.now();
     genieSalesLoading = false;
 
-    if(loggedInUser && loggedInUser.defaultState && !dashboardDefaultStateApplied){
-      const ds = loggedInUser.defaultState;
-      stateFilters.exec = [ds];
-      stateFilters.primary = [ds];
-      stateFilters.secondary = [ds];
-      stateFilters.beatwiseState = [ds];
+    if(loggedInUser && !dashboardDefaultStateApplied){
+      const ds = UMStateAccess.forUser(UMAuth.user).states;
+      stateFilters.exec = ds.slice();
+      stateFilters.primary = ds.slice();
+      stateFilters.secondary = ds.slice();
+      stateFilters.beatwiseState = ds.slice();
       dashboardDefaultStateApplied = true;
     }
     populateStateFilters();
@@ -3095,7 +3130,7 @@ async function loadAllData(silent, forceFresh){
       jobs[3] = await reportPromise;
       if(jobs[3].status === 'fulfilled'){
         beatWiseData = jobs[3].value;
-        if(loggedInUser && loggedInUser.defaultState && !(stateFilters.beatwiseState || []).length) stateFilters.beatwiseState = [loggedInUser.defaultState];
+        if(loggedInUser && !(stateFilters.beatwiseState || []).length) stateFilters.beatwiseState = UMStateAccess.forUser(UMAuth.user).states.slice();
         populateStateFilters();
         renderBeatWise();
       }else{ failedNames.push('Report'); }
@@ -3172,17 +3207,14 @@ async function fetchProductData(forceFresh){
 }
 
 function populateProductFilters(){
-  const lockedState = loggedInUser && loggedInUser.defaultState;
-  let states = Array.from(new Set(productData.map(r => r.state))).filter(Boolean).sort();
-  if(lockedState){
-    states = states.includes(lockedState) ? [lockedState] : [];
-    stateFilters.product = [lockedState];
-  }
+  const scope=UMStateAccess.forUser(UMAuth.user);
+  let states = Array.from(new Set(productData.map(r => r.state))).filter(s=>s&&UMStateAccess.allows(UMAuth.user,s)).sort();
+  if(!scope.all&&scope.states.length===1)stateFilters.product=states.slice();
   buildMultiSelect('product', states, () => { rebuildProductPartyFilter(); renderProductTable(); }, 'States');
   const months = Array.from(new Set(productData.map(r => r.month))).filter(Boolean).sort(sortMonthStrings);
   buildMultiSelect('productMonth', months, () => { rebuildProductPartyFilter(); renderProductTable(); }, 'Months');
   rebuildProductPartyFilter();
-  if(lockedState) lockStateMultiSelect('product');
+  if(!scope.all&&scope.states.length===1) lockStateMultiSelect('product');
 }
 function rebuildProductPartyFilter(){
   const selS = stateFilters.product || [], selM = stateFilters.productMonth || [];
@@ -3411,15 +3443,10 @@ function populateStateFilters(){
   let allStates = Array.from(new Set([...statesPrimary, ...statesSecondary])).sort();
   let statesBeat = Array.from(new Set(beatWiseData.map(r => r.state))).sort();
 
-  // If this user is locked to a single state, restrict every state picker's
-  // option list to just that state so nothing else can ever be selected.
-  const lockedState = loggedInUser && loggedInUser.defaultState;
-  if(lockedState){
-    statesPrimary = statesPrimary.includes(lockedState) ? [lockedState] : [];
-    statesSecondary = statesSecondary.includes(lockedState) ? [lockedState] : [];
-    allStates = allStates.includes(lockedState) ? [lockedState] : [];
-    statesBeat = statesBeat.includes(lockedState) ? [lockedState] : [];
-  }
+  const scope=UMStateAccess.forUser(UMAuth.user);
+  const permitted=s=>UMStateAccess.allows(UMAuth.user,s);
+  statesPrimary=statesPrimary.filter(permitted);statesSecondary=statesSecondary.filter(permitted);
+  allStates=allStates.filter(permitted);statesBeat=statesBeat.filter(permitted);
 
   buildMultiSelect('exec', allStates.length ? allStates : statesPrimary, renderExecutive);
   buildMultiSelect('primary', statesPrimary.length ? statesPrimary : allStates, renderPrimaryTable);
@@ -3438,7 +3465,7 @@ function populateStateFilters(){
   // Lock the state pickers themselves (hide the "All States" master option,
   // disable the checkbox for the locked state, and grey out the dropdown)
   // so a locked-in user can't reopen the menu and add other states.
-  if(lockedState){
+  if(!scope.all&&scope.states.length===1){
     ['exec','primary','secondary','beatwiseState'].forEach(lockStateMultiSelect);
   }
 
@@ -3521,11 +3548,16 @@ function buildMultiSelect(key, options, onChange, labelWord){
   if(!menu || !toggleBtn) return;
 
   // keep previous selection only where the option is still valid
-  const prev = (stateFilters[key] || []).filter(s => options.includes(s));
+  const statePicker=['exec','primary','secondary','beatwiseState','product'].includes(key);
+  if(statePicker)options=options.filter(s=>UMStateAccess.allows(UMAuth.user,s));
+  const old=stateFilters[key] || [];
+  const prev=statePicker?options.filter(s=>old.some(v=>UMStateAccess.key(v)===UMStateAccess.key(s))):old.filter(s=>options.includes(s));
+  const allLabel=statePicker&&!UMStateAccess.forUser(UMAuth.user).all?'All permitted states':'All '+labelWord;
+  toggleBtn.disabled=false;toggleBtn.style.opacity='';toggleBtn.style.cursor='';
   stateFilters[key] = prev;
 
   menu.innerHTML =
-    `<label class="ms-item"><input type="checkbox" class="ms-all" ${prev.length === 0 ? 'checked' : ''}><b>All ${labelWord}</b></label>
+    `<label class="ms-item"><input type="checkbox" class="ms-all" ${prev.length === 0 ? 'checked' : ''}><b>${escapeHtml(allLabel)}</b></label>
      <div class="ms-sep"></div>` +
     options.map(s => `<label class="ms-item"><input type="checkbox" value="${escapeHtml(s)}" ${prev.includes(s) ? 'checked' : ''}>${escapeHtml(s)}</label>`).join('');
 
@@ -3562,7 +3594,8 @@ function updateMsToggleLabel(key){
   const toggleBtn = document.getElementById('msToggle-' + key);
   if(!toggleBtn) return;
   const labelWord = msLabelWords[key] || 'States';
-  const text = sel.length === 0 ? 'All ' + labelWord : sel.length === 1 ? sel[0] : sel.length + ' ' + labelWord + ' Selected';
+  const allLabel=['exec','primary','secondary','beatwiseState','product'].includes(key)&&!UMStateAccess.forUser(UMAuth.user).all?'All permitted states':'All '+labelWord;
+  const text = sel.length === 0 ? allLabel : sel.length === 1 ? sel[0] : sel.length + ' ' + labelWord + ' Selected';
   toggleBtn.querySelector('.button-label').textContent = text;
   toggleBtn.title = text;
 }
@@ -4885,7 +4918,7 @@ document.getElementById('refreshBtn').addEventListener('click', () => loadAllDat
   }
   function startSession(){
     const u = UMAuth.user;
-    loggedInUser = { id:u.id, name:u.name, role:u.role, password:null, defaultState:u.state || null };
+    loggedInUser = { id:u.id, name:u.name, role:u.role, password:null, defaultStates:UMStateAccess.forUser(u).states };
     loginForm.style.display = ''; pwForm.style.display = 'none';
     unlockDashboard();
     UMAuth.watch();
@@ -4994,7 +5027,7 @@ function toast(msg, ok){
 }
 
 /* ---------- session (timer) persistence ---------- */
-function loadSess(){ try{ const s = JSON.parse(localStorage.getItem(SK)); return s && user && s.u === user.id ? s : null; }catch(e){ return null; } }
+function loadSess(){ try{ const s = JSON.parse(localStorage.getItem(SK)); return s && user && s.u === user.id && UMStateAccess.allows(UMAuth.user,s.state) ? s : null; }catch(e){ return null; } }
 function saveSess(){ try{ sess ? localStorage.setItem(SK, JSON.stringify(sess)) : localStorage.removeItem(SK); }catch(e){} }
 function newId(){ const a = new Uint8Array(6); crypto.getRandomValues(a); return 'DC-' + Date.now().toString(36).toUpperCase() + '-' + Array.from(a, b => b.toString(16).padStart(2,'0')).join('').toUpperCase(); }
 function startTick(){ stopTick(); if(sess && sess.phase === 'running'){ tick = setInterval(updTimer, 500); updTimer(); } }
@@ -5104,14 +5137,14 @@ let OB = [], syncing = false, obTimer = null, obFails = 0;
 const pending = new Set(), recent = [];
 try{ OB = JSON.parse(localStorage.getItem(OBK)) || []; }catch(e){ OB = []; }
 const saveOB = () => { try{ OB.length ? localStorage.setItem(OBK, JSON.stringify(OB)) : localStorage.removeItem(OBK); }catch(e){} };
-const mine = () => OB.filter(o => user && o.u === user.id);
+const mine = () => OB.filter(o => user && o.u === user.id && UMStateAccess.allows(UMAuth.user,o.rec?.state));
 const istP = ms => { const p = {}; new Intl.DateTimeFormat('en-GB', {timeZone:'Asia/Kolkata', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit', hourCycle:'h23'}).formatToParts(new Date(ms)).forEach(x => p[x.type] = x.value); return p; };
 const istD = ms => { const p = istP(ms); return p.year + '-' + p.month + '-' + p.day; };
 const istT = ms => { const p = istP(ms); return p.hour + ':' + p.minute + ':' + p.second; };
 function mergePending(){   // keep not-yet-confirmed rows visible after a reload
   const have = new Set(C.map(c => c[0])); pending.clear();
   mine().forEach(o => { if(!have.has(o.rec.callId)){ C.push(o.row); pending.add(o.rec.callId); } });
-  recent.forEach(r => { if(!have.has(r[0])) C.push(r); });
+  recent.forEach(r => { if(UMStateAccess.allows(UMAuth.user,r[4])&&!have.has(r[0])) C.push(r); });
 }
 $('dcGlobalErr').insertAdjacentHTML('afterend', '<div id="dcSync"></div>');
 function syncUI(){
@@ -5911,7 +5944,7 @@ self.addEventListener('fetch', (event) => {
   'use strict';
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const PERMS = [['sales.target','Targets / Executive'],['sales.party','Party-wise'],['sales.secondary','Secondary'],['sales.report','Beat-wise report'],['sales.product','Product-wise'],['content.training','Training videos'],['dc','Distributor Connect'],['tm','Training Mgmt'],['lead.own','Own Leads'],['lead.manage','Manage Leads']];
+  const PERMS = [['sales.target','Targets / Executive'],['sales.party','Party-wise'],['sales.secondary','Secondary'],['sales.report','Beat-wise report'],['sales.product','Product-wise'],['content.training','Training videos'],['dc','Distributor Connect'],['tm','Training Mgmt'],['lead.own','Own Leads'],['lead.manage','Manage Leads'],['orders.create','Punch primary orders'],['orders.manage','Manage primary orders']];
   let users = [], editing = null, loaded = false, pendingLoads = 0;
   $('admPerms').innerHTML = '<span class="adm-lbl">Explicit access (required for Read-Only, optional extras for others):</span> ' +
     PERMS.map(p => '<label class="adm-chk"><input type="checkbox" class="admPerm" value="' + p[0] + '"> ' + esc(p[1]) + '</label>').join('');
@@ -5922,9 +5955,45 @@ self.addEventListener('fetch', (event) => {
     b.innerHTML = '<b>' + esc(what) + ' for ' + esc(id) + '</b><br>Temporary password (shown <u>once</u> - give it to the user privately; they must change it at first sign-in):<br><code style="font-size:18px;user-select:all">' + esc(pw) + '</code>';
   }
   function perms(){ return Array.from(document.querySelectorAll('.admPerm:checked')).map(x => x.value).join(','); }
+  const COMMON_STATES=['Andaman and Nicobar Islands','Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chandigarh','Chhattisgarh','Dadra and Nagar Haveli and Daman and Diu','Delhi','Goa','Gujarat','Haryana','Himachal Pradesh','Jammu and Kashmir','Jharkhand','Karnataka','Kerala','Ladakh','Lakshadweep','Madhya Pradesh','Maharashtra','Manipur','Meghalaya','Mizoram','Nagaland','Odisha','Puducherry','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana','Tripura','Uttar Pradesh','Uttarakhand','West Bengal'];
+  const knownStates=new Map(COMMON_STATES.map(s=>[UMStateAccess.key(s),s]));
+  let selectedStates=new Set(),allStates=true,stateAccessReady=false;
+  function renderStatePicker(){
+    const search=UMStateAccess.key($('admStateSearch').value);
+    $('admAllStates').checked=allStates;
+    $('admStateOptions').innerHTML=[...knownStates.values()].sort((a,b)=>a.localeCompare(b)).filter(s=>!search||UMStateAccess.key(s).includes(search)).map(s=>'<label class="adm-state-option"><input type="checkbox" value="'+esc(s)+'" '+(selectedStates.has(UMStateAccess.key(s))?'checked ':'')+(allStates?'disabled ':'')+'>'+esc(s)+'</label>').join('');
+    updateStateSummary();
+  }
+  function updateStateSummary(){$('admStateSummary').textContent=allStates?'Access to all states in the permitted modules.':selectedStates.size?[...selectedStates].map(k=>knownStates.get(k)).sort((a,b)=>a.localeCompare(b)).join(' · '):'Select at least one state.';}
+  function setStateScope(value){
+    const scope=UMStateAccess.parse(value);allStates=scope.all;selectedStates=new Set(scope.keys);
+    scope.states.forEach(s=>{if(!knownStates.has(UMStateAccess.key(s)))knownStates.set(UMStateAccess.key(s),s);});
+    $('admStateSearch').value='';renderStatePicker();
+  }
+  function statePayload(){
+    const states=allStates?[]:[...selectedStates].map(k=>knownStates.get(k)).sort((a,b)=>a.localeCompare(b));
+    if(!allStates&&!states.length)throw new Error('Choose at least one state or select All states.');
+    return {states,allStates,state:allStates?'':states.join(', ')};
+  }
+  $('admAllStates').addEventListener('change',()=>{allStates=$('admAllStates').checked;if(allStates)selectedStates.clear();renderStatePicker();});
+  $('admStateSearch').addEventListener('input',renderStatePicker);
+  $('admStateOptions').addEventListener('change',event=>{
+    const target=event.target;if(target.type!=='checkbox')return;
+    const k=UMStateAccess.key(target.value);if(target.checked)selectedStates.add(k);else selectedStates.delete(k);updateStateSummary();
+  });
+  function addState(){
+    const scope=UMStateAccess.parse($('admCustomState').value);
+    if(scope.invalid||scope.all){msg('Enter a state name exactly as it appears in your data.');return;}
+    scope.states.forEach(s=>{const k=UMStateAccess.key(s);if(!knownStates.has(k))knownStates.set(k,s);selectedStates.add(k);});
+    allStates=false;$('admCustomState').value='';$('admStateSearch').value='';msg('');renderStatePicker();
+  }
+  $('admAddState').addEventListener('click',addState);
+  $('admCustomState').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();addState();}});
+  setStateScope(null);$('admSave').disabled=true;
+
   function resetForm(){
     editing = null; $('admFormTitle').textContent = 'Add user'; $('admSave').textContent = 'Create user'; $('admCancel').style.display = 'none';
-    ['admId','admName','admState'].forEach(i => { $(i).value = ''; }); $('admId').disabled = false; $('admRole').value = 'SALES_MGMT'; $('admActive').checked = true;
+    ['admId','admName'].forEach(i => { $(i).value = ''; }); setStateScope(null); $('admId').disabled = false; $('admRole').value = 'SALES_MGMT'; $('admActive').checked = true;
     document.querySelectorAll('.admPerm').forEach(x => { x.checked = false; }); msg('');
   }
   async function load(){
@@ -5934,7 +6003,10 @@ self.addEventListener('fetch', (event) => {
     if(!loaded) status.style.display = 'block';
     try{
       const [u, l] = await Promise.all([api('adminListUsers'), api('adminAuditLog', { limit:200 })]);
-      users = u.users;
+      users = u.users;stateAccessReady=u.stateAccessVersion===2;
+      users.forEach(person=>UMStateAccess.parse(person.state).states.forEach(s=>{if(!knownStates.has(UMStateAccess.key(s)))knownStates.set(UMStateAccess.key(s),s);}));
+      renderStatePicker();$('admSave').disabled=!stateAccessReady;
+      if(!stateAccessReady)msg('Deploy the updated Code.gs and StateAccess.gs before changing user state access.');
       $('admUsers').innerHTML = users.map((x, i) => '<tr><td>' + esc(x.id) + '</td><td>' + esc(x.name) + '</td><td>' + esc(x.role) + '</td><td>' + esc(x.state || 'All') + '</td><td>' + esc(x.extra) +
         '</td><td>' + (x.active ? 'Active' : '<b>Disabled</b>') + (x.must ? ' (must change password)' : '') + '</td><td>' + esc(x.last) +
         '</td><td style="white-space:nowrap"><button class="dc-btn" data-a="edit" data-i="' + i + '">Edit</button> <button class="dc-btn" data-a="reset" data-i="' + i + '">Reset password</button> <button class="dc-btn" data-a="revoke" data-i="' + i + '">Sign out everywhere</button></td></tr>').join('');
@@ -5952,7 +6024,7 @@ self.addEventListener('fetch', (event) => {
     const b = ev.target.closest('button'); if(!b) return; const u = users[+b.dataset.i]; if(!u) return;
     if(b.dataset.a === 'edit'){
       editing = u.id; $('admFormTitle').textContent = 'Edit user: ' + u.id; $('admSave').textContent = 'Save changes'; $('admCancel').style.display = '';
-      $('admId').value = u.id; $('admId').disabled = true; $('admName').value = u.name; $('admRole').value = u.role; $('admState').value = u.state; $('admActive').checked = u.active;
+      $('admId').value = u.id; $('admId').disabled = true; $('admName').value = u.name; $('admRole').value = u.role; setStateScope(u.state); $('admActive').checked = u.active;
       const set = (u.extra || '').split(','); document.querySelectorAll('.admPerm').forEach(x => { x.checked = set.indexOf(x.value) >= 0; }); workspaceMain.scrollTop = 0;
     }else if(b.dataset.a === 'reset'){
       if(!confirm('Reset the password for ' + u.id + '? They will be signed out everywhere.')) return;
@@ -5963,11 +6035,13 @@ self.addEventListener('fetch', (event) => {
     }
   });
   $('admSave').addEventListener('click', async () => {
-    msg(''); const f = { id:$('admId').value.trim(), name:$('admName').value.trim(), role:$('admRole').value, state:$('admState').value.trim(), extra:perms(), active:$('admActive').checked };
+    msg('');if(!stateAccessReady){msg('Deploy the updated Code.gs and StateAccess.gs first.');return;}
+    let scope;try{scope=statePayload();}catch(e){msg(e.message);return;}
+    const f = { id:$('admId').value.trim(), name:$('admName').value.trim(), role:$('admRole').value, ...scope, extra:perms(), active:$('admActive').checked };
     const save = $('admSave');
     setButtonBusy(save, true);
     try{
-      if(editing){ await api('adminUpdateUser', f); resetForm(); showToast('User updated.', 'success'); }
+      if(editing){ await api('adminUpdateUser', f); resetForm(); showToast('User updated. Access changes require the user to sign in again.', 'success'); }
       else { const r = await api('adminCreateUser', f); showTemp(r.id, r.tempPassword, 'User created'); resetForm(); showToast('User created.', 'success'); }
       load();
     }catch(e){ msg(e.message); showToast('Could not save the user.', 'error'); }
@@ -5997,7 +6071,7 @@ const istClock = new Intl.DateTimeFormat('en-GB', {
 const esc = value => escapeHtml(String(value ?? ''));
 const norm = value => String(value ?? '').trim().replace(/\s+/g,' ').toLowerCase();
 const isDate = value => /^\d{4}-\d{2}-\d{2}$/.test(value);
-const withinState = state => !UMAuth.user?.state || norm(state) === norm(UMAuth.user.state);
+const withinState = state => UMStateAccess.allows(UMAuth.user,state);
 const canOpen = tab => (NAV_PERM[tab] || []).some(permission => UMAuth.can(permission));
 const currentPage = () => document.querySelector('.nav-item[data-tab].active')?.dataset.tab || 'exec';
 const currency = amount => '₹ ' + fmtNum(amount);
@@ -6008,7 +6082,7 @@ const tabs = {
   secondary:['Secondary Sale','Filter by state, month, or user. Select a user to see their date and shop-type call details.'],
   beatwise:['Beat Wise Secondary','Choose a state, month, or user, then select a beat row. Use Export to Excel or Export to PDF in the shop-wise detail.'],
   'kra-kpi':['KRA/KPI','This page is reserved for KRA and KPI tracking.'],
-  'punch-sale-order':['Punch Sale Order','This page is reserved for sale order entry.'],
+  'punch-sale-order':['Punch Sale Order','Select an assigned distributor, add product variants and quantities, review the order, then submit. Order history shows your submitted orders; authorised managers can review their state scope.'],
   'lead-dashboard':['Lead Dashboard','Use the date and salesperson filters to review your lead pipeline and follow-up workload.'],
   'lead-list':['All Leads','Use New lead or Import leads to add records. Select a lead name to view its details and activity.'],
   'lead-schedule':['Follow-up Schedule','Choose Today, Upcoming, Overdue, or Completed. Open a task to reschedule it or mark it complete.'],
