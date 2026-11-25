@@ -1852,7 +1852,7 @@ SOFTWARE.
           <p class="page-description">Find, create, import, and manage customer leads.</p>
         </div>
       </div>
-      <div class="controls lm-header-actions"><button type="button" class="refresh-btn lm-secondary" data-lm-action="export"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-download"></use></svg><span class="button-label">Export Excel</span></button><button type="button" class="refresh-btn lm-secondary" data-lm-action="import"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-spreadsheet"></use></svg><span class="button-label">Import leads</span></button><button type="button" class="refresh-btn" data-lm-action="add"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-user"></use></svg><span class="button-label">New lead</span></button></div>
+      <div class="controls lm-header-actions"><button type="button" class="refresh-btn lm-secondary" data-lm-action="export"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-download"></use></svg><span class="button-label">Export Excel</span></button><button type="button" class="refresh-btn lm-secondary" data-lm-action="export-csv"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-download"></use></svg><span class="button-label">Export CSV</span></button><button type="button" class="refresh-btn lm-secondary" data-lm-action="import"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-spreadsheet"></use></svg><span class="button-label">Import leads</span></button><button type="button" class="refresh-btn" data-lm-action="add"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-user"></use></svg><span class="button-label">New lead</span></button></div>
     </div>
     <div data-lm-filters></div>
     <div data-lm-tabs></div>
@@ -2539,7 +2539,7 @@ function openLeadWorkspace(page){
       document.head.appendChild(link);
     });
   }
-  Promise.all([leadStyles, loadScriptOnce('./lead-management.js?v=20261121-states-1')]).then(() => {
+  Promise.all([leadStyles, loadScriptOnce('./lead-management.js?v=20261124-catalogue-1')]).then(() => {
     if(document.getElementById('tab-' + page).classList.contains('active')) window.UMLeadWorkspace.open(page);
   }).catch(() => {
     const panel = document.querySelector('#tab-' + page + ' [data-lm-data]');
