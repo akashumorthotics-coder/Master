@@ -1260,6 +1260,42 @@ SOFTWARE.
         <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-chart"></use></svg><span class="nav-label">Performance &amp; Reports</span>
       </button>
     </div>
+    <div class="nav-group" hidden>
+      <p class="nav-caption">Support Management</p>
+      <button type="button" class="nav-item" data-tab="support-overview" aria-label="Support Overview" title="Support Overview" style="display:none">
+        <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-overview"></use></svg><span class="nav-label">Support Overview</span>
+      </button>
+      <button type="button" class="nav-item" data-tab="support-all" aria-label="All Tickets" title="All Tickets" style="display:none">
+        <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-inbox"></use></svg><span class="nav-label">All Tickets</span>
+      </button>
+      <button type="button" class="nav-item" data-tab="support-new" aria-label="New Ticket" title="New Ticket" style="display:none">
+        <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-file"></use></svg><span class="nav-label">New Ticket</span>
+      </button>
+      <button type="button" class="nav-item" data-tab="support-mine" aria-label="My Assigned Tickets" title="My Assigned Tickets" style="display:none">
+        <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-user"></use></svg><span class="nav-label">My Assigned Tickets</span>
+      </button>
+      <button type="button" class="nav-item" data-tab="support-unassigned" aria-label="Unassigned Tickets" title="Unassigned Tickets" style="display:none">
+        <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-users"></use></svg><span class="nav-label">Unassigned Tickets</span>
+      </button>
+      <button type="button" class="nav-item" data-tab="support-pending" aria-label="Pending Tickets" title="Pending Tickets" style="display:none">
+        <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-clock"></use></svg><span class="nav-label">Pending Tickets</span>
+      </button>
+      <button type="button" class="nav-item" data-tab="support-overdue" aria-label="Overdue Tickets" title="Overdue Tickets" style="display:none">
+        <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-warning"></use></svg><span class="nav-label">Overdue Tickets</span>
+      </button>
+      <button type="button" class="nav-item" data-tab="support-escalated" aria-label="Escalated Tickets" title="Escalated Tickets" style="display:none">
+        <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-target"></use></svg><span class="nav-label">Escalated Tickets</span>
+      </button>
+      <button type="button" class="nav-item" data-tab="support-closure" aria-label="Closure Approval" title="Closure Approval" style="display:none">
+        <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-check"></use></svg><span class="nav-label">Closure Approval</span>
+      </button>
+      <button type="button" class="nav-item" data-tab="support-reports" aria-label="Support Reports" title="Support Reports" style="display:none">
+        <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-chart"></use></svg><span class="nav-label">Support Reports</span>
+      </button>
+      <button type="button" class="nav-item" data-tab="support-settings" aria-label="Support Settings" title="Support Settings" style="display:none">
+        <svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-admin"></use></svg><span class="nav-label">Support Settings</span>
+      </button>
+    </div>
     <div class="nav-group">
       <p class="nav-caption">Workflows</p>
       <button type="button" class="nav-item" data-tab="training" aria-label="Product Training" title="Product Training">
@@ -1660,6 +1696,150 @@ SOFTWARE.
       </div>
     </div>
     <div id="soRoot" aria-busy="false"><p class="ui-empty" role="status">Preparing primary orders…</p></div>
+  </div>
+
+  <!-- SUPPORT MANAGEMENT -->
+  <div class="tab-content" id="tab-support-overview">
+    <div class="topbar">
+      <div class="page-heading">
+        <span class="page-mark"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-overview"></use></svg></span>
+        <div>
+          <p class="page-context">Support Management</p>
+          <h2 tabindex="-1">Support Overview</h2>
+        </div>
+      </div>
+    </div>
+    <div data-support-slot></div>
+  </div>
+
+  <div class="tab-content" id="tab-support-all">
+    <div class="topbar">
+      <div class="page-heading">
+        <span class="page-mark"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-inbox"></use></svg></span>
+        <div>
+          <p class="page-context">Support Management</p>
+          <h2 tabindex="-1">All Tickets</h2>
+        </div>
+      </div>
+    </div>
+    <div data-support-slot></div>
+  </div>
+
+  <div class="tab-content" id="tab-support-new">
+    <div class="topbar">
+      <div class="page-heading">
+        <span class="page-mark"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-file"></use></svg></span>
+        <div>
+          <p class="page-context">Support Management</p>
+          <h2 tabindex="-1">New Ticket</h2>
+        </div>
+      </div>
+    </div>
+    <div data-support-slot></div>
+  </div>
+
+  <div class="tab-content" id="tab-support-mine">
+    <div class="topbar">
+      <div class="page-heading">
+        <span class="page-mark"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-user"></use></svg></span>
+        <div>
+          <p class="page-context">Support Management</p>
+          <h2 tabindex="-1">My Assigned Tickets</h2>
+        </div>
+      </div>
+    </div>
+    <div data-support-slot></div>
+  </div>
+
+  <div class="tab-content" id="tab-support-unassigned">
+    <div class="topbar">
+      <div class="page-heading">
+        <span class="page-mark"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-users"></use></svg></span>
+        <div>
+          <p class="page-context">Support Management</p>
+          <h2 tabindex="-1">Unassigned Tickets</h2>
+        </div>
+      </div>
+    </div>
+    <div data-support-slot></div>
+  </div>
+
+  <div class="tab-content" id="tab-support-pending">
+    <div class="topbar">
+      <div class="page-heading">
+        <span class="page-mark"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-clock"></use></svg></span>
+        <div>
+          <p class="page-context">Support Management</p>
+          <h2 tabindex="-1">Pending Tickets</h2>
+        </div>
+      </div>
+    </div>
+    <div data-support-slot></div>
+  </div>
+
+  <div class="tab-content" id="tab-support-overdue">
+    <div class="topbar">
+      <div class="page-heading">
+        <span class="page-mark"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-warning"></use></svg></span>
+        <div>
+          <p class="page-context">Support Management</p>
+          <h2 tabindex="-1">Overdue Tickets</h2>
+        </div>
+      </div>
+    </div>
+    <div data-support-slot></div>
+  </div>
+
+  <div class="tab-content" id="tab-support-escalated">
+    <div class="topbar">
+      <div class="page-heading">
+        <span class="page-mark"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-target"></use></svg></span>
+        <div>
+          <p class="page-context">Support Management</p>
+          <h2 tabindex="-1">Escalated Tickets</h2>
+        </div>
+      </div>
+    </div>
+    <div data-support-slot></div>
+  </div>
+
+  <div class="tab-content" id="tab-support-closure">
+    <div class="topbar">
+      <div class="page-heading">
+        <span class="page-mark"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-check"></use></svg></span>
+        <div>
+          <p class="page-context">Support Management</p>
+          <h2 tabindex="-1">Closure Approval</h2>
+        </div>
+      </div>
+    </div>
+    <div data-support-slot></div>
+  </div>
+
+  <div class="tab-content" id="tab-support-reports">
+    <div class="topbar">
+      <div class="page-heading">
+        <span class="page-mark"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-chart"></use></svg></span>
+        <div>
+          <p class="page-context">Support Management</p>
+          <h2 tabindex="-1">Support Reports</h2>
+        </div>
+      </div>
+    </div>
+    <div data-support-slot></div>
+  </div>
+
+  <div class="tab-content" id="tab-support-settings">
+    <div class="topbar">
+      <div class="page-heading">
+        <span class="page-mark"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="#ui-admin"></use></svg></span>
+        <div>
+          <p class="page-context">Support Management</p>
+          <h2 tabindex="-1">Support Settings</h2>
+        </div>
+      </div>
+    </div>
+    <div data-support-slot></div>
   </div>
 
   <!-- PRODUCT TRAINING -->
@@ -2275,6 +2455,53 @@ const UMAuth = (function(){
   const st = { token:null, expiresAt:0, remember:false, user:null };
   let leaving = false, lastActive = Date.now();
   const wait = ms => new Promise(r => setTimeout(r, ms));
+  // Share only in-flight reads for the current session. Authentication and writes retain their own execution paths.
+  const readActions = new Set([
+    'tab', 'reportMeta', 'reportPage', 'productMeta', 'productPage',
+    'leadList', 'leadQueue', 'leadAnalytics', 'leadGet', 'leadAssignees', 'leadCallReport', 'leadExport', 'leadCallExport',
+    'orderBootstrap', 'orderQuote', 'orderList', 'orderGet', 'orderExport',
+    'support.bootstrap', 'support.overview', 'support.list', 'support.get', 'support.download', 'support.settings', 'support.reports',
+    'adminListUsers', 'adminAuditLog'
+  ]);
+  const pendingReads = new Map(), readQueue = [], activeSessionReads = new Set();
+  const READ_PARALLEL = 5;
+  let runningReads = 0, sessionRevision = 0;
+  function advanceSession(){
+    sessionRevision++;
+    activeSessionReads.forEach(controller => controller.abort());
+    activeSessionReads.clear();
+  }
+  function cancelledRequest(){
+    const error = new Error('This request was replaced. Please retry.');
+    error.code = 'REQUEST_CANCELLED';
+    return error;
+  }
+  function runQueuedReads(){
+    while(runningReads < READ_PARALLEL && readQueue.length){
+      const request = readQueue.shift();
+      request.signal?.removeEventListener('abort', request.cancel);
+      if(request.signal?.aborted){ request.reject(cancelledRequest()); continue; }
+      runningReads++;
+      request.run().then(request.resolve, request.reject).finally(() => {
+        runningReads--;
+        runQueuedReads();
+      });
+    }
+  }
+  function queueRead(run, signal){
+    return new Promise((resolve, reject) => {
+      if(signal?.aborted){ reject(cancelledRequest()); return; }
+      const request = {run, resolve, reject, signal, cancel(){
+        const index = readQueue.indexOf(request);
+        if(index >= 0) readQueue.splice(index, 1);
+        reject(cancelledRequest());
+      }};
+      readQueue.push(request);
+      signal?.addEventListener('abort', request.cancel, {once:true});
+      runQueuedReads();
+    });
+  }
+
   function purgeLegacy(){
     ['dcToken_v1','umTrainingLogin_v3','umTrainingAdminToken_v1','salesMisMasterAuthed','salesMisMasterUser','salesMisMasterUserState'].forEach(k => {
       try{ localStorage.removeItem(k); }catch(e){} try{ sessionStorage.removeItem(k); }catch(e){}
@@ -2297,7 +2524,7 @@ const UMAuth = (function(){
   }
   function wipeLocal(){
     try{ localStorage.removeItem(KEY); }catch(e){} try{ sessionStorage.removeItem(KEY); }catch(e){}
-    st.token = null; st.user = null; st.expiresAt = 0;
+    st.token = null; st.user = null; st.expiresAt = 0; advanceSession();
     try{ indexedDB.deleteDatabase('salesMisDB'); }catch(e){}          // never leave business data behind after sign-out
   }
   function forceLogout(msg){
@@ -2308,25 +2535,56 @@ const UMAuth = (function(){
   }
   async function api(action, payload, opts){
     opts = opts || {};
-    const body = JSON.stringify(Object.assign({ action:action, token: opts.noToken ? undefined : st.token }, payload || {}));
+    const request = Object.assign({ action:action, token: opts.noToken ? undefined : st.token }, payload || {});
+    const body = JSON.stringify(request);
+    const revision = sessionRevision;
+    const protectedRead = !!st.token && !opts.noToken && request.token === st.token && readActions.has(request.action);
+    const run = () => send(body, opts, revision, protectedRead);
+    if(!protectedRead) return run();
+    if(opts.signal) return queueRead(run, opts.signal);
+    const {token, ...readPayload} = request;
+    const key = JSON.stringify([revision, readPayload, opts.tries || 3, opts.timeout || 60000, !!opts.noLogout]);
+    let pending = pendingReads.get(key);
+    if(!pending){
+      pending = {consumers:0, promise:queueRead(run).finally(() => pendingReads.delete(key))};
+      pendingReads.set(key, pending);
+    }
+    pending.consumers++;
+    // Only clone a shared response so callers can independently format returned data in place.
+    return pending.promise.then(result => pending.consumers === 1 ? result :
+      (typeof structuredClone === 'function' ? structuredClone(result) : JSON.parse(JSON.stringify(result))));
+  }
+  async function send(body, opts, revision, protectedRead){
+    const {signal} = opts;
+    const obsolete = () => signal?.aborted || (protectedRead && revision !== sessionRevision);
     const tries = opts.tries || 3; let last;
     for(let i = 0; i < tries; i++){
+      if(obsolete()) throw cancelledRequest();
       const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), opts.timeout || 60000);
+      const abort = () => ctl.abort();
+      signal?.addEventListener('abort', abort, {once:true});
+      if(protectedRead) activeSessionReads.add(ctl);
       try{
         const r = await fetch(BACKEND_URL, { method:'POST', body:body, signal:ctl.signal });
         let j; try{ j = await r.json(); }catch(x){ const e = new Error('The server sent an unexpected reply. Please retry.'); e.code = 'BADRESP'; throw e; }
+        if(obsolete()) throw cancelledRequest();
         if(!j.ok){
           const e = new Error(j.message || j.error || 'Request failed'); e.code = j.code;
-          if(j.code === 'AUTH' && !opts.noLogout) forceLogout('Your session has ended. Please sign in again.');
+          if(j.code === 'AUTH' && !opts.noLogout && revision === sessionRevision) forceLogout('Your session has ended. Please sign in again.');
           throw e;
         }
         return j;
       }catch(e){
+        if(obsolete() && e.code !== 'AUTH') throw cancelledRequest();
         last = e;
         const retry = e.name === 'AbortError' || e instanceof TypeError || e.code === 'BADRESP' || e.code === 'BUSY' || e.code === 'SNAPSHOT_EVICTED';
         if(!retry || i === tries - 1) break;
         await wait(700 * (i + 1));
-      }finally{ clearTimeout(timer); }
+      }finally{
+        clearTimeout(timer);
+        signal?.removeEventListener('abort', abort);
+        activeSessionReads.delete(ctl);
+      }
     }
     if(last && last.name === 'AbortError') throw new Error('The server is taking too long to respond. Check your connection and retry.');
     if(last instanceof TypeError) throw new Error(navigator.onLine === false ? 'You are offline. Check your internet connection and retry.' : 'Could not reach the server. Check your connection and retry.');
@@ -2334,12 +2592,14 @@ const UMAuth = (function(){
   }
   async function login(id, pass, remember){
     const j = await api('login', { id:id, pass:pass, remember:!!remember }, { tries:1, timeout:45000, noLogout:true, noToken:true });
+    advanceSession();
     st.token = j.token; st.expiresAt = j.expiresAt; st.remember = !!j.remember; st.user = j.user;
     if(!j.mustChange) save();                                         // a forced-change token stays in memory only
     return j;
   }
   async function changePassword(oldPass, newPass){
     const j = await api('changePassword', { oldPass:oldPass, newPass:newPass }, { tries:1, timeout:45000, noLogout:true });
+    advanceSession();
     st.token = j.token; st.expiresAt = j.expiresAt; st.user = j.user; st.remember = false; save();
     return j;
   }
@@ -2378,6 +2638,17 @@ const UMAuth = (function(){
 
 const SALES_PERMISSIONS = ['sales.target','sales.party','sales.secondary','sales.report','sales.product'];
 const NAV_PERM = {
+  'support-overview':['support.agent','support.manage','support.reports'],
+  'support-all':['support.manage'],
+  'support-new':['support.agent','support.manage'],
+  'support-mine':['support.agent','support.manage'],
+  'support-unassigned':['support.manage'],
+  'support-pending':['support.agent','support.manage','support.reports'],
+  'support-overdue':['support.agent','support.manage','support.reports'],
+  'support-escalated':['support.agent','support.manage','support.reports'],
+  'support-closure':['support.manage'],
+  'support-reports':['support.manage','support.reports'],
+  'support-settings':['support.admin'],
   exec:['sales.target'], primary:['sales.target','sales.party'], product:['sales.product'], secondary:['sales.secondary'],
   beatwise:['sales.report'], 'kra-kpi':SALES_PERMISSIONS, 'punch-sale-order':['orders.create','orders.manage'],
   'lead-dashboard':['lead.own','lead.manage'], 'lead-list':['lead.own','lead.manage'],
@@ -2428,8 +2699,7 @@ function unlockDashboard(){
   syncSidebar();
   applyAccess();
   if(!anySalesAccess()){
-    document.getElementById('salesSyncMeta').hidden = true;                                              // Distributor / Training-only roles: no sales download at all
-    if(UMAuth.can('content.training')) loadTrainingData();
+    document.getElementById('salesSyncMeta').hidden = true;
     return;
   }
   // Show cached data instantly (only for "keep me signed in" devices) while the real fetch runs quietly in the background.
@@ -2491,20 +2761,27 @@ async function fetchPaged(metaAction, pageAction, decode, onProgress, forceFresh
     // forceFresh (manual Refresh) makes the server re-read the sheet on the FIRST call only;
     // retries after VERSION_CHANGED just pick up the snapshot that was just built.
     const meta = await UMAuth.api(metaAction, { force: !!forceFresh && attempt === 0 }, { timeout: 120000 });
-    const pages = meta.pages, results = new Array(pages);
+    const pages = meta.pages, results = new Array(pages), request = new AbortController();
     let next = 0, done = 0, changed = false;
     async function worker(){
-      while(next < pages && !changed){
+      while(next < pages && !request.signal.aborted){
         const idx = next++;
         try{
-          const p = await UMAuth.api(pageAction, { version: meta.version, page: idx }, { timeout: 120000 });
+          const p = await UMAuth.api(pageAction, { version: meta.version, page: idx }, { timeout: 120000, signal:request.signal });
           results[idx] = decode(p.cols, meta.dict); done++;
           if(onProgress) onProgress(done, pages);
-        }catch(e){ if(e.code === 'VERSION_CHANGED'){ changed = true; return; } throw e; }
+        }catch(e){
+          if(changed && e.code === 'REQUEST_CANCELLED') return;
+          if(e.code !== 'VERSION_CHANGED') throw e;
+          changed = true;
+          request.abort();
+        }
       }
     }
-    await Promise.all(Array.from({ length: Math.min(REPORT_PARALLEL, pages) }, worker));
-    if(!changed) return [].concat.apply([], results);
+    try{
+      await Promise.all(Array.from({ length: Math.min(REPORT_PARALLEL, pages) }, worker));
+    }finally{ request.abort(); }
+    if(!changed) return results.flat();
   }
   throw new Error('The data kept changing while it was downloading. Please tap Refresh again.');
 }
@@ -2527,7 +2804,7 @@ function loadScriptOnce(src){
   return _libPromises[src];
 }
 let leadStyles;
-function openLeadWorkspace(page){
+function openLeadWorkspace(page, entered = true){
   if(!(NAV_PERM[page] || []).some(permission => UMAuth.can(permission))) return;
   if(!leadStyles){
     leadStyles = new Promise((resolve, reject) => {
@@ -2539,8 +2816,8 @@ function openLeadWorkspace(page){
       document.head.appendChild(link);
     });
   }
-  Promise.all([leadStyles, loadScriptOnce('./lead-management.js?v=20261124-catalogue-1')]).then(() => {
-    if(document.getElementById('tab-' + page).classList.contains('active')) window.UMLeadWorkspace.open(page);
+  Promise.all([leadStyles, loadScriptOnce('./lead-management.js?v=20261124-catalogue-1-perf-1')]).then(() => {
+    if(document.getElementById('tab-' + page).classList.contains('active')) window.UMLeadWorkspace.open(page, entered);
   }).catch(() => {
     const panel = document.querySelector('#tab-' + page + ' [data-lm-data]');
     panel.innerHTML = '<p role="alert">Lead Management could not load.</p><button type="button" class="refresh-btn">Retry</button>';
@@ -2548,23 +2825,56 @@ function openLeadWorkspace(page){
   });
 }
 let primaryOrderAssets;
-function openOrderWorkspace(){
+function openOrderWorkspace(entered = true){
   if(!UMAuth.can('orders.create') && !UMAuth.can('orders.manage')) return;
   if(!primaryOrderAssets){
     const styles = new Promise((resolve,reject) => {
       const link=document.createElement('link');link.rel='stylesheet';link.href='./primary-orders.css?v=20261120-orders-1';
       link.onload=resolve;link.onerror=()=>{link.remove();reject(new Error('Order styles could not load.'));};document.head.appendChild(link);
     });
-    primaryOrderAssets=Promise.all([styles,loadScriptOnce('./primary-orders.js?v=20261120-orders-1')]).catch(error=>{primaryOrderAssets=null;throw error;});
+    primaryOrderAssets=Promise.all([styles,loadScriptOnce('./primary-orders.js?v=20261126-perf-1')]).catch(error=>{primaryOrderAssets=null;throw error;});
   }
-  primaryOrderAssets.then(()=>{if(document.getElementById('tab-punch-sale-order').classList.contains('active'))window.UMPrimaryOrders.open();}).catch(()=>{
-    const root=document.getElementById('soRoot');root.innerHTML='<p class="error-box" role="alert">Primary orders could not load. Check that the new order files were uploaded.</p><button class="refresh-btn" type="button">Retry</button>';root.querySelector('button').onclick=openOrderWorkspace;
+  primaryOrderAssets.then(()=>{if(document.getElementById('tab-punch-sale-order').classList.contains('active'))window.UMPrimaryOrders.open(entered);}).catch(()=>{
+    const root=document.getElementById('soRoot');root.innerHTML='<p class="error-box" role="alert">Primary orders could not load. Check that the new order files were uploaded.</p><button class="refresh-btn" type="button">Retry</button>';root.querySelector('button').onclick=()=>openOrderWorkspace();
+  });
+}
+let supportAssets;
+function openSupportWorkspace(page, entered = true){
+  if(!(NAV_PERM[page] || []).some(permission => UMAuth.can(permission))) return;
+  const panel = document.getElementById('tab-' + page);
+  const slot = panel.querySelector('[data-support-slot]');
+  if(!supportAssets){
+    const styles = new Promise((resolve, reject) => {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = './support-management.css?v=1';
+      link.onload = resolve;
+      link.onerror = () => { link.remove(); reject(new Error('Support Management styles could not load.')); };
+      document.head.appendChild(link);
+    });
+    supportAssets = Promise.all([styles, loadScriptOnce('./support-management.js?v=20261126-perf-1')])
+      .catch(error => { supportAssets = null; throw error; });
+  }
+  if(!slot.firstChild) slot.innerHTML = '<p class="ui-empty" role="status">Loading support workspace…</p>';
+  supportAssets.then(() => {
+    if(panel.classList.contains('active')) window.UMSupportWorkspace.open(page, slot, entered);
+  }).catch(() => {
+    if(!panel.classList.contains('active')) return;
+    slot.innerHTML = '<p class="error-box" role="alert">Support Management could not load.</p><button class="refresh-btn" type="button">Retry</button>';
+    slot.querySelector('button').onclick = () => openSupportWorkspace(page);
   });
 }
 const LIB_XLSX = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
 const LIB_JSPDF = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
 const LIB_AUTOTABLE = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js';
 const nextFrame = () => new Promise(r => setTimeout(r, 0));
+function debounceInput(render, delay = 120){
+  let timer;
+  return () => {
+    clearTimeout(timer);
+    timer = setTimeout(render, delay);
+  };
+}
 
 function colLetterToIndex(letter){
   return letter.toUpperCase().charCodeAt(0) - 65; // A=0, B=1, ...
@@ -2879,8 +3189,10 @@ document.querySelectorAll('.nav-item').forEach(item => {
       if(drawerOpen) setDrawerOpen(false);
       return;
     }
+    if(item.dataset.tab.startsWith('support-') && !NAV_PERM[item.dataset.tab].some(p => UMAuth.can(p))) return;
     const content = document.getElementById('tab-' + item.dataset.tab);
-    if(!item.classList.contains('active')){
+    const entered = !item.classList.contains('active');
+    if(entered){
       const previousItem = document.querySelector('.nav-item[data-tab].active');
       previousItem?.classList.remove('active');
       previousItem?.removeAttribute('aria-current');
@@ -2892,8 +3204,10 @@ document.querySelectorAll('.nav-item').forEach(item => {
       workspaceMain.scrollTop = 0;
     }
     if(drawerOpen) setDrawerOpen(false, content.querySelector('h2'));
-    if(item.dataset.tab.startsWith('lead-')) openLeadWorkspace(item.dataset.tab);
-    if(item.dataset.tab==='punch-sale-order') openOrderWorkspace();
+    if(item.dataset.tab.startsWith('lead-')) openLeadWorkspace(item.dataset.tab, entered);
+    if(item.dataset.tab==='punch-sale-order') openOrderWorkspace(entered);
+    if(item.dataset.tab.startsWith('support-')) openSupportWorkspace(item.dataset.tab, entered);
+    if(item.dataset.tab==='training' && !trainingLoaded) loadTrainingData();
   });
 });
 
@@ -2962,7 +3276,8 @@ async function loadCacheAndRender(){
   }catch(e){
     return false;
   }
-  if(!cached || cached.uid !== UMAuth.user.id || cached.scope!==UMStateAccess.fingerprint(UMAuth.user) || !Array.isArray(cached.beatWiseData)) return false;
+  if(!cached || cached.uid !== UMAuth.user?.id || cached.scope!==UMStateAccess.fingerprint(UMAuth.user) || !Array.isArray(cached.beatWiseData)) return false;
+  if(typeof salesSync !== 'undefined' && salesSync) return false;
 
   targetVsAchData = cached.targetVsAchData || [];
   partyWiseData = cached.partyWiseData || [];
@@ -2985,7 +3300,6 @@ async function loadCacheAndRender(){
   renderPrimaryTable(stateFilters.primary || []);
   renderSecondaryTable(stateFilters.secondary || []);
   renderBeatWise();
-  loadTrainingData();
 
   document.getElementById('exec-status').style.display = 'none';
   document.getElementById('exec-content').style.display = 'block';
@@ -3004,29 +3318,53 @@ async function loadCacheAndRender(){
   return fresh ? 'fresh' : 'stale';
 }
 
-async function loadAllData(silent, forceFresh){
+let salesSync = null, pendingManualSync = null;
+function loadAllData(silent, forceFresh){
+  if(!salesSync){
+    const promise = syncSalesData(silent, forceFresh).finally(() => { salesSync = null; });
+    salesSync = {forceFresh, promise};
+  }else if(forceFresh && !salesSync.forceFresh){
+    // Honor a manual forced refresh once, after the current startup/background sync.
+    if(!pendingManualSync){
+      setButtonBusy(document.getElementById('refreshBtn'), true);
+      pendingManualSync = salesSync.promise.then(() => {
+        pendingManualSync = null;
+        return loadAllData(false, true);
+      });
+    }
+    return pendingManualSync;
+  }
+  return salesSync.promise;
+}
+async function syncSalesData(silent, forceFresh){
   genieSalesLoading = true;
   const btn = document.getElementById('refreshBtn');
   const label = btn.querySelector('.button-label');
   const reportProgress = document.getElementById('beatwiseProgress');
   // In silent mode (background refresh behind already-visible cached or live data), don't touch
   // the loading spinners / hide the content — the user shouldn't see anything flicker.
+  const hasVisibleData = document.getElementById('exec-content').style.display === 'block' ||
+    document.getElementById('primary-content').style.display === 'block' ||
+    document.getElementById('secondary-content').style.display === 'block' ||
+    document.getElementById('beatwise-content').style.display === 'block';
+  const showLoading = !silent && !hasVisibleData;
   if(!silent){
     setButtonBusy(btn, true);
     label.textContent = 'Refreshing your data…';
+    for(const page of ['exec', 'primary', 'secondary', 'beatwise']){
+      document.getElementById(page + '-error').replaceChildren();
+    }
+  }
+  if(showLoading){
     reportProgress.textContent = 'Syncing your data…';
     document.getElementById('exec-status').style.display = 'block';
     document.getElementById('exec-content').style.display = 'none';
-    document.getElementById('exec-error').innerHTML = '';
     document.getElementById('primary-status').style.display = 'block';
     document.getElementById('primary-content').style.display = 'none';
-    document.getElementById('primary-error').innerHTML = '';
     document.getElementById('secondary-status').style.display = 'block';
     document.getElementById('secondary-content').style.display = 'none';
-    document.getElementById('secondary-error').innerHTML = '';
     document.getElementById('beatwise-status').style.display = 'block';
     document.getElementById('beatwise-content').style.display = 'none';
-    document.getElementById('beatwise-error').innerHTML = '';
   }
 
   try{
@@ -3092,7 +3430,6 @@ async function loadAllData(silent, forceFresh){
         return true;
       });
 
-    const rDIdx = colLetterToIndex('D'), rGIdx = colLetterToIndex('G'), rIIdx = colLetterToIndex('I'), rNIdx = colLetterToIndex('N'), rJIdx = colLetterToIndex('J'), rRIdx = colLetterToIndex('R'), rMIdx = colLetterToIndex('M'), rSIdx = colLetterToIndex('S');
     if(repRows) beatWiseData = repRows;
     if(tva) genieSalesLoadedAt.primary = Date.now();
     if(sec) genieSalesLoadedAt.secondary = Date.now();
@@ -3106,7 +3443,7 @@ async function loadAllData(silent, forceFresh){
       stateFilters.beatwiseState = ds.slice();
       dashboardDefaultStateApplied = true;
     }
-    populateStateFilters();
+    populateStateFilters(jobs[3].status === 'pending' ? 'sales' : undefined);
     renderExecutive(stateFilters.exec || []);
     document.getElementById('exec-status').style.display = 'none';
     document.getElementById('exec-content').style.display = 'block';
@@ -3119,8 +3456,8 @@ async function loadAllData(silent, forceFresh){
     document.getElementById('secondary-status').style.display = 'none';
     document.getElementById('secondary-content').style.display = 'block';
     await nextFrame();
-    renderBeatWise();
-    loadTrainingData(); // independent — a missing/renamed Training tab shouldn't break the other tabs
+    if(jobs[3].status !== 'pending') renderBeatWise();
+    if(forceFresh && trainingLoaded) loadTrainingData();
     const showBeat = () => { document.getElementById('beatwise-status').style.display = 'none'; document.getElementById('beatwise-content').style.display = 'block'; };
     if(jobs[3].status !== 'pending' || beatWiseData.length) showBeat(); // otherwise Beat Wise keeps its loading spinner
 
@@ -3130,9 +3467,16 @@ async function loadAllData(silent, forceFresh){
       if(jobs[3].status === 'fulfilled'){
         beatWiseData = jobs[3].value;
         if(loggedInUser && !(stateFilters.beatwiseState || []).length) stateFilters.beatwiseState = UMStateAccess.forUser(UMAuth.user).states.slice();
-        populateStateFilters();
+        populateStateFilters('report');
         renderBeatWise();
-      }else{ failedNames.push('Report'); }
+        renderSecondaryShopTypeSummary(stateFilters.secondary || [], stateFilters.secondaryMonth || [], stateFilters.secondaryUser || []);
+      }else{
+        failedNames.push('Report');
+        if(!beatWiseData.length){
+          populateStateFilters('report');
+          renderBeatWise();
+        }
+      }
       showBeat();
     }
 
@@ -3158,7 +3502,7 @@ async function loadAllData(silent, forceFresh){
     document.getElementById('last-updated').textContent = silent ? 'Showing last synced data' : 'Could not sync data';
     // In silent mode we already have cached (or previously live) data on screen — leave it visible
     // rather than replacing it with an error box on a transient network hiccup.
-    if(!silent){
+    if(showLoading){
       const msg = `<div class="error-box">⚠️ Could not load live data: ${escapeHtml(err.message)}<br><br>
         Please check your internet connection and tap Refresh. If it continues, contact the administrator.</div>`;
       document.getElementById('exec-status').style.display = 'none';
@@ -3169,8 +3513,8 @@ async function loadAllData(silent, forceFresh){
       document.getElementById('primary-error').innerHTML = msg;
       document.getElementById('secondary-error').innerHTML = msg;
       document.getElementById('beatwise-error').innerHTML = msg;
-      if(forceFresh) showToast('Could not refresh the dashboard. Please try again.', 'error');
     }
+    if(forceFresh && !silent) showToast('Could not refresh the dashboard. Please try again.', 'error');
   }finally{
     genieSalesLoading = false;
     if(!silent){
@@ -3343,7 +3687,7 @@ function renderProductTable(){
   document.getElementById('product-subtotal').textContent = '₹ ' + fmtNum(grandSale);
 }
 
-document.getElementById('productSearch').addEventListener('input', renderProductTable);
+document.getElementById('productSearch').addEventListener('input', debounceInput(renderProductTable));
 document.querySelector('#tab-product thead').addEventListener('click', e => {
   const th = e.target.closest('th');
   if(!th || !th.dataset.key) return;
@@ -3377,6 +3721,7 @@ function normalizeVideoUrl(raw){
   return url;
 }
 
+let trainingLoaded = false;
 async function loadTrainingData(){
   if(!UMAuth.can('content.training')) return;
   const statusEl = document.getElementById('training-status');
@@ -3398,6 +3743,7 @@ async function loadTrainingData(){
       }))
       .filter(r => r.topic && r.topic.toUpperCase() !== 'TOPIC');
 
+    trainingLoaded = true;
     renderTraining();
     statusEl.style.display = 'none';
     contentEl.style.display = 'block';
@@ -3433,58 +3779,54 @@ function renderTraining(){
   `).join('');
 }
 
-document.getElementById('trainingSearch') && document.getElementById('trainingSearch').addEventListener('input', renderTraining);
+document.getElementById('trainingSearch') && document.getElementById('trainingSearch').addEventListener('input', debounceInput(renderTraining));
 document.getElementById('trainingRefreshBtn') && document.getElementById('trainingRefreshBtn').addEventListener('click', loadTrainingData);
 
-function populateStateFilters(){
-  let statesPrimary = Array.from(new Set(targetVsAchData.map(r => r.state))).sort();
-  let statesSecondary = Array.from(new Set(secondaryData.map(r => r.state))).sort();
-  let allStates = Array.from(new Set([...statesPrimary, ...statesSecondary])).sort();
-  let statesBeat = Array.from(new Set(beatWiseData.map(r => r.state))).sort();
-
+function populateStateFilters(section){
   const scope=UMStateAccess.forUser(UMAuth.user);
   const permitted=s=>UMStateAccess.allows(UMAuth.user,s);
-  statesPrimary=statesPrimary.filter(permitted);statesSecondary=statesSecondary.filter(permitted);
-  allStates=allStates.filter(permitted);statesBeat=statesBeat.filter(permitted);
-
-  buildMultiSelect('exec', allStates.length ? allStates : statesPrimary, renderExecutive);
-  buildMultiSelect('primary', statesPrimary.length ? statesPrimary : allStates, renderPrimaryTable);
-  buildMultiSelect('secondary', statesSecondary.length ? statesSecondary : allStates, (selStates) => {
-    rebuildSecondaryUserFilter(selStates);
-    renderSecondaryTable(selStates);
-  });
-  rebuildSecondaryUserFilter(stateFilters.secondary || []);
-
-  buildMultiSelect('beatwiseState', statesBeat, (selStates) => {
-    rebuildBeatUserFilter(selStates);
-    renderBeatWise();
-  });
-  rebuildBeatUserFilter(stateFilters.beatwiseState || []);
-
-  // Lock the state pickers themselves (hide the "All States" master option,
-  // disable the checkbox for the locked state, and grey out the dropdown)
-  // so a locked-in user can't reopen the menu and add other states.
-  if(!scope.all&&scope.states.length===1){
-    ['exec','primary','secondary','beatwiseState'].forEach(lockStateMultiSelect);
-  }
-
-  // Month filters — each tab pulls month options from its own source sheet
-  const monthsPrimary = Array.from(new Set(targetVsAchData.map(r => r.month))).filter(Boolean).sort(sortMonthStrings);
-  const monthsPartyWise = Array.from(new Set(partyWiseData.map(r => r.month))).filter(Boolean).sort(sortMonthStrings);
-  const monthsSecondary = Array.from(new Set(secondaryData.map(r => r.month))).filter(Boolean).sort(sortMonthStrings);
-  const monthsBeat = Array.from(new Set(beatWiseData.map(r => r.month))).filter(Boolean).sort(sortMonthStrings);
-  const monthsExec = Array.from(new Set([...monthsPrimary, ...monthsSecondary])).sort(sortMonthStrings);
-
-  buildMultiSelect('execMonth', monthsExec, () => renderExecutive(stateFilters.exec || []), 'Months');
-  buildMultiSelect('primaryMonth', monthsPartyWise.length ? monthsPartyWise : monthsPrimary, () => renderPrimaryTable(stateFilters.primary || []), 'Months');
-  buildMultiSelect('secondaryMonth', monthsSecondary, () => {
+  const locked = !scope.all && scope.states.length === 1;
+  if(section !== 'report'){
+    const statesPrimary = Array.from(new Set(targetVsAchData.map(r => r.state))).filter(permitted).sort();
+    const statesSecondary = Array.from(new Set(secondaryData.map(r => r.state))).filter(permitted).sort();
+    const allStates = Array.from(new Set([...statesPrimary, ...statesSecondary])).sort();
+    buildMultiSelect('exec', allStates.length ? allStates : statesPrimary, renderExecutive);
+    buildMultiSelect('primary', statesPrimary.length ? statesPrimary : allStates, renderPrimaryTable);
+    buildMultiSelect('secondary', statesSecondary.length ? statesSecondary : allStates, (selStates) => {
+      rebuildSecondaryUserFilter(selStates);
+      renderSecondaryTable(selStates);
+    });
     rebuildSecondaryUserFilter(stateFilters.secondary || []);
-    renderSecondaryTable(stateFilters.secondary || []);
-  }, 'Months');
-  buildMultiSelect('beatwiseMonth', monthsBeat, (selMonths) => {
+    if(locked) ['exec','primary','secondary'].forEach(lockStateMultiSelect);
+
+    const monthsPrimary = Array.from(new Set(targetVsAchData.map(r => r.month))).filter(Boolean).sort(sortMonthStrings);
+    const monthsPartyWise = Array.from(new Set(partyWiseData.map(r => r.month))).filter(Boolean).sort(sortMonthStrings);
+    const monthsSecondary = Array.from(new Set(secondaryData.map(r => r.month))).filter(Boolean).sort(sortMonthStrings);
+    const monthsExec = Array.from(new Set([...monthsPrimary, ...monthsSecondary])).sort(sortMonthStrings);
+    buildMultiSelect('execMonth', monthsExec, () => renderExecutive(stateFilters.exec || []), 'Months');
+    buildMultiSelect('primaryMonth', monthsPartyWise.length ? monthsPartyWise : monthsPrimary, () => renderPrimaryTable(stateFilters.primary || []), 'Months');
+    buildMultiSelect('secondaryMonth', monthsSecondary, () => {
+      rebuildSecondaryUserFilter(stateFilters.secondary || []);
+      renderSecondaryTable(stateFilters.secondary || []);
+    }, 'Months');
+  }
+  if(section !== 'sales'){
+    const statesBeat = new Set(), monthsBeat = new Set();
+    for(const row of beatWiseData){
+      statesBeat.add(row.state);
+      if(row.month) monthsBeat.add(row.month);
+    }
+    buildMultiSelect('beatwiseState', Array.from(statesBeat).filter(permitted).sort(), selStates => {
+      rebuildBeatUserFilter(selStates);
+      renderBeatWise();
+    });
     rebuildBeatUserFilter(stateFilters.beatwiseState || []);
-    renderBeatWise();
-  }, 'Months');
+    if(locked) lockStateMultiSelect('beatwiseState');
+    buildMultiSelect('beatwiseMonth', Array.from(monthsBeat).sort(sortMonthStrings), () => {
+      rebuildBeatUserFilter(stateFilters.beatwiseState || []);
+      renderBeatWise();
+    }, 'Months');
+  }
 }
 
 /* Rebuild the User filter options for Secondary Sale tab based on currently selected states + months */
@@ -3830,7 +4172,7 @@ function renderPrimaryTable(selectedStates){
   document.getElementById('primary-subtotal').textContent = '₹ ' + fmtNum(subtotal);
 }
 
-document.getElementById('primarySearch').addEventListener('input', () => renderPrimaryTable(stateFilters.primary || []));
+document.getElementById('primarySearch').addEventListener('input', debounceInput(() => renderPrimaryTable(stateFilters.primary || [])));
 
 document.querySelector('#tab-primary thead').addEventListener('click', e => {
   const th = e.target.closest('th');
@@ -3842,7 +4184,7 @@ document.querySelector('#tab-primary thead').addEventListener('click', e => {
 });
 
 /* ============ RENDER SECONDARY TABLE (User Wise) ============ */
-function renderSecondaryTable(selectedStates){
+function renderSecondaryTable(selectedStates, refreshCoverage = true){
   selectedStates = selectedStates || [];
   const selMonths = stateFilters.secondaryMonth || [];
   const selUsers = stateFilters.secondaryUser || [];
@@ -3900,73 +4242,68 @@ function renderSecondaryTable(selectedStates){
   document.getElementById('secondary-subtotal-ach').textContent = '₹ ' + fmtNum(totalAch);
   document.getElementById('secondary-subtotal-pct').textContent = totalPct.toFixed(1) + '%';
 
-  renderSecondaryShopTypeSummary(selectedStates, selMonths, selUsers);
+  if(refreshCoverage) renderSecondaryShopTypeSummary(selectedStates, selMonths, selUsers);
 }
 
 /* ============ SECONDARY SALE PAGE-LEVEL SHOP-TYPE COVERAGE SUMMARY ============ */
+function summarizeShopCoverage(rows, selectedStates, selMonths, selUsers){
+  const hasMonths = Boolean(selMonths?.length);
+  const groups = new Map(SHOP_TYPE_CATEGORIES.map(category => [category, {
+    salePerShop:new Map(), firstSaleDate:new Map(), sale:0
+  }]));
+  const stateKeys = new Set((selectedStates || []).map(normFilterVal));
+  const monthKeys = new Set((selMonths || []).map(normFilterVal));
+  const userKeys = new Set((selUsers || []).map(normFilterVal));
+  const categoryFor = new Map(), timeFor = new Map();
+  let earliestVisit = Infinity;
+  for(const row of rows){
+    if(stateKeys.size && !stateKeys.has(normFilterVal(row.state))) continue;
+    if(userKeys.size && !userKeys.has(normFilterVal(row.user))) continue;
+    const inMonth = !hasMonths || monthKeys.has(normFilterVal(row.month));
+    const hasSaleHistory = hasMonths && row.sale > 0;
+    if(!inMonth && !hasSaleHistory) continue;
+    if(!categoryFor.has(row.shopType)) categoryFor.set(row.shopType, categorizeShopType(row.shopType));
+    const group = groups.get(categoryFor.get(row.shopType));
+    if(hasMonths && !timeFor.has(row.date)) timeFor.set(row.date, new Date(row.date).getTime());
+    const date = timeFor.get(row.date);
+    if(inMonth){
+      group.salePerShop.set(row.shop, (group.salePerShop.get(row.shop) || 0) + row.sale);
+      group.sale += row.sale;
+      if(date < earliestVisit) earliestVisit = date;
+    }
+    if(hasSaleHistory && Number.isFinite(date)){
+      const first = group.firstSaleDate.get(row.shop);
+      if(first === undefined || date < first) group.firstSaleDate.set(row.shop, date);
+    }
+  }
+  const summary = new Map();
+  for(const [category, group] of groups){
+    let shopsWithSale = 0, repeatCount = 0;
+    for(const [shop, sale] of group.salePerShop){
+      if(!(sale > 0)) continue;
+      shopsWithSale++;
+      if(Number.isFinite(earliestVisit) && group.firstSaleDate.get(shop) < earliestVisit) repeatCount++;
+    }
+    const uniqueCount = group.salePerShop.size;
+    summary.set(category, {
+      uniqueCount, shopsWithSale, repeatCount, newCount:shopsWithSale - repeatCount,
+      conversionPct:uniqueCount ? shopsWithSale / uniqueCount * 100 : 0,
+      catSale:group.sale, avgPerCounter:shopsWithSale ? group.sale / shopsWithSale : 0
+    });
+  }
+  return summary;
+}
+
 function renderSecondaryShopTypeSummary(selectedStates, selMonths, selUsers){
   const wrap = document.getElementById('secondary-shoptype-summary');
   if(!wrap) return;
   selUsers = selUsers || [];
-
-  const scopedRows = beatWiseData
-    .filter(r => inFilter(r.state, selectedStates) && inFilter(r.month, selMonths) && inFilter(r.user, selUsers))
-    .map(r => ({ ...r, cat: categorizeShopType(r.shopType) }));
-
-  // Full history (state/user filters applied, but NOT month filter) — needed to know whether a
-  // counter gave sale in any month *before* the currently selected month(s).
-  const historyRows = beatWiseData
-    .filter(r => inFilter(r.state, selectedStates) && inFilter(r.user, selUsers))
-    .map(r => ({ ...r, cat: categorizeShopType(r.shopType) }));
-
-  // Earliest actual visit date among the currently-scoped (filtered) rows — the cutoff before
-  // which a sale counts as "previous". Built from the real per-row date, not the month label,
-  // since the month field alone (e.g. "September") doesn't reliably parse into a JS Date.
-  let thresholdDate = null;
-  if(selMonths && selMonths.length){
-    const validDates = scopedRows.map(r => new Date(r.date)).filter(d => !isNaN(d));
-    if(validDates.length) thresholdDate = new Date(Math.min(...validDates.map(d => d.getTime())));
-  }
+  const summary = summarizeShopCoverage(beatWiseData, selectedStates, selMonths, selUsers);
 
   const cardColors = { 'Chemist/Retail': 'var(--blue)', 'Dr./Hospital': 'var(--green)', 'Sub-Dist/Dealer': '#d97706', 'Others': 'var(--red)' };
 
   wrap.innerHTML = SHOP_TYPE_CATEGORIES.map(cat => {
-    const catRows = scopedRows.filter(r => r.cat === cat);
-
-    // Sale per shop within this category, to find unique count + how many gave any sale
-    const salePerShop = new Map();
-    catRows.forEach(r => {
-      salePerShop.set(r.shop, (salePerShop.get(r.shop) || 0) + r.sale);
-    });
-    const uniqueCount = salePerShop.size;
-    const shopsGivingSale = Array.from(salePerShop.entries()).filter(([,v]) => v > 0).map(([shop]) => shop);
-    const shopsWithSale = shopsGivingSale.length;
-    const conversionPct = uniqueCount > 0 ? (shopsWithSale / uniqueCount * 100) : 0;
-    const catSale = catRows.reduce((s,r) => s + r.sale, 0);
-    const avgPerCounter = shopsWithSale > 0 ? (catSale / shopsWithSale) : 0;
-
-    // Earliest-ever sale date per shop in this category, from the full history.
-    let repeatCount = 0, newCount = 0;
-    if(thresholdDate){
-      const catHistory = historyRows.filter(r => r.cat === cat && r.sale > 0);
-      const firstSaleDate = new Map();
-      catHistory.forEach(r => {
-        const d = new Date(r.date);
-        if(isNaN(d)) return;
-        const existing = firstSaleDate.get(r.shop);
-        if(!existing || d < existing) firstSaleDate.set(r.shop, d);
-      });
-      shopsGivingSale.forEach(shop => {
-        const firstDate = firstSaleDate.get(shop);
-        if(firstDate && firstDate < thresholdDate) repeatCount++;
-        else newCount++;
-      });
-    } else {
-      // No specific month selected — there's no "previous month" reference to compare against.
-      newCount = shopsWithSale;
-      repeatCount = 0;
-    }
-
+    const {uniqueCount, shopsWithSale, repeatCount, newCount, conversionPct, catSale, avgPerCounter} = summary.get(cat);
     return `
       <div class="shoptype-card" style="border-top-color:${cardColors[cat]};">
         <div class="shoptype-card-title">🏬 ${cat}</div>
@@ -3992,14 +4329,14 @@ function renderSecondaryShopTypeSummary(selectedStates, selMonths, selUsers){
   });
 }
 
-document.getElementById('secondarySearch').addEventListener('input', () => renderSecondaryTable(stateFilters.secondary || []));
+document.getElementById('secondarySearch').addEventListener('input', debounceInput(() => renderSecondaryTable(stateFilters.secondary || [], false)));
 
 document.querySelectorAll('#tab-secondary thead th').forEach(th => {
   th.addEventListener('click', () => {
     const key = th.dataset.key;
     if(currentSecondarySort.key === key){ currentSecondarySort.dir *= -1; }
     else { currentSecondarySort = { key, dir: 1 }; }
-    renderSecondaryTable(stateFilters.secondary || []);
+    renderSecondaryTable(stateFilters.secondary || [], false);
   });
 });
 
@@ -4057,7 +4394,7 @@ function renderBeatWise(){
   document.getElementById('beatwise-subtotal').textContent = '₹ ' + fmtNum(subtotal);
 }
 
-document.getElementById('beatSearch').addEventListener('input', renderBeatWise);
+document.getElementById('beatSearch').addEventListener('input', debounceInput(renderBeatWise));
 
 document.querySelectorAll('#tab-beatwise thead th').forEach(th => {
   th.addEventListener('click', () => {
@@ -4969,8 +5306,10 @@ document.getElementById('refreshBtn').addEventListener('click', () => loadAllDat
 
   (async function boot(){
     try{ const m = sessionStorage.getItem('umNotice'); if(m){ sessionStorage.removeItem('umNotice'); showMsg($i('loginError'), m, true); } }catch(e){}
-    UMAuth.api('ping', {}, { tries:1, timeout:15000, noToken:true, noLogout:true }).catch(() => {});   // wakes the server while the user types
-    try{ if(await UMAuth.init()) startSession(); }
+    try{
+      if(await UMAuth.init()) startSession();
+      else UMAuth.api('ping', {}, { tries:1, timeout:15000, noToken:true, noLogout:true }).catch(() => {});
+    }
     catch(e){ showMsg($i('loginError'), 'Could not verify your session: ' + e.message); }
   })();
 })();
@@ -5943,7 +6282,7 @@ self.addEventListener('fetch', (event) => {
   'use strict';
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const PERMS = [['sales.target','Targets / Executive'],['sales.party','Party-wise'],['sales.secondary','Secondary'],['sales.report','Beat-wise report'],['sales.product','Product-wise'],['content.training','Training videos'],['dc','Distributor Connect'],['tm','Training Mgmt'],['lead.own','Own Leads'],['lead.manage','Manage Leads'],['orders.create','Punch primary orders'],['orders.manage','Manage primary orders']];
+  const PERMS = [['sales.target','Targets / Executive'],['sales.party','Party-wise'],['sales.secondary','Secondary'],['sales.report','Beat-wise report'],['sales.product','Product-wise'],['content.training','Training videos'],['dc','Distributor Connect'],['tm','Training Mgmt'],['lead.own','Own Leads'],['lead.manage','Manage Leads'],['orders.create','Punch primary orders'],['orders.manage','Manage primary orders'],['support.agent','Work on support tickets'],['support.manage','Manage support tickets'],['support.admin','Configure support'],['support.reports','View support reports']];
   let users = [], editing = null, loaded = false, pendingLoads = 0;
   $('admPerms').innerHTML = '<span class="adm-lbl">Explicit access (required for Read-Only, optional extras for others):</span> ' +
     PERMS.map(p => '<label class="adm-chk"><input type="checkbox" class="admPerm" value="' + p[0] + '"> ' + esc(p[1]) + '</label>').join('');
@@ -6100,6 +6439,17 @@ const tabs = {
   'lead-schedule':['Follow-up Schedule','Choose Today, Upcoming, Overdue, or Completed. Open a task to reschedule it or mark it complete.'],
   'lead-calls':["Today's Calls",'Choose Log call on a due task to record the outcome and schedule the next contact.'],
   'lead-reports':['Performance & Reports','Filter by date and salesperson to review activity, workload, and conversions.'],
+  'support-overview':['Support Overview','Review your support queue and service levels.'],
+  'support-all':['All Tickets','Search and filter the support queue. Open a ticket to review its activity.'],
+  'support-new':['New Ticket','Record a support request received outside email.'],
+  'support-mine':['My Assigned Tickets','Review and work on the tickets assigned to you.'],
+  'support-unassigned':['Unassigned Tickets','Open a ticket to assign it to a support employee.'],
+  'support-pending':['Pending Tickets','Review tickets that still need action.'],
+  'support-overdue':['Overdue Tickets','Review tickets with a breached response or resolution target.'],
+  'support-escalated':['Escalated Tickets','Review escalation activity and record follow-up actions.'],
+  'support-closure':['Closure Approval','Review submitted resolutions and decide whether to close or return each ticket.'],
+  'support-reports':['Support Reports','Filter ticket activity and export authorized support records.'],
+  'support-settings':['Support Settings','Maintain categories, employees, working hours, SLA targets and notifications.'],
   training:['Product Training','Search for a topic or product and select Watch Video on a training card.'],
   trainingmodule:['Training Management','Use Schedule Training to plan a session. In Training Attendance, select the date and session, mark each employee, and submit attendance.'],
   distconnect:['Distributor Connect','Select a distributor to view its call history. Use Follow-Up Tracker to find due calls and open the previous call remarks.'],
